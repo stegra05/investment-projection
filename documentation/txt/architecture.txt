@@ -1,0 +1,100 @@
+# Architecture Overview
+
+## 1. Introduction
+
+This document provides a high-level overview of the system architecture
+for the Investment Planning Projection website. It describes the main
+components, how they interact, the flow of data, and how the
+architecture supports the key Non-Functional Requirements (NFRs).
+
+## 2. Key Components
+
+The system is designed using a standard client-server architecture
+consisting of three primary components:
+
+-   **Frontend (Client):** A single-page application (SPA) built using
+    **React**. It runs in the user's web browser and is responsible for
+    rendering the user interface, capturing user input (portfolio
+    details, assumptions, etc.), and displaying results (projections,
+    graphs).
+-   **Backend (Server):** An API server built using **Flask (Python)**.
+    It is responsible for:
+    -   Handling API requests from the React frontend.
+    -   Implementing business logic (user authentication, portfolio
+        management, projection calculations).
+    -   Interacting with the database via **SQLAlchemy**.
+    -   Enforcing security measures.
+-   **Database (Data Store):** A **PostgreSQL** relational database. It
+    is responsible for persistently storing all application data,
+    including:
+    -   User account information (securely hashed passwords).
+    -   User-created portfolios and their asset allocations.
+    -   User-defined assumptions and planned future changes.
+    -   (Potentially cached asset information, if applicable).
+
+## 3. Interactions
+
+-   **Client-Server Communication:** The React Frontend communicates
+    with the Flask Backend exclusively through **API calls** (likely
+    RESTful over HTTPS). The frontend sends user data and requests for
+    calculations/data retrieval, and the backend responds with data or
+    status updates.
+-   **Backend-Database Communication:** The Flask Backend interacts with
+    the PostgreSQL database using the **SQLAlchemy ORM**. SQLAlchemy
+    translates Python objects and operations into SQL queries, handles
+    connections, and maps database results back to Python objects.
+
+## 4. Data Flow Example (Running a Projection)
+
+1.  **User Action:** User selects a portfolio and clicks "Run
+    Projection" in the React frontend.
+2.  **API Request:** React gathers necessary inputs (portfolio ID,
+    assumptions) and sends an API request (e.g.,
+    `POST /api/projections`) to the Flask backend.
+3.  **Backend Processing:**
+    -   Flask receives the request, authenticates the user session.
+    -   It uses SQLAlchemy to query the PostgreSQL database for the
+        specified portfolio details, planned future changes, and
+        potentially other relevant data.
+    -   The core projection engine (within Flask) performs the
+        calculations based on the retrieved data and user-provided
+        assumptions.
+4.  **API Response:** Flask sends the calculated projection results
+    (e.g., data points for the graph) back to the React frontend in the
+    API response (likely as JSON).
+5.  **Frontend Display:** React receives the projection data and uses a
+    charting library to render the visualization (graph) for the user.
+
+## 5. NFR Alignment
+
+This architecture supports the key NFRs as follows:
+
+-   **Maintainability (M-1):** The clear separation between Frontend
+    (React), Backend (Flask API), and Database (PostgreSQL) promotes
+    modularity. Using SQLAlchemy provides a maintainable way to interact
+    with the database. This structure makes it easier to modify or
+    extend individual components independently. \[cite: 8\]
+-   **Usability (U-1, U-2):** React's component-based nature facilitates
+    building a clean and interactive user interface. Backend API design
+    will focus on providing data efficiently for smooth workflows.
+    \[cite: 8, 29\]
+-   **Security (SEC-1, SEC-2, SEC-3):** Security is handled centrally in
+    the Flask backend (authentication, authorization, password hashing
+    via bcrypt) and through enforced HTTPS communication. \[cite: 8\]
+-   **Performance (P-1, P-2):** While not critical, the separation
+    allows optimizing the backend (Python calculations, database
+    queries) and frontend (rendering) independently if needed.
+    Asynchronous processing could be added to Flask for long
+    calculations if required later. \[cite: 8\]
+-   **Reliability (R-1):** Tolerating occasional downtime allows for
+    simpler hosting solutions for the Flask backend and PostgreSQL
+    database, aligning with budget constraints. \[cite: 8\]
+-   **Data Accuracy (DA-1):** Using PostgreSQL provides strong data
+    integrity features suitable for financial data structures.
+    SQLAlchemy helps maintain consistent data interaction. \[cite: 8\]
+
+------------------------------------------------------------------------
+
+*This high-level architecture provides a decoupled structure suitable
+for developing the required features while supporting key quality
+attributes like maintainability.*

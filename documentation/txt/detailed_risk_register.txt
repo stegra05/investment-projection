@@ -1,0 +1,63 @@
+# Detailed Risk Register
+
+This register provides a more detailed view of the potential risks
+identified for the Investment Planning Projection Website project,
+expanding on the information in the README.
+
+  ------------------------------------------------------------------------------------------------------------------------------
+  ID     Risk Description        Impact   Likelihood   Mitigation Strategy        Contingency Plan      Owner       Status
+  ------ ----------------------- -------- ------------ -------------------------- --------------------- ----------- ------------
+  R-01   Underestimating         High     Medium       Break down logic into      Simplify projection   Assistant   Identified
+         Projection Engine                             smaller parts; allocate    model for V1 if                   
+         Complexity                                    specific research/learning necessary\[cite:                  
+                                                       time\[cite: 137\].         138\].                            
+
+  R-02   Learning Curve for      Medium   Medium       Start with simple CRUD;    Seek community help   Assistant   Identified
+         SQLAlchemy/PostgreSQL                         follow tutorials; allocate (Stack Overflow,                  
+                                                       learning time\[cite:       forums)\[cite: 140\].             
+                                                       139\].                                                       
+
+  R-03   Data Source Limitations Medium   Medium       Implement caching; monitor Use small budget      Assistant   Identified
+         (Free APIs)                                   usage; design defensively  (€10/mo) for paid                 
+                                                       for API errors\[cite:      tier if vital\[cite:              
+                                                       141\].                     142\].                            
+
+  R-04   Overall Time Estimation High     Medium       Use task tracking          Adjust scope (move    Assistant   Identified
+         (Solo Dev @ 8hrs/wk)                          (Trello); Break down       Must-\>Should);                   
+                                                       tasks; Regularly review    Extend                            
+                                                       progress vs plan\[cite:    timeline\[cite:                   
+                                                       144\].                     145\].                            
+
+  R-05   Backend API Security    High     Medium       Follow security best       Perform security      Assistant   Identified
+         Flaws (e.g., Injection,                       practices (input           testing                           
+         Auth Bypass)                                  validation, ORM use,       (manual/automated);               
+                                                       secure auth); Use HTTPS;   Isolate sensitive                 
+                                                       Regular dependency checks. data if possible.                 
+                                                       \[cite: 502, 511, 517,                                       
+                                                       540\]                                                        
+
+  R-06   Frontend Security Flaws Medium   Medium       Sanitize user inputs       Implement Content     Assistant   Identified
+         (e.g., XSS)                                   displayed on UI; Use       Security Policy                   
+                                                       secure libraries/framework (CSP); Perform                    
+                                                       features. \[cite: 517\]    frontend security                 
+                                                                                  testing.                          
+
+  R-07   Free Tier Hosting       Medium   Low          Monitor resource usage;    Allocate budget       Assistant   Identified
+         Limitations Exceeded                          Optimize application;      (€10/mo) for upgrade              
+                                                       Choose platform with clear if necessary. \[cite:             
+                                                       upgrade path. \[cite:      84\]                              
+                                                       890\]                                                        
+
+  R-08   Difficulty Integrating  Medium   Medium       Define clear API contracts Allocate extra time   Assistant   Identified
+         Frontend and Backend                          early; Test integration    for debugging                     
+                                                       points incrementally.      integration issues.               
+                                                       \[cite: 757\]                                                
+  ------------------------------------------------------------------------------------------------------------------------------
+
+-   **Owner:** The person/role responsible for monitoring and managing
+    the risk (Defaulted to 'Assistant' for now).
+-   **Status:** The current state of the risk (e.g., Identified,
+    Mitigating, Resolved, Closed).
+
+This provides a more structured way to keep track of potential issues as
+the project progresses.
