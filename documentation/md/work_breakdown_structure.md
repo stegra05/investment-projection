@@ -23,23 +23,23 @@ This WBS breaks down the high-level tasks from the project README [cite: 98] int
     - 3.5. Generate and apply initial database migration [cite: 93] [DONE]
 
 ## 4. User Authentication Backend (T4) [cite: 109]
-    - 4.1. Finalize User database model (including password hashing field) [cite: 71] [IN PROGRESS]
-    - 4.2. Implement password hashing (using bcrypt) [cite: 71, 517] [IN PROGRESS]
-    - 4.3. Create API endpoints for user registration (`/register`) [IN PROGRESS]
-    - 4.4. Create API endpoints for user login (`/login`, returning token/session) [IN PROGRESS]
-    - 4.5. Create API endpoints for user logout (`/logout`) [IN PROGRESS]
+    - 4.1. Finalize User database model (including password hashing field) [cite: 71] [Done]
+    - 4.2. Implement password hashing (using bcrypt) [cite: 71, 517] [Done]
+    - 4.3. Create API endpoints for user registration (`/register`) [Done]
+    - 4.4. Create API endpoints for user login (`/login`, returning token/session) [Done]
+    - 4.5. Create API endpoints for user logout (`/logout`) [Done]
     - 4.6. Implement password reset functionality (e.g., email link - may need email service setup) [cite: 47] [BLOCKED - Requires email service setup]
     - 4.7. Add authorization checks (e.g., require login for certain endpoints) [cite: 70] [IN PROGRESS - JWT Setup done, decorator applied to logout]
 
 ## 5. Core Portfolio Models & API (T5) [cite: 111]
-    - 5.1. Define Database Models (SQLAlchemy) for:
+    - 5.1. Define Database Models (SQLAlchemy) for: [DONE]
         - Portfolio
         - Asset (linking to Portfolio)
         - PlannedFutureChange (linking to Portfolio)
-    - 5.2. Generate and apply database migrations for new models
-    - 5.3. Create API endpoints for Portfolio CRUD (Create, Read, Update, Delete) [cite: 43]
-    - 5.4. Create API endpoints for managing Assets within a Portfolio [cite: 40, 41]
-    - 5.5. Create API endpoints for managing PlannedFutureChanges within a Portfolio [cite: 44]
+    - 5.2. Generate and apply database migrations for new models [DONE]
+    - 5.3. Create API endpoints for Portfolio CRUD (Create, Read, Update, Delete) [cite: 43] [DONE]
+    - 5.4. Create API endpoints for managing Assets within a Portfolio [cite: 40, 41] [DONE]
+    - 5.5. Create API endpoints for managing PlannedFutureChanges within a Portfolio [cite: 44] [DONE]
 
 ## 6. Backend Projection Engine (T6) [cite: 113]
     - 6.1. Research/define core projection calculation logic (considering returns, time, future changes)

@@ -30,6 +30,10 @@ def create_app(config_class=Config):
     from app.routes.auth import auth_bp
     app.register_blueprint(auth_bp)
 
+    # Register the portfolio blueprint
+    from app.routes.portfolios import portfolios_bp
+    app.register_blueprint(portfolios_bp)
+
     # Example blueprint registration (add more as needed)
     # from app.routes.portfolios import bp as portfolios_bp
     # app.register_blueprint(portfolios_bp, url_prefix='/api/v1/portfolios')
