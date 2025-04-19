@@ -49,19 +49,19 @@ This WBS breaks down the high-level tasks from the project README [cite: 98] int
     - 6.5. Consider performance optimization for calculations (if needed) [cite: 29] [DONE - Pre-grouped changes]
 
 ## 7. Basic React Frontend Setup (T7) [cite: 116]
-    - 7.1. Create React application using `create-react-app` or similar tool [cite: 831]
-    - 7.2. Set up project structure (components/, pages/, services/, etc.)
-    - 7.3. Configure basic routing (e.g., using React Router)
-    - 7.4. Set up basic styling approach (e.g., CSS modules, styled-components)
+    - 7.1. Create React application using `create-react-app` or similar tool [cite: 831] [DONE]
+    - 7.2. Set up project structure (components/, pages/, services/, etc.) [DONE]
+    - 7.3. Configure basic routing (e.g., using React Router) [DONE]
+    - 7.4. Set up basic styling approach (e.g., CSS modules, styled-components) [IN PROGRESS - Basic CSS setup]
 
 ## 8. Frontend Authentication Pages & Logic (T8) [cite: 119]
-    - 8.1. Create Registration page/component UI
-    - 8.2. Create Login page/component UI
-    - 8.3. Implement frontend logic to call backend registration API
-    - 8.4. Implement frontend logic to call backend login API (store token/session)
-    - 8.5. Implement frontend logic for logout
-    - 8.6. Set up protected routes (redirect if not logged in)
-    - 8.7. Implement UI for password reset flow
+    - 8.1. Create Registration page/component UI [DONE]
+    - 8.2. Create Login page/component UI [DONE]
+    - 8.3. Implement frontend logic to call backend registration API [DONE - Placeholder Service] [DONE]
+    - 8.4. Implement frontend logic to call backend login API (store token/session) [DONE - Placeholder Service, Context Implemented] [DONE]
+    - 8.5. Implement frontend logic for logout [DONE - Context Implemented]
+    - 8.6. Set up protected routes (redirect if not logged in) [DONE]
+    - 8.7. Implement UI for password reset flow [DONE - Placeholders]
 
 ## 9. Frontend Portfolio Input/Management UI (T9) [cite: 122]
     - 9.1. Create UI components for displaying list of portfolios

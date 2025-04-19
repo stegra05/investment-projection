@@ -20,4 +20,37 @@ class Config:
     # MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') is not None
     # MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     # MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    # ADMINS = ['your-email@example.com'] 
+    # ADMINS = ['your-email@example.com']
+
+    @staticmethod
+    def init_app(app):
+        pass
+
+class DevelopmentConfig(Config):
+    """Development configuration."""
+    DEBUG = True
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
+        'sqlite:///' + os.path.join(basedir, 'dev-app.db')
+
+class TestingConfig(Config):
+    """Testing configuration."""
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
+        'sqlite:///:memory:' # Use in-memory SQLite for tests
+    WTF_CSRF_ENABLED = False # Disable CSRF for tests
+
+class ProductionConfig(Config):
+    """Production configuration."""
+    # Production settings might differ, e.g., database URL from production env
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+        'sqlite:///' + os.path.join(basedir, 'app.db')
+    # Ensure DEBUG is False in production
+    DEBUG = False
+
+# Dictionary to map configuration names to classes
+config = {
+    'development': DevelopmentConfig,
+    'testing': TestingConfig,
+    'production': ProductionConfig,
+    'default': DevelopmentConfig # Default to development config
+} 

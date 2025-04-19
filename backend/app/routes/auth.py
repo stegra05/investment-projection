@@ -3,7 +3,7 @@ from app import db
 from app.models.user import User
 from flask_jwt_extended import create_access_token, jwt_required
 
-# Define the blueprint: \'auth\', prefix: /api/v1/auth
+# Define the blueprint: 'auth', prefix: /api/v1/auth
 # Following API spec (prefix /api/v1/)
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/v1/auth')
 

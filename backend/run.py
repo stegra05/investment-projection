@@ -1,13 +1,16 @@
 import os
-from app import create_app, db
+try:
+    from app import create_app, db
+except Exception as e:
+    print(f"--- ERROR during import from app: {e} ---")
+    import traceback
+    traceback.print_exc()
+    import sys
+    sys.exit(1) # Exit if import fails
+
 # from app.models import User # Import models if needed for shell context
 
-# Load environment variables before creating the app
-# dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
-# if os.path.exists(dotenv_path):
-#     from dotenv import load_dotenv
-#     load_dotenv(dotenv_path)
-# Note: config.py now handles loading .env, so this might be redundant
+# Note: config.py now handles loading .env
 
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')
 
@@ -20,4 +23,6 @@ def make_shell_context():
     return context
 
 if __name__ == '__main__':
-    app.run(debug=True) # Enable debug mode for development 
+    # Explicitly set host, port, and ensure debug is True
+    # Defaulting debug to True for development environment
+    app.run(host='0.0.0.0', port=5000, debug=True) 

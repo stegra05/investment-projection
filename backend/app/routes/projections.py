@@ -4,7 +4,10 @@ from decimal import Decimal, InvalidOperation
 import datetime
 
 from app.services.projection_engine import calculate_projection
-from app.models import Portfolio, db # Import Portfolio to verify ownership
+# Import models from app.models
+from app.models import Portfolio 
+# Import db instance from the app package
+from app import db 
 
 projections_bp = Blueprint('projections_bp', __name__, url_prefix='/api/v1/portfolios')
 

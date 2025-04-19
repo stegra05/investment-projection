@@ -2,8 +2,10 @@ import datetime
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal, InvalidOperation
 
-# Assuming models are defined in app.models
-from app.models import Portfolio, Asset, PlannedFutureChange, db
+d# Import models from app.models
+from app.models import Portfolio, Asset, PlannedFutureChange
+# Import db instance from the app package
+from app import db
 from sqlalchemy.orm import joinedload
 
 # Placeholder for models until actual import path is confirmed
