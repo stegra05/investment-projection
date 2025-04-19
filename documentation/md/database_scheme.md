@@ -6,10 +6,13 @@ This document describes the structure of the PostgreSQL database used by the Inv
 
 Stores information about registered users.
 
-* **`user_id`** (SERIAL, PRIMARY KEY): Unique identifier for the user.
-* **`email`** (VARCHAR(100), UNIQUE, NOT NULL): User's email address, used for login.
-* **`hashed_password`** (VARCHAR(255), NOT NULL): User's password, securely hashed using bcrypt[cite: 71, 9].
+* **`id`** (INTEGER, PRIMARY KEY): Unique identifier for the user (Auto-incrementing).
+* **`username`** (VARCHAR(64), UNIQUE, INDEX, NOT NULL): User's chosen username.
+* **`email`** (VARCHAR(120), UNIQUE, INDEX, NOT NULL): User's email address, can be used for login or password recovery.
+* **`password_hash`** (VARCHAR(128), NOT NULL): User's password, securely hashed (e.g., using bcrypt via Werkzeug).
 * **`created_at`** (TIMESTAMP WITH TIME ZONE, DEFAULT NOW()): Timestamp when the user account was created.
+
+*(Primary Key: `id`, Indexes on: `username`, `email`)*
 
 ## 2. Table: `portfolios`
 

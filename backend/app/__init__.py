@@ -34,7 +34,7 @@ def create_app(config_class=Config):
     # app.register_blueprint(projections_bp, url_prefix='/api/v1/projections')
 
     # Import models here to ensure they are known to Flask-Migrate
-    # from app import models
+    from app import models
 
     @app.route('/test/')
     def test_page():

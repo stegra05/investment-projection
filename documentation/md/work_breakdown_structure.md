@@ -16,11 +16,11 @@ This WBS breaks down the high-level tasks from the project README [cite: 98] int
     - 2.4. Set up basic API routing structure (e.g., using Blueprints) [DONE]
 
 ## 3. PostgreSQL DB Setup & Migrations (T3) [cite: 106]
-    - 3.1. Install and configure local PostgreSQL server [cite: 91]
-    - 3.2. Create development database and user roles
-    - 3.3. Integrate Flask-SQLAlchemy and Flask-Migrate with the Flask app [cite: 92]
-    - 3.4. Define initial database models (e.g., User) [cite: 155]
-    - 3.5. Generate and apply initial database migration [cite: 93]
+    - 3.1. Install and configure local PostgreSQL server [cite: 91] [DONE]
+    - 3.2. Create development database and user roles [DONE]
+    - 3.3. Integrate Flask-SQLAlchemy and Flask-Migrate with the Flask app [cite: 92] [DONE]
+    - 3.4. Define initial database models (e.g., User) [cite: 155] [DONE]
+    - 3.5. Generate and apply initial database migration [cite: 93] [DONE]
 
 ## 4. User Authentication Backend (T4) [cite: 109]
     - 4.1. Finalize User database model (including password hashing field) [cite: 71]
