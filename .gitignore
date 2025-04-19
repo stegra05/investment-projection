@@ -200,3 +200,11 @@ yarn-error.log*
 pnpm-debug.log*
 *.log
 coverage/
+
+# SQLite database (if used for development)
+backend/app.db
+db.sqlite3
+db.sqlite3-journal
+
+# Flask-Migrate directory
+migrations/

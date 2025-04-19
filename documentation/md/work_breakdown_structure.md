@@ -3,17 +3,17 @@
 This WBS breaks down the high-level tasks from the project README [cite: 98] into smaller sub-tasks for more detailed planning.
 
 ## 1. Project Setup & Boilerplate (T1) [cite: 100]
-    - 1.1. Initialize Git repository locally and on GitHub [cite: 464, 466, 467]
-    - 1.2. Create project directory structure (e.g., backend/, frontend/, docs/)
-    - 1.3. Set up Python virtual environment (`venv`) for backend [cite: 160, 834]
-    - 1.4. Set up Node.js environment (npm/yarn) for frontend [cite: 91]
-    - 1.5. Create initial README, LICENSE, .gitignore files [cite: 812, 822]
+    - 1.1. Initialize Git repository locally and on GitHub [cite: 464, 466, 467] [DONE]
+    - 1.2. Create project directory structure (e.g., backend/, frontend/, docs/) [DONE]
+    - 1.3. Set up Python virtual environment (`venv`) for backend [cite: 160, 834] [DONE]
+    - 1.4. Set up Node.js environment (npm/yarn) for frontend [cite: 91] [DONE]
+    - 1.5. Create initial README, LICENSE, .gitignore files [cite: 812, 822] [DONE]
 
 ## 2. Basic Flask Backend Setup (T2) [cite: 103]
-    - 2.1. Install Flask and essential extensions (e.g., Flask-SQLAlchemy, Flask-Migrate, Flask-CORS) [cite: 92]
-    - 2.2. Create basic Flask application structure (`app.py` or package)
-    - 2.3. Configure environment variables (e.g., `FLASK_APP`, `DATABASE_URL`, `SECRET_KEY`) [cite: 83]
-    - 2.4. Set up basic API routing structure (e.g., using Blueprints)
+    - 2.1. Install Flask and essential extensions (e.g., Flask-SQLAlchemy, Flask-Migrate, Flask-CORS) [cite: 92] [DONE]
+    - 2.2. Create basic Flask application structure (`app.py` or package) [DONE]
+    - 2.3. Configure environment variables (e.g., `FLASK_APP`, `DATABASE_URL`, `SECRET_KEY`) [cite: 83] [DONE]
+    - 2.4. Set up basic API routing structure (e.g., using Blueprints) [DONE]
 
 ## 3. PostgreSQL DB Setup & Migrations (T3) [cite: 106]
     - 3.1. Install and configure local PostgreSQL server [cite: 91]
