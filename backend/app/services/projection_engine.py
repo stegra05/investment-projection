@@ -2,7 +2,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal, InvalidOperation
 
-d# Import models from app.models
+# Import models from app.models
 from app.models import Portfolio, Asset, PlannedFutureChange
 # Import db instance from the app package
 from app import db
