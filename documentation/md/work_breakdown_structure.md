@@ -42,11 +42,11 @@ This WBS breaks down the high-level tasks from the project README [cite: 98] int
     - 5.5. Create API endpoints for managing PlannedFutureChanges within a Portfolio [cite: 44] [DONE]
 
 ## 6. Backend Projection Engine (T6) [cite: 113]
-    - 6.1. Research/define core projection calculation logic (considering returns, time, future changes)
-    - 6.2. Implement projection calculation function(s) in Python
-    - 6.3. Integrate projection logic with portfolio/asset/change data fetched via SQLAlchemy
-    - 6.4. Create API endpoint (`/projections`) to trigger calculations and return results [cite: 17]
-    - 6.5. Consider performance optimization for calculations (if needed) [cite: 29]
+    - 6.1. Research/define core projection calculation logic (considering returns, time, future changes) [DONE]
+    - 6.2. Implement projection calculation function(s) in Python [DONE]
+    - 6.3. Integrate projection logic with portfolio/asset/change data fetched via SQLAlchemy [DONE]
+    - 6.4. Create API endpoint (`/projections`) to trigger calculations and return results [cite: 17] [DONE]
+    - 6.5. Consider performance optimization for calculations (if needed) [cite: 29] [DONE - Pre-grouped changes]
 
 ## 7. Basic React Frontend Setup (T7) [cite: 116]
     - 7.1. Create React application using `create-react-app` or similar tool [cite: 831]

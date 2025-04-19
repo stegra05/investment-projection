@@ -34,6 +34,10 @@ def create_app(config_class=Config):
     from app.routes.portfolios import portfolios_bp
     app.register_blueprint(portfolios_bp)
 
+    # Register the projections blueprint
+    from app.routes.projections import projections_bp
+    app.register_blueprint(projections_bp)
+
     # Example blueprint registration (add more as needed)
     # from app.routes.portfolios import bp as portfolios_bp
     # app.register_blueprint(portfolios_bp, url_prefix='/api/v1/portfolios')
