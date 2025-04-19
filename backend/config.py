@@ -8,6 +8,8 @@ load_dotenv(os.path.join(basedir, '.env'))
 class Config:
     """Base configuration class."""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
+    # Use a dedicated JWT secret key, falling back to SECRET_KEY if not set
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or os.environ.get('SECRET_KEY') or 'jwt-secret-string'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'app.db') # Default to SQLite if not set
     SQLALCHEMY_TRACK_MODIFICATIONS = False

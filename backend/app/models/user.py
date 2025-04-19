@@ -1,20 +1,27 @@
 from app import db
-from werkzeug.security import generate_password_hash, check_password_hash
+# Remove werkzeug imports and add bcrypt
+# from werkzeug.security import generate_password_hash, check_password_hash
+import bcrypt
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True, nullable=False)
     email = db.Column(db.String(120), index=True, unique=True, nullable=False)
+    # Ensure the hash length accommodates bcrypt (String(128) is sufficient, often String(60) is used)
     password_hash = db.Column(db.String(128), nullable=False)
 
     # Add relationships here later, e.g.:
     # portfolios = db.relationship('Portfolio', backref='owner', lazy='dynamic')
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        # Encode password to bytes, generate salt, and hash
+        pwhash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        # Store the hash as a decoded string
+        self.password_hash = pwhash.decode('utf-8')
 
     def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+        # Encode the plaintext password and the stored hash to bytes for comparison
+        return bcrypt.checkpw(password.encode('utf-8'), self.password_hash.encode('utf-8'))
 
     def __repr__(self):
         return f'<User {self.username}>' 
