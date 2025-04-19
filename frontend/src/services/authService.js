@@ -34,14 +34,14 @@ const register = async (userData) => {
 const login = async (credentials) => {
   console.log('Calling login API with:', credentials);
   const response = await apiClient.post(`/auth/login`, credentials);
-  // Backend must return { token: '...', user: { ... } }
-  if (response.data.token) {
-      // Token storage is handled by AuthContext, but service returns the data
-      return response.data;
-  } else {
-      // Throw an error if the expected token is not in the response
-      throw new Error('Login response did not include a token.');
+  console.log('Login API response data:', response.data);
+  // Accept either access_token or token for compatibility
+  const token = response.data.access_token || response.data.token;
+  if (token) {
+    return { token, user: response.data.user };
   }
+  // Throw an error if no token field found
+  throw new Error('Login response did not include a token.');
 };
 
 const logout = async () => {

@@ -14,8 +14,11 @@ function LoginPage() {
     setError('');
 
     try {
-      // Use the login function from AuthContext
-      await login({ username, password });
+      // Determine if input is an email or username
+      const payload = username.includes('@')
+        ? { email: username, password }
+        : { username, password };
+      await login(payload);
       navigate('/'); // Redirect to dashboard on success
     } catch (err) {
       // Error is re-thrown by context, catch it here to display message

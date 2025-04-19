@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from app import db
 from app.models.user import User
 from flask_jwt_extended import create_access_token, jwt_required
+from sqlalchemy import or_
 
 # Define the blueprint: 'auth', prefix: /api/v1/auth
 # Following API spec (prefix /api/v1/)
@@ -30,17 +31,28 @@ def register():
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    email = data.get('email')
+    # Accept either email or username as identifier
+    identifier = data.get('email') or data.get('username')
     password = data.get('password')
-
-    if not email or not password:
-        return jsonify({"message": "Missing email or password"}), 400
-
-    user = User.query.filter_by(email=email).first()
+    if not identifier or not password:
+        return jsonify({"message": "Missing username/email or password"}), 400
+    # Search for user by email or username
+    user = User.query.filter(
+        or_(User.email == identifier, User.username == identifier)
+    ).first()
 
     if user and user.check_password(password):
         access_token = create_access_token(identity=str(user.id))
-        return jsonify(access_token=access_token), 200
+        # Return token and user object for frontend consumption
+        return jsonify(
+            message="Login successful.",
+            access_token=access_token,
+            user={
+                "id": user.id,
+                "username": user.username,
+                "email": user.email
+            }
+        ), 200
     else:
         return jsonify({"message": "Invalid email or password"}), 401
 
