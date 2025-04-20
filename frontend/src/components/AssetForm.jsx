@@ -60,11 +60,11 @@ const validateField = (name, value) => {
  * @param {string|number} props.portfolioId - The ID of the portfolio this asset belongs to.
  * @param {object} [props.existingAsset=null] - If provided, the form will be pre-filled with this asset's data
  *                                             for editing. If null, the form is for creating a new asset.
- * @param {Function} props.onSaved - Callback function executed successfully after creating or updating an asset.
+ * @param {Function} props.onSaveAsset - Callback function executed successfully after creating or updating an asset.
  * @param {Function} [props.onCancel] - Optional callback function executed when the cancel button is clicked.
  * @returns {JSX.Element} The AssetForm component.
  */
-export default function AssetForm({ portfolioId, existingAsset = null, onSaved, onCancel }) {
+export default function AssetForm({ portfolioId, existingAsset = null, onSaveAsset, onCancel }) {
   const { isEditing, error: submissionError, setError: setSubmissionError } = useFormState(existingAsset); // Renamed for clarity
   const [assetType, setAssetType] = useState('');
   const [customAssetType, setCustomAssetType] = useState('');
@@ -188,7 +188,7 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaved, 
       } else {
         await assetService.createAsset(portfolioId, payload);
       }
-      onSaved(); // Call the callback to signal success
+      onSaveAsset(); // Changed onSaved() to onSaveAsset()
     } catch (err) {
       console.error('Asset save failed:', err);
       setSubmissionError(err.response?.data?.message || 'Failed to save asset. Please check the details.'); // Use setSubmissionError

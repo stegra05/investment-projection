@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 // Import specific named functions needed
-import { login as apiLogin, logout as apiLogout, refreshAccessToken } from '../services/authService'; 
+import { login as apiLogin, logout as apiLogout, register as apiRegister, refreshAccessToken } from '../services/authService'; 
 
 const AuthContext = createContext(null);
 
@@ -68,6 +68,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Add the register function
+  const register = async (userData) => {
+    setLoading(true);
+    try {
+      // Call the imported registration service function
+      const data = await apiRegister(userData);
+      // Decide what to do on successful registration. 
+      // Option 1: Automatically log the user in.
+      setToken(data.token);
+      setRefreshToken(data.refreshToken);
+      setUser(data.user); 
+      // Option 2: Require the user to log in separately after registration.
+      // (In this case, just return or maybe show a success message)
+      setLoading(false);
+      return data; // Return data for potential use in component
+    } catch (error) {
+      setLoading(false);
+      console.error('Registration failed:', error);
+      // Rethrow the error so the component can handle it (e.g., show message)
+      throw error;
+    }
+  };
+
   // Rename the imported function to avoid conflict
   const logout = async () => {
     setLoading(true);
@@ -123,6 +146,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     login, // Provide the context's login function
     logout, // Provide the context's logout function
+    register, // Provide the context's register function
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
