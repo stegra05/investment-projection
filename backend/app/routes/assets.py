@@ -1,113 +1,76 @@
-from flask import Blueprint, request, jsonify, abort
+from flask import Blueprint, jsonify, abort
 from app import db
-from app.models import Asset
-from flask_jwt_extended import jwt_required
-from decimal import InvalidOperation
-from pydantic import ValidationError
-
-# Import shared decorator and schemas (Adjust path if necessary)
-from app.utils.decorators import verify_portfolio_ownership # Assuming decorator is moved
+from app.models import Portfolio, Asset # Keep Portfolio for type hinting if needed
+from app.routes.portfolios import verify_portfolio_ownership # Import decorator
+from app.utils.decorators import handle_api_errors # Import error handler
 from app.schemas.portfolio_schemas import AssetSchema, AssetCreateSchema, AssetUpdateSchema
 
-# Define the blueprint: 'assets', prefix will be handled during registration
+# Define the blueprint: 'assets', mounting handled in app/__init__.py
+# No url_prefix here, it will be defined during registration
 assets_bp = Blueprint('assets', __name__)
 
-# --- Helper Functions ---
+# --- Helper Function (Copied from portfolios.py) ---
 
-# Note: 'portfolio' object is injected by the verify_portfolio_ownership decorator
-def get_asset_or_404(portfolio, asset_id: int):
+def get_asset_or_404(portfolio: Portfolio, asset_id: int):
      """Gets an asset by ID within a portfolio, aborting if not found."""
-     # Check eager loaded assets first (assuming portfolio object might have them)
-     if hasattr(portfolio, 'assets'):
-         for asset in portfolio.assets:
-             if asset.asset_id == asset_id:
-                 return asset
-     # Fallback query if not found in potentially eager loaded list
-     asset = Asset.query.filter_by(portfolio_id=portfolio.portfolio_id, asset_id=asset_id).first()
-     if asset is None:
+     # Check eager loaded assets first (passed via decorator)
+     for asset in portfolio.assets:
+         if asset.asset_id == asset_id:
+             return asset
+     # Fallback query if not found in eager loaded list (shouldn't happen if decorator used correctly)
+     # Note: This might require portfolio_id if portfolio object isn't fully functional here?
+     # Let's assume portfolio object is sufficient from the decorator.
+     asset_fallback = Asset.query.filter_by(portfolio_id=portfolio.portfolio_id, asset_id=asset_id).first()
+     if asset_fallback is None:
          abort(404, description=f"Asset with id {asset_id} not found within portfolio {portfolio.portfolio_id}.")
-     return asset
+     return asset_fallback
 
+# --- Asset Routes (Moved from portfolios.py, Task 5.4) ---
 
-# --- Asset Routes (Task 5.4) ---
+# Note: portfolio_id is captured from the URL prefix during blueprint registration
+# The verify_portfolio_ownership decorator injects the 'portfolio' object
 
-@assets_bp.route('/assets', methods=['POST'])
-@verify_portfolio_ownership # Decorator now handles portfolio fetching and ownership check
-def add_asset(portfolio_id, portfolio): # 'portfolio' is injected by decorator
-    """Adds a new asset to a specific portfolio."""
-    json_data = request.get_json()
-    if not json_data:
-        abort(400, description="Request body cannot be empty.")
-
-    # Validate using Pydantic (includes allocation exclusivity check)
-    try:
-        asset_data = AssetCreateSchema.parse_obj(json_data)
-    except ValidationError as e:
-        abort(400, description=e.errors())
-
-    try:
-        new_asset = Asset(
-            portfolio_id=portfolio.portfolio_id,
-            **asset_data.dict()
-        )
-        db.session.add(new_asset)
-        db.session.commit()
-        db.session.refresh(new_asset)
-        # Serialize output
-        return jsonify(AssetSchema.from_orm(new_asset).model_dump(mode='json')), 201
-    except (InvalidOperation, ValueError) as e: # Keep specific validation error handling
-         db.session.rollback()
-         abort(400, description=f"Invalid numeric value provided: {e}")
-    except Exception as e: # General DB error handling (will be refactored later)
-         db.session.rollback()
-         abort(500, description=f"Error adding asset: {e}")
-
-
-@assets_bp.route('/assets/<int:asset_id>', methods=['PUT', 'PATCH'])
+@assets_bp.route('', methods=['POST']) # Route is relative to '/portfolios/<pid>/assets'
 @verify_portfolio_ownership
-def update_asset(portfolio_id, asset_id, portfolio):
+@handle_api_errors(schema=AssetCreateSchema)
+def add_asset(portfolio_id, portfolio, validated_data): # portfolio injected by verify_..., validated_data by handle_...
+    """Adds a new asset to a specific portfolio."""
+    new_asset = Asset(
+        portfolio_id=portfolio.portfolio_id, # Use ID from the verified portfolio object
+        **validated_data.dict()
+    )
+    db.session.add(new_asset)
+    # Commit handled by decorator
+    db.session.refresh(new_asset)
+    # Serialize output
+    return jsonify(AssetSchema.from_orm(new_asset).model_dump(mode='json')), 201
+
+@assets_bp.route('/<int:asset_id>', methods=['PUT', 'PATCH']) # Route is relative to '/portfolios/<pid>/assets'
+@verify_portfolio_ownership
+@handle_api_errors(schema=AssetUpdateSchema)
+def update_asset(portfolio_id, asset_id, portfolio, validated_data):
     """Updates an existing asset within a portfolio."""
     asset = get_asset_or_404(portfolio, asset_id)
-    json_data = request.get_json()
-    if not json_data:
-        abort(400, description="Request body cannot be empty for update.")
+    validated_dict = validated_data.dict(exclude_unset=True)
 
-    # Validate input
-    try:
-        update_data = AssetUpdateSchema.parse_obj(json_data)
-    except ValidationError as e:
-        abort(400, description=e.errors())
+    # Update fields
+    for key, value in validated_dict.items():
+        setattr(asset, key, value)
 
-    validated_dict = update_data.dict(exclude_unset=True)
+    # Commit handled by decorator
+    db.session.refresh(asset)
+    # Serialize output
+    return jsonify(AssetSchema.from_orm(asset).model_dump(mode='json')), 200
 
-    try:
-        # Update fields
-        for key, value in validated_dict.items():
-            setattr(asset, key, value)
-
-        # Note: SQLAlchemy model-level validation (@validates) should handle
-        # exclusivity logic during setattr if implemented correctly.
-
-        db.session.commit()
-        db.session.refresh(asset)
-        # Serialize output
-        return jsonify(AssetSchema.from_orm(asset).model_dump(mode='json')), 200
-    except (InvalidOperation, ValueError) as e:
-         db.session.rollback()
-         abort(400, description=f"Invalid numeric value provided: {e}")
-    except Exception as e:
-         db.session.rollback()
-         abort(500, description=f"Error updating asset: {e}")
-
-
-@assets_bp.route('/assets/<int:asset_id>', methods=['DELETE'])
+@assets_bp.route('/<int:asset_id>', methods=['DELETE'])
 @verify_portfolio_ownership
+# No handle_api_errors needed for DELETE unless we add payload validation later
 def delete_asset(portfolio_id, asset_id, portfolio):
     """Deletes an asset from a portfolio."""
     asset = get_asset_or_404(portfolio, asset_id)
     try:
         db.session.delete(asset)
-        db.session.commit()
+        db.session.commit() # Need manual commit/rollback for non-decorated routes
         return jsonify({"message": "Asset deleted successfully"}), 200
     except Exception as e:
          db.session.rollback()
