@@ -241,21 +241,8 @@ def update_asset(portfolio_id, asset_id, portfolio):
 
     try:
         # Update fields
-        allocation_updated = False
         for key, value in validated_dict.items():
             setattr(asset, key, value)
-            # If one allocation type is set, unset the other
-            if key == 'allocation_percentage' and value is not None:
-                asset.allocation_value = None
-                allocation_updated = True
-            elif key == 'allocation_value' and value is not None:
-                asset.allocation_percentage = None
-                allocation_updated = True
-
-        # Final validation after updates
-        if asset.allocation_percentage is None and asset.allocation_value is None:
-             # This might happen if user PATCHes both to null, which might be invalid
-             abort(400, description="Asset must have either allocation_percentage or allocation_value set.")
 
         db.session.commit()
         db.session.refresh(asset)

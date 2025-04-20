@@ -3,6 +3,8 @@ from typing import List, Optional
 from datetime import date
 from decimal import Decimal
 
+from app.enums import AssetType, ChangeType # Import Enums
+
 # --- Base Schemas (for common fields/config) ---
 class OrmBaseModel(BaseModel):
     class Config:
@@ -12,41 +14,34 @@ class OrmBaseModel(BaseModel):
 
 # --- Planned Change Schemas ---
 class PlannedChangeBase(OrmBaseModel):
-    change_type: str = Field(..., example="Contribution")
+    change_type: ChangeType = Field(..., example=ChangeType.CONTRIBUTION)
     change_date: date = Field(..., example="2024-08-15")
     amount: Optional[condecimal(max_digits=15, decimal_places=2)] = Field(None, example="500.00")
     description: Optional[str] = Field(None, example="Monthly savings addition")
 
 class PlannedChangeCreateSchema(PlannedChangeBase):
-    # Add specific validation for creation if needed, e.g., based on change_type
     @validator('amount')
     def amount_required_for_contribution_withdrawal(cls, v, values):
         change_type = values.get('change_type')
-        if change_type in ['Contribution', 'Withdrawal'] and v is None:
-            raise ValueError(f"'{change_type}' requires an 'amount'.")
-        if change_type == 'Reallocation' and v is not None:
-            raise ValueError("'Reallocation' change type should not include an 'amount'.")
+        if change_type in [ChangeType.CONTRIBUTION, ChangeType.WITHDRAWAL] and v is None:
+            raise ValueError(f"'{change_type.value}' requires an 'amount'.")
+        if change_type == ChangeType.REALLOCATION and v is not None:
+            raise ValueError(f"'{ChangeType.REALLOCATION.value}' change type should not include an 'amount'.")
         return v
 
 class PlannedChangeUpdateSchema(PlannedChangeBase):
-    # Make fields optional for PATCH updates
-    change_type: Optional[str] = Field(None, example="Contribution")
+    change_type: Optional[ChangeType] = Field(None, example=ChangeType.CONTRIBUTION)
     change_date: Optional[date] = Field(None, example="2024-08-15")
-    # Amount can be explicitly set to None
     amount: Optional[condecimal(max_digits=15, decimal_places=2)] = Field(None, example="500.00")
     description: Optional[str] = Field(None, example="Monthly savings addition")
 
-    # Re-validate consistency on update
     @validator('amount')
     def check_amount_consistency(cls, v, values):
         change_type = values.get('change_type')
-        if change_type in ['Contribution', 'Withdrawal'] and v is None:
-            # This check might depend on whether change_type is also being updated.
-            # For simplicity, assume if amount is provided, it must be valid for the *intended* type.
-            # More complex validation might be needed depending on PATCH semantics.
-            pass # Allow setting to None if change_type isn't specified or changing to Reallocation?
-        elif change_type == 'Reallocation' and v is not None:
-            raise ValueError("'Reallocation' change type should not include an 'amount'.")
+        if change_type in [ChangeType.CONTRIBUTION, ChangeType.WITHDRAWAL] and v is None:
+            pass
+        elif change_type == ChangeType.REALLOCATION and v is not None:
+            raise ValueError(f"'{ChangeType.REALLOCATION.value}' change type should not include an 'amount'.")
         return v
 
 class PlannedChangeSchema(PlannedChangeBase):
@@ -55,7 +50,7 @@ class PlannedChangeSchema(PlannedChangeBase):
 
 # --- Asset Schemas ---
 class AssetBase(OrmBaseModel):
-    asset_type: str = Field(..., example="Stock")
+    asset_type: AssetType = Field(..., example=AssetType.STOCK)
     name_or_ticker: Optional[str] = Field(None, example="AAPL")
     allocation_percentage: Optional[condecimal(max_digits=5, decimal_places=2)] = Field(None, ge=0, le=100, example="60.50")
     allocation_value: Optional[condecimal(max_digits=15, decimal_places=2)] = Field(None, ge=0, example="10000.00")
@@ -71,8 +66,7 @@ class AssetCreateSchema(AssetBase):
         return v
 
 class AssetUpdateSchema(AssetBase):
-    # Make fields optional for PATCH updates
-    asset_type: Optional[str] = Field(None, example="Stock")
+    asset_type: Optional[AssetType] = Field(None, example=AssetType.STOCK)
     name_or_ticker: Optional[str] = Field(None, example="AAPL")
     allocation_percentage: Optional[condecimal(max_digits=5, decimal_places=2)] = Field(None, ge=0, le=100, example="60.50")
     allocation_value: Optional[condecimal(max_digits=15, decimal_places=2)] = Field(None, ge=0, example="10000.00")

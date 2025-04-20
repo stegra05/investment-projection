@@ -1,390 +1,231 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { getPortfolio } from '../services/portfolioService';
-import assetService from '../services/assetService';
-import axios from 'axios';
-import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { PlusIcon } from '@heroicons/react/24/outline';
+
+// Import custom hooks
+import { useAssetManagement } from '../hooks/useAssetManagement';
+import { useChangeManagement } from '../hooks/useChangeManagement';
+
+// Import extracted components
+import AssetForm from '../components/AssetForm';
+import AssetList from '../components/AssetList';
+import ChangeForm from '../components/ChangeForm';
+import ChangeList from '../components/ChangeList';
 import ProjectionChart from '../components/ProjectionChart';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+// Simplified styles for the page layout
+const styles = {
+  main: {
+    margin: 'var(--space-xl) auto',
+    padding: 'var(--space-l)',
+    maxWidth: '800px', // Keep content constrained
+    // Ensure background color is set for the page content area if needed
+    // background: 'var(--color-app-background-light)', // Example
+    color: 'var(--color-text-primary-light)', // Ensure text color is set
+  },
+  pageTitle: {
+    fontSize: '2rem', // Use H1 size from typography rules
+    fontWeight: 700,
+    marginBottom: 'var(--space-xs)', // Adjust spacing
+    color: 'var(--color-text-primary-light)',
+  },
+  portfolioDescription: {
+    marginBottom: 'var(--space-xl)', // Larger space after description
+    fontSize: '1rem', // Body text size
+    color: 'var(--color-text-secondary-light)', // Use secondary color
+  },
+  section: {
+    marginBottom: 'var(--space-xxl)', // Consistent large spacing between sections
+  },
+  sectionHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 'var(--space-m)', // Space between header and content/form
+    paddingBottom: 'var(--space-s)', // Space below header text/button
+    borderBottom: '1px solid var(--color-border-light)', // Optional visual separator
+  },
+  sectionTitle: {
+    fontSize: '1.5rem', // H2 size
+    fontWeight: 600,
+    margin: 0, // Remove default margins
+    color: 'var(--color-text-primary-light)',
+  },
+  addButton: {
+    // Apply button styles based on DLS rules (consider creating a Button component)
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 'var(--space-xs)',
+    background: 'transparent',
+    border: '1px solid var(--color-primary)', // Secondary button style
+    color: 'var(--color-primary)',
+    padding: 'var(--space-s) var(--space-m)', // Use standard button padding
+    borderRadius: '6px', // Use standard border radius
+    cursor: 'pointer',
+    fontSize: '0.875rem', // Slightly smaller for add buttons? Or 1rem.
+    fontWeight: 500,
+    transition: 'background-color 0.2s ease, color 0.2s ease',
+    // Add hover/focus states from Button DLS rule
+  },
+  addButtonIcon: {
+    width: '1rem',
+    height: '1rem',
+  },
+  loadingText: {
+      padding: 'var(--space-xl)',
+      textAlign: 'center',
+      fontSize: '1.25rem',
+      color: 'var(--color-text-secondary-light)',
+  },
+  errorText: { // Style for general page errors or hook errors
+    padding: 'var(--space-l)',
+    color: 'var(--color-error-light)',
+    background: 'rgba(222, 53, 11, 0.1)',
+    border: '1px solid var(--color-error-light)',
+    borderRadius: '4px',
+    textAlign: 'center',
+    marginBottom: 'var(--space-l)',
+  },
+};
 
-// Form to add or edit an asset
-function AssetForm({ portfolioId, existingAsset, onSaved, onCancel }) {
-  const isEditing = Boolean(existingAsset);
-  const [assetType, setAssetType] = useState('');
-  const [customAssetType, setCustomAssetType] = useState('');
-  const [ticker, setTicker] = useState('');
-  const [allocationPercentage, setAllocationPercentage] = useState(0);
-  const [expectedReturn, setExpectedReturn] = useState(0);
-  const [loading, setLoading] = useState(isEditing);
-  const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (isEditing) {
-      if (['Stock','Bond'].includes(existingAsset.asset_type)) {
-        setAssetType(existingAsset.asset_type);
-      } else {
-        setAssetType('Other');
-        setCustomAssetType(existingAsset.asset_type);
-      }
-      setTicker(existingAsset.name_or_ticker);
-      setAllocationPercentage(existingAsset.allocation_percentage ?? 0);
-      setExpectedReturn(existingAsset.manual_expected_return ?? 0);
-      setLoading(false);
-    }
-  }, [existingAsset, isEditing]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    try {
-      const finalAssetType = assetType === 'Other' ? customAssetType : assetType;
-      const payload = {
-        asset_type: finalAssetType,
-        name_or_ticker: ticker,
-        allocation_percentage: parseFloat(allocationPercentage),
-        manual_expected_return: parseFloat(expectedReturn),
-      };
-      if (isEditing) {
-        await assetService.updateAsset(portfolioId, existingAsset.asset_id, payload);
-      } else {
-        await assetService.createAsset(portfolioId, payload);
-      }
-      onSaved();
-    } catch (err) {
-      console.error('Asset save failed:', err);
-      setError(err.response?.data?.message || 'Asset save failed');
-    }
-  };
-
-  if (loading) {
-    return <p>Loading asset...</p>;
-  }
-
-  return (
-    <form onSubmit={handleSubmit} style={{ marginBottom: 'var(--space-l)', border: '1px solid var(--color-border)', padding: 'var(--space-m)', borderRadius: '4px' }}>
-      {error && <p style={{ color: 'var(--color-error)', marginBottom: 'var(--space-m)' }}>{error}</p>}
-      <div style={{ marginBottom: 'var(--space-m)' }}>
-        <label style={{ display: 'block', marginBottom: 'var(--space-xs)', color: 'var(--color-text-secondary)' }}>Asset Type</label>
-        <select
-          value={assetType}
-          onChange={(e) => setAssetType(e.target.value)}
-          required
-          style={{ width: '100%', padding: 'var(--space-s)', border: '1px solid var(--color-border)', borderRadius: '4px' }}
-        >
-          <option value="">-- Select Asset Type --</option>
-          <option value="Stock">Stock</option>
-          <option value="Bond">Bond</option>
-          <option value="Other">Other (custom)</option>
-        </select>
-        {assetType === 'Other' && (
-          <input
-            type="text"
-            placeholder="Enter custom asset type"
-            value={customAssetType}
-            onChange={(e) => setCustomAssetType(e.target.value)}
-            required
-            style={{ width: '100%', padding: 'var(--space-s)', marginTop: 'var(--space-xs)', border: '1px solid var(--color-border)', borderRadius: '4px' }}
-          />
-        )}
-      </div>
-      <div style={{ marginBottom: 'var(--space-m)' }}>
-        <label style={{ display: 'block', marginBottom: 'var(--space-xs)', color: 'var(--color-text-secondary)' }}>Name/Ticker</label>
-        <input
-          type="text"
-          value={ticker}
-          onChange={(e) => setTicker(e.target.value)}
-          required
-          style={{ width: '100%', padding: 'var(--space-s)', border: '1px solid var(--color-border)', borderRadius: '4px' }}
-        />
-      </div>
-      <div style={{ marginBottom: 'var(--space-m)' }}>
-        <label style={{ display: 'block', marginBottom: 'var(--space-xs)', color: 'var(--color-text-secondary)' }}>Allocation (%)</label>
-        <input
-          type="range"
-          min="0" max="100" step="1"
-          value={allocationPercentage}
-          onChange={(e) => setAllocationPercentage(e.target.value)}
-          style={{ width: '100%' }}
-        />
-        <span style={{ marginLeft: 'var(--space-xs)' }}>{allocationPercentage}%</span>
-      </div>
-      <div style={{ marginBottom: 'var(--space-m)' }}>
-        <label style={{ display: 'block', marginBottom: 'var(--space-xs)', color: 'var(--color-text-secondary)' }}>Expected Return (%)</label>
-        <input
-          type="range"
-          min="0" max="20" step="0.1"
-          value={expectedReturn}
-          onChange={(e) => setExpectedReturn(e.target.value)}
-          style={{ width: '100%' }}
-        />
-        <span style={{ marginLeft: 'var(--space-xs)' }}>{expectedReturn}%</span>
-      </div>
-      <div style={{ display: 'flex', gap: 'var(--space-s)' }}>
-        <button
-          type="submit"
-          style={{ display: 'flex', alignItems: 'center', backgroundColor: 'var(--color-primary)', color: 'var(--color-text-on-primary)', border: 'none', padding: 'var(--space-s)', borderRadius: '4px' }}
-        >
-          <PlusIcon style={{ width: '1rem', height: '1rem', marginRight: 'var(--space-xs)' }} />
-          {isEditing ? 'Update Asset' : 'Add Asset'}
-        </button>
-        {onCancel && (
-          <button type="button" onClick={onCancel} style={{ background: 'transparent', border: 'none', color: 'var(--color-secondary)' }}>
-            Cancel
-          </button>
-        )}
-      </div>
-    </form>
-  );
-}
-
-// Form to add or edit a planned change
-function ChangeForm({ portfolioId, existingChange, onSaved, onCancel }) {
-  const isEditing = Boolean(existingChange);
-  const [changeType, setChangeType] = useState('');
-  const [changeDate, setChangeDate] = useState('');
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
-  const [loading, setLoading] = useState(isEditing);
-  const [error, setError] = useState('');
-  const token = localStorage.getItem('token');
-
-  useEffect(() => {
-    if (isEditing) {
-      setChangeType(existingChange.change_type);
-      setChangeDate(existingChange.change_date);
-      setAmount(existingChange.amount ?? '');
-      setDescription(existingChange.description ?? '');
-      setLoading(false);
-    }
-  }, [existingChange, isEditing]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    try {
-      const payload = {
-        change_type: changeType,
-        change_date: changeDate,
-        amount: parseFloat(amount),
-        description,
-      };
-      const config = { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } };
-      if (isEditing) {
-        await axios.put(`${API_URL}/portfolios/${portfolioId}/changes/${existingChange.change_id}`, payload, config);
-      } else {
-        await axios.post(`${API_URL}/portfolios/${portfolioId}/changes`, payload, config);
-      }
-      onSaved();
-    } catch (err) {
-      console.error('Change save failed:', err);
-      setError(err.response?.data?.message || 'Change save failed');
-    }
-  };
-
-  if (loading) {
-    return <p>Loading change...</p>;
-  }
-
-  return (
-    <form onSubmit={handleSubmit} style={{ marginBottom: 'var(--space-l)', border: '1px solid var(--color-border)', padding: 'var(--space-m)', borderRadius: '4px' }}>
-      {error && <p style={{ color: 'var(--color-error)', marginBottom: 'var(--space-m)' }}>{error}</p>}
-      <div style={{ marginBottom: 'var(--space-m)' }}>
-        <label style={{ display: 'block', marginBottom: 'var(--space-xs)', color: 'var(--color-text-secondary)' }}>Change Type</label>
-        <input
-          type="text"
-          value={changeType}
-          onChange={(e) => setChangeType(e.target.value)}
-          required
-          style={{ width: '100%', padding: 'var(--space-s)', border: '1px solid var(--color-border)', borderRadius: '4px' }}
-        />
-      </div>
-      <div style={{ marginBottom: 'var(--space-m)' }}>
-        <label style={{ display: 'block', marginBottom: 'var(--space-xs)', color: 'var(--color-text-secondary)' }}>Date</label>
-        <input
-          type="date"
-          value={changeDate}
-          onChange={(e) => setChangeDate(e.target.value)}
-          required
-          style={{ width: '100%', padding: 'var(--space-s)', border: '1px solid var(--color-border)', borderRadius: '4px' }}
-        />
-      </div>
-      <div style={{ marginBottom: 'var(--space-m)' }}>
-        <label style={{ display: 'block', marginBottom: 'var(--space-xs)', color: 'var(--color-text-secondary)' }}>Amount</label>
-        <input
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          required
-          style={{ width: '100%', padding: 'var(--space-s)', border: '1px solid var(--color-border)', borderRadius: '4px' }}
-        />
-      </div>
-      <div style={{ marginBottom: 'var(--space-m)' }}>
-        <label style={{ display: 'block', marginBottom: 'var(--space-xs)', color: 'var(--color-text-secondary)' }}>Description</label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={2}
-          style={{ width: '100%', padding: 'var(--space-s)', border: '1px solid var(--color-border)', borderRadius: '4px' }}
-        />
-      </div>
-      <div style={{ display: 'flex', gap: 'var(--space-s)' }}>
-        <button
-          type="submit"
-          style={{ display: 'inline-flex', alignItems: 'center', backgroundColor: 'var(--color-primary)', color: 'var(--color-text-on-primary)', border: 'none', padding: 'var(--space-s)', borderRadius: '4px' }}
-        >
-          <PlusIcon style={{ width: '1rem', height: '1rem', marginRight: 'var(--space-xs)' }} />
-          {isEditing ? 'Update Change' : 'Add Change'}
-        </button>
-        {onCancel && (
-          <button type="button" onClick={onCancel} style={{ background: 'transparent', border: 'none', color: 'var(--color-secondary)' }}>
-            Cancel
-          </button>
-        )}
-      </div>
-    </form>
-  );
-}
-
-// Main detail page
+// Main detail page component
 export default function PortfolioDetailPage() {
-  const { id } = useParams();
+  const { id: portfolioId } = useParams(); // Rename id to portfolioId for clarity
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showAssetForm, setShowAssetForm] = useState(false);
-  const [assetToEdit, setAssetToEdit] = useState(null);
-  const [showChangeForm, setShowChangeForm] = useState(false);
-  const [changeToEdit, setChangeToEdit] = useState(null);
-  const token = localStorage.getItem('token');
+  const [pageError, setPageError] = useState(null); // Error specific to fetching portfolio
 
-  const fetchPortfolio = async () => {
+  // Callback to refresh portfolio data
+  const fetchPortfolio = useCallback(async () => {
+    setLoading(true); // Set loading true when refetching
+    setPageError(null); // Clear previous page errors
     try {
-      const data = await getPortfolio(id);
+      const data = await getPortfolio(portfolioId);
       setPortfolio(data);
     } catch (err) {
       console.error('Failed to load portfolio:', err);
+      setPageError(err.response?.data?.message || 'Failed to load portfolio details.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [portfolioId]); // Dependency is portfolioId
 
+  // Fetch initial data
   useEffect(() => {
     fetchPortfolio();
-  }, [id]);
+  }, [fetchPortfolio]); // fetchPortfolio is memoized by useCallback
 
-  const handleAssetSaved = () => {
-    setShowAssetForm(false);
-    setAssetToEdit(null);
-    fetchPortfolio();
-  };
+  // Use custom hooks for managing assets and changes
+  // Pass fetchPortfolio as the success callback to refresh data
+  const {
+    showAssetForm,
+    assetToEdit,
+    handleAddAssetClick,
+    handleEditAssetClick,
+    handleCancelAssetForm,
+    handleSaveAsset,
+    handleDeleteAsset,
+    error: assetError, // Get error state from hook if needed
+  } = useAssetManagement(portfolioId, fetchPortfolio);
 
-  const handleChangeSaved = () => {
-    setShowChangeForm(false);
-    setChangeToEdit(null);
-    fetchPortfolio();
-  };
+  const {
+    showChangeForm,
+    changeToEdit,
+    handleAddChangeClick,
+    handleEditChangeClick,
+    handleCancelChangeForm,
+    handleSaveChange,
+    handleDeleteChange,
+    error: changeError, // Get error state from hook
+  } = useChangeManagement(portfolioId, fetchPortfolio);
 
-  const handleDeleteAsset = async (asset) => {
-    if (window.confirm('Remove this asset?')) {
-      try {
-        await assetService.deleteAsset(id, asset.asset_id);
-        fetchPortfolio();
-      } catch (err) {
-        console.error('Delete asset failed:', err);
-      }
-    }
-  };
 
-  const handleDeleteChange = async (change) => {
-    if (window.confirm('Remove this planned change?')) {
-      try {
-        await axios.delete(`${API_URL}/portfolios/${id}/changes/${change.change_id}`, { headers: { Authorization: `Bearer ${token}` } });
-        fetchPortfolio();
-      } catch (err) {
-        console.error('Delete change failed:', err);
-      }
-    }
-  };
-
-  if (loading) {
-    return <p style={{ padding: 'var(--space-l)' }}>Loading portfolio...</p>;
+  // Loading state
+  if (loading && !portfolio) { // Show loading only on initial load or full refresh
+    return <p style={styles.loadingText}>Loading portfolio...</p>;
   }
 
+  // Error state for initial load
+  if (pageError) {
+    return <p style={styles.errorText}>{pageError}</p>;
+  }
+
+  // Portfolio not found state
   if (!portfolio) {
-    return <p style={{ padding: 'var(--space-l)' }}>Portfolio not found.</p>;
+    return <p style={styles.errorText}>Portfolio not found.</p>;
   }
+
+  // Combine hook errors for potential display (optional)
+  const currentError = assetError || changeError; // Display first error encountered
 
   return (
-    <main style={{ margin: 'var(--space-xl) auto', padding: 'var(--space-l)', maxWidth: '800px' }}>
-      <h1 style={{ fontSize: '2rem', fontWeight: 700 }}>{portfolio.name}</h1>
-      {portfolio.description && <p style={{ marginBottom: 'var(--space-l)' }}>{portfolio.description}</p>}
+    <main style={styles.main}>
+      <h1 style={styles.pageTitle}>{portfolio.name}</h1>
+      {portfolio.description && (
+        <p style={styles.portfolioDescription}>{portfolio.description}</p>
+      )}
 
-      <section style={{ marginBottom: 'var(--space-xxl)' }}>
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Assets</h2>
-          <button onClick={() => { setShowAssetForm(true); setAssetToEdit(null); }} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', background: 'transparent', border: 'none', color: 'var(--color-primary)' }}>
-            <PlusIcon style={{ width: '1rem', height: '1rem' }} /> Add Asset
-          </button>
+      {/* Display any errors from hooks (optional) */}
+      {currentError && <p style={styles.errorText}>{currentError}</p>}
+
+      {/* Assets Section */}
+      <section style={styles.section}>
+        <header style={styles.sectionHeader}>
+          <h2 style={styles.sectionTitle}>Assets</h2>
+          {!showAssetForm && ( // Only show Add button if form isn't visible
+            <button onClick={handleAddAssetClick} style={styles.addButton}>
+              <PlusIcon style={styles.addButtonIcon} /> Add Asset
+            </button>
+          )}
         </header>
-        {showAssetForm && <AssetForm portfolioId={id} existingAsset={assetToEdit} onSaved={handleAssetSaved} onCancel={() => setShowAssetForm(false)} />}
-        {portfolio.assets.length === 0 ? (
-          <p>No assets added.</p>
-        ) : (
-          <ul style={{ listStyle: 'none', padding: 0, marginTop: 'var(--space-m)' }}>
-            {portfolio.assets.map((asset) => (
-              <li key={asset.asset_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-s)', border: '1px solid var(--color-border)', borderRadius: '4px', marginBottom: 'var(--space-s)' }}>
-                <div>
-                  <strong>{asset.name_or_ticker}</strong> ({asset.asset_type}) — {asset.allocation_percentage}%<br />
-                  {asset.manual_expected_return != null && <span>Return: {asset.manual_expected_return}%</span>}
-                </div>
-                <div style={{ display: 'flex', gap: 'var(--space-s)' }}>
-                  <button onClick={() => { setAssetToEdit(asset); setShowAssetForm(true); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
-                    <PencilIcon style={{ width: '1rem', height: '1rem', color: 'var(--color-text-secondary)' }} />
-                  </button>
-                  <button onClick={() => handleDeleteAsset(asset)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
-                    <TrashIcon style={{ width: '1rem', height: '1rem', color: 'var(--color-error)' }} />
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+        {showAssetForm && (
+          <AssetForm
+            portfolioId={portfolioId}
+            existingAsset={assetToEdit}
+            onSaved={handleSaveAsset} // The hook's save handler now acts as the success callback
+            onCancel={handleCancelAssetForm}
+          />
         )}
+        <AssetList
+          assets={portfolio.assets}
+          onEdit={handleEditAssetClick}
+          onDelete={handleDeleteAsset}
+        />
       </section>
 
-      <section>
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Planned Changes</h2>
-          <button onClick={() => { setShowChangeForm(true); setChangeToEdit(null); }} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', background: 'transparent', border: 'none', color: 'var(--color-primary)' }}>
-            <PlusIcon style={{ width: '1rem', height: '1rem' }} /> Add Change
-          </button>
+      {/* Planned Changes Section */}
+      <section style={styles.section}>
+        <header style={styles.sectionHeader}>
+          <h2 style={styles.sectionTitle}>Planned Changes</h2>
+           {!showChangeForm && ( // Only show Add button if form isn't visible
+              <button onClick={handleAddChangeClick} style={styles.addButton}>
+                <PlusIcon style={styles.addButtonIcon} /> Add Change
+              </button>
+           )}
         </header>
-        {showChangeForm && <ChangeForm portfolioId={id} existingChange={changeToEdit} onSaved={handleChangeSaved} onCancel={() => setShowChangeForm(false)} />}
-        {portfolio.planned_changes.length === 0 ? (
-          <p>No planned changes.</p>
-        ) : (
-          <ul style={{ listStyle: 'none', padding: 0, marginTop: 'var(--space-m)' }}>
-            {portfolio.planned_changes.map((change) => (
-              <li key={change.change_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-s)', border: '1px solid var(--color-border)', borderRadius: '4px', marginBottom: 'var(--space-s)' }}>
-                <div>
-                  <strong>{change.change_type}</strong> on {change.change_date} — Amount: {change.amount}<br />
-                  {change.description && <span>{change.description}</span>}
-                </div>
-                <div style={{ display: 'flex', gap: 'var(--space-s)' }}>
-                  <button onClick={() => { setChangeToEdit(change); setShowChangeForm(true); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
-                    <PencilIcon style={{ width: '1rem', height: '1rem', color: 'var(--color-text-secondary)' }} />
-                  </button>
-                  <button onClick={() => handleDeleteChange(change)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
-                    <TrashIcon style={{ width: '1rem', height: '1rem', color: 'var(--color-error)' }} />
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+        {showChangeForm && (
+          <ChangeForm
+            portfolioId={portfolioId}
+            existingChange={changeToEdit}
+            onSaved={handleSaveChange} // Hook's save handler
+            onCancel={handleCancelChangeForm}
+          />
         )}
+        <ChangeList
+          changes={portfolio.planned_changes}
+          onEdit={handleEditChangeClick}
+          onDelete={handleDeleteChange}
+        />
       </section>
-      <section style={{ marginTop: 'var(--space-xxl)' }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Projection</h2>
-        <ProjectionChart portfolioId={id} />
+
+      {/* Projection Section */}
+      <section style={styles.section}>
+        <header style={styles.sectionHeader}>
+             <h2 style={styles.sectionTitle}>Projection</h2>
+        </header>
+        <ProjectionChart portfolioId={portfolioId} />
       </section>
     </main>
   );
