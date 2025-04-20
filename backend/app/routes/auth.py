@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from app import db
 from app.models.user import User
-from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt_identity, jwt_required
+from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt_identity, jwt_required, set_refresh_cookies
 from sqlalchemy import or_
 # Import the limiter instance from the app factory
 from app import limiter
@@ -73,17 +73,21 @@ def login():
     if user and user.check_password(password):
         access_token = create_access_token(identity=str(user.id))
         refresh_token = create_refresh_token(identity=str(user.id))
-        # Return both tokens and user info
-        return jsonify(
-            message="Login successful.",
-            access_token=access_token,
-            refresh_token=refresh_token,
-            user={
+        # Prepare the JSON response without the refresh token
+        response_body = {
+            "message": "Login successful.",
+            "access_token": access_token,
+            "user": {
                 "id": user.id,
                 "username": user.username,
                 "email": user.email
             }
-        ), 200
+        }
+        # Create the response object
+        response = jsonify(response_body)
+        # Set the refresh token in an HttpOnly cookie
+        set_refresh_cookies(response, refresh_token)
+        return response, 200 # Return the response object with the cookie
     else:
         return jsonify({"message": "Invalid email or password"}), 401
 
@@ -92,12 +96,13 @@ def login():
 def logout():
     # JWT logout is primarily handled client-side by discarding the token.
     # Server-side blocklisting can be added for more robust security if needed.
+    # TODO: Add logic to unset refresh cookie upon logout using unset_jwt_cookies
     return jsonify({"message": "Logout successful (token needs to be discarded client-side)"}), 200
 
 @auth_bp.route('/refresh', methods=['POST'])
-@jwt_required(refresh=True)
+@jwt_required(refresh=True) # This decorator now automatically checks the cookie and handles CSRF
 def refresh():
-    """Refresh access token using a valid refresh token."""
+    """Refresh access token using a valid refresh token (sent via HttpOnly cookie)."""
     current_user_id = get_jwt_identity()
     new_access_token = create_access_token(identity=current_user_id)
     return jsonify(access_token=new_access_token), 200

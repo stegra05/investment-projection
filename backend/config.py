@@ -14,6 +14,26 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
     # Use a dedicated JWT secret key, falling back to SECRET_KEY if not set
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or os.environ.get('SECRET_KEY') or 'jwt-secret-string'
+
+    # --- JWT Cookie Configuration ---
+    # Define where to look for tokens (header for access, cookie for refresh)
+    JWT_TOKEN_LOCATION = ["headers", "cookies"]
+    # Enable CSRF protection for cookie-based tokens (primarily refresh)
+    JWT_COOKIE_CSRF_PROTECT = True
+    # Set cookies to be HttpOnly
+    JWT_COOKIE_HTTPONLY = True
+    # Set cookies to be Secure (only sent over HTTPS) - IMPORTANT FOR PRODUCTION
+    # Set to False ONLY for local HTTP development if necessary
+    JWT_COOKIE_SECURE = os.environ.get('FLASK_ENV') == 'production' # True in production, False otherwise
+    # Set SameSite policy for cookies (Lax is a good default)
+    JWT_COOKIE_SAMESITE = 'Lax'
+    # Define the path for the refresh token cookie
+    JWT_REFRESH_COOKIE_PATH = '/api/v1/auth/refresh'
+    # Set path for CSRF cookie (optional, defaults are usually fine)
+    # JWT_ACCESS_CSRF_COOKIE_PATH = '/api/'
+    # JWT_REFRESH_CSRF_COOKIE_PATH = '/api/v1/auth/refresh'
+    # Note: Access tokens are intended to be sent via headers, not cookies here.
+
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'app.db') # Default to SQLite if not set
     SQLALCHEMY_TRACK_MODIFICATIONS = False
