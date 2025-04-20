@@ -1,6 +1,18 @@
 import React from 'react';
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 
+/**
+ * Represents a single planned future change item in the ChangeList.
+ *
+ * Displays the change's details (type, date, amount, description) and provides
+ * buttons for editing and deleting the change.
+ *
+ * @param {object} props - The component props.
+ * @param {object} props.change - The planned change object to display.
+ * @param {Function} props.onEdit - Callback function triggered when the edit button is clicked.
+ * @param {Function} props.onDelete - Callback function triggered when the delete button is clicked.
+ * @returns {JSX.Element} The ChangeListItem component.
+ */
 function ChangeListItem({ change, onEdit, onDelete }) {
   // Format date nicely (consider a date formatting library like date-fns later)
   const formatDate = (dateString) => {
@@ -42,6 +54,18 @@ function ChangeListItem({ change, onEdit, onDelete }) {
   );
 }
 
+/**
+ * Displays a list of planned future changes for a portfolio.
+ *
+ * Renders a ChangeListItem for each change in the provided array.
+ * Shows a message if the list is empty.
+ *
+ * @param {object} props - The component props.
+ * @param {Array<object>} props.changes - An array of planned change objects to display.
+ * @param {Function} props.onEdit - Callback function passed down to ChangeListItem for editing.
+ * @param {Function} props.onDelete - Callback function passed down to ChangeListItem for deleting.
+ * @returns {JSX.Element} The ChangeList component.
+ */
 export default function ChangeList({ changes, onEdit, onDelete }) {
   if (!changes || changes.length === 0) {
     return <p style={styles.noItemsText}>No planned changes have been added yet.</p>;

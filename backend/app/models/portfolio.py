@@ -18,6 +18,16 @@ class Portfolio(db.Model):
     planned_changes = db.relationship('PlannedFutureChange', back_populates='portfolio', cascade='all, delete-orphan')
 
     def to_dict(self, include_details=False):
+        """Serialize the Portfolio object to a dictionary.
+
+        Args:
+            include_details (bool): If True, includes related assets and
+                                  planned changes in the dictionary.
+                                  Defaults to False.
+
+        Returns:
+            dict: A dictionary representation of the portfolio.
+        """
         data = {
             'portfolio_id': self.portfolio_id,
             'user_id': self.user_id,

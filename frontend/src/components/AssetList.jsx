@@ -1,6 +1,18 @@
 import React from 'react';
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 
+/**
+ * Represents a single asset item in the AssetList.
+ *
+ * Displays the asset's details (name, type, allocation, return) and provides
+ * buttons for editing and deleting the asset.
+ *
+ * @param {object} props - The component props.
+ * @param {object} props.asset - The asset object to display.
+ * @param {Function} props.onEdit - Callback function triggered when the edit button is clicked.
+ * @param {Function} props.onDelete - Callback function triggered when the delete button is clicked.
+ * @returns {JSX.Element} The AssetListItem component.
+ */
 function AssetListItem({ asset, onEdit, onDelete }) {
   // Format percentage and return nicely
   const formatPercent = (value) => value != null ? `${value}%` : 'N/A';
@@ -41,6 +53,18 @@ function AssetListItem({ asset, onEdit, onDelete }) {
   );
 }
 
+/**
+ * Displays a list of assets belonging to a portfolio.
+ *
+ * Renders an AssetListItem for each asset in the provided array.
+ * Shows a message if the list is empty.
+ *
+ * @param {object} props - The component props.
+ * @param {Array<object>} props.assets - An array of asset objects to display.
+ * @param {Function} props.onEdit - Callback function passed down to AssetListItem for editing.
+ * @param {Function} props.onDelete - Callback function passed down to AssetListItem for deleting.
+ * @returns {JSX.Element} The AssetList component.
+ */
 export default function AssetList({ assets, onEdit, onDelete }) {
   if (!assets || assets.length === 0) {
     return <p style={styles.noItemsText}>No assets have been added to this portfolio yet.</p>;

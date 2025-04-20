@@ -1,11 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// import axios from 'axios'; // Use apiClient instead
+import apiClient from '../services/apiClient'; // Import the shared apiClient
 import { PlusIcon } from '@heroicons/react/24/outline';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+// const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'; // Handled by apiClient
 
-// Form to add or edit a planned change
-export default function ChangeForm({ portfolioId, existingChange, onSaved, onCancel }) {
+/**
+ * A form component for creating or editing a planned future change within a portfolio.
+ *
+ * Handles input fields for change type, date, amount, and description.
+ * Manages loading and error states. Calls appropriate service functions via apiClient
+ * on submit.
+ *
+ * @param {object} props - The component props.
+ * @param {string|number} props.portfolioId - The ID of the portfolio this change belongs to.
+ * @param {object} [props.existingChange=null] - If provided, the form will be pre-filled with this change's data
+ *                                              for editing. If null, the form is for creating a new change.
+ * @param {Function} props.onSaved - Callback function executed successfully after creating or updating a change.
+ * @param {Function} [props.onCancel] - Optional callback function executed when the cancel button is clicked.
+ * @returns {JSX.Element} The ChangeForm component.
+ */
+export default function ChangeForm({ portfolioId, existingChange = null, onSaved, onCancel }) {
   const isEditing = Boolean(existingChange);
   const [changeType, setChangeType] = useState('');
   const [changeDate, setChangeDate] = useState('');
@@ -36,10 +51,11 @@ export default function ChangeForm({ portfolioId, existingChange, onSaved, onCan
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (!token) {
-        setError('Authentication error. Please log in again.');
-        return;
-    }
+    // No need to check token explicitly, apiClient handles it
+    // if (!token) {
+    //     setError('Authentication error. Please log in again.');
+    //     return;
+    // }
     if (!changeType || !changeDate || amount === '') {
         setError('Change Type, Date, and Amount are required fields.');
         return;
@@ -52,12 +68,14 @@ export default function ChangeForm({ portfolioId, existingChange, onSaved, onCan
         amount: parseFloat(amount),
         description,
       };
-      const config = { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } };
+      // const config = { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } }; // Not needed with apiClient
 
       if (isEditing && existingChange) {
-        await axios.put(`${API_URL}/portfolios/${portfolioId}/changes/${existingChange.change_id}`, payload, config);
+        await apiClient.put(`/portfolios/${portfolioId}/changes/${existingChange.change_id}`, payload);
+        // await axios.put(`${API_URL}/portfolios/${portfolioId}/changes/${existingChange.change_id}`, payload, config);
       } else {
-        await axios.post(`${API_URL}/portfolios/${portfolioId}/changes`, payload, config);
+        await apiClient.post(`/portfolios/${portfolioId}/changes`, payload);
+        // await axios.post(`${API_URL}/portfolios/${portfolioId}/changes`, payload, config);
       }
       onSaved(); // Signal success
     } catch (err) {

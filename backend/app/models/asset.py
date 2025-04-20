@@ -19,6 +19,12 @@ class Asset(db.Model):
     # --- Validation ---
     @validates('allocation_percentage')
     def validate_allocation_percentage(self, key, value):
+        """Validate allocation percentage.
+
+        Ensures that if allocation_percentage is set, allocation_value is
+        cleared to maintain exclusivity between the two allocation methods.
+        Allows setting the value to None.
+        """
         if value is not None:
             if self.allocation_value is not None:
                  self.allocation_value = None # Clear the other value
@@ -30,6 +36,12 @@ class Asset(db.Model):
 
     @validates('allocation_value')
     def validate_allocation_value(self, key, value):
+        """Validate allocation value.
+
+        Ensures that if allocation_value is set, allocation_percentage is
+        cleared to maintain exclusivity between the two allocation methods.
+        Allows setting the value to None.
+        """
         if value is not None:
             if self.allocation_percentage is not None:
                 self.allocation_percentage = None # Clear the other value
@@ -43,6 +55,7 @@ class Asset(db.Model):
     portfolio = db.relationship('Portfolio', back_populates='assets')
 
     def to_dict(self):
+        """Serialize the Asset object to a dictionary."""
         return {
             'asset_id': self.asset_id,
             'portfolio_id': self.portfolio_id,

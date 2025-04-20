@@ -17,6 +17,7 @@ This document outlines the key API endpoints for the Investment Planning Project
     ```json
     {
       "email": "user@example.com",
+      "username": "newuser", // Optional, if usernames are supported
       "password": "securePassword123"
     }
     ```
@@ -24,19 +25,20 @@ This document outlines the key API endpoints for the Investment Planning Project
     ```json
     {
       "message": "User registered successfully."
-      // Optionally return user info excluding password
+      // Or potentially return user object (without password) or user ID
+      // "user_id": 123
     }
     ```
-* **Error Responses:** `400 Bad Request` (Invalid input, missing fields), `409 Conflict` (Email already exists)
+* **Error Responses:** `400 Bad Request` (Invalid input, missing fields, weak password), `409 Conflict` (Email or username already exists)
 
 **2. Login User**
 * **Method:** `POST`
 * **Path:** `/auth/login`
-* **Description:** Authenticates a user and returns a token or establishes a session.
+* **Description:** Authenticates a user using email or username and returns access and refresh tokens.
 * **Request Body:**
     ```json
     {
-      "email": "user@example.com",
+      "identifier": "user@example.com", // Can be email or username
       "password": "securePassword123"
     }
     ```
@@ -44,16 +46,35 @@ This document outlines the key API endpoints for the Investment Planning Project
     ```json
     {
       "message": "Login successful.",
-      "access_token": "your_jwt_token_here" // Or sets session cookie
+      "access_token": "your_jwt_access_token_here",
+      "refresh_token": "your_jwt_refresh_token_here"
       // Optionally return user info
     }
     ```
-* **Error Responses:** `400 Bad Request`, `401 Unauthorized` (Invalid credentials)
+* **Error Responses:** `400 Bad Request` (Missing fields), `401 Unauthorized` (Invalid credentials)
 
-**3. Logout User**
+**3. Refresh Token**
+* **Method:** `POST`
+* **Path:** `/auth/refresh`
+* **Description:** Obtains a new access token using a valid refresh token. Requires Authentication via Refresh Token.
+* **Request Body:**
+    ```json
+    {
+      "refresh_token": "your_valid_refresh_token"
+    }
+    ```
+* **Success Response:** `200 OK`
+    ```json
+    {
+      "access_token": "new_jwt_access_token_here"
+    }
+    ```
+* **Error Responses:** `401 Unauthorized` (Invalid or expired refresh token)
+
+**4. Logout User**
 * **Method:** `POST`
 * **Path:** `/auth/logout`
-* **Description:** Invalidates the user's session/token. Requires Authentication.
+* **Description:** Invalidates the user's refresh token (access tokens are typically short-lived and stateless). Requires Authentication via Access Token.
 * **Request Body:** None
 * **Success Response:** `200 OK`
     ```json
@@ -177,27 +198,22 @@ This document outlines the key API endpoints for the Investment Planning Project
 
 **1. Run Projection**
 * **Method:** `POST`
-* **Path:** `/projections`
-* **Description:** Calculates and returns the future value projection for a specified portfolio based on its current state, assumptions, and planned changes. Requires Authentication.
+* **Path:** `/portfolios/{portfolio_id}/projections`
+* **Description:** Calculates and returns the future value projection for a specified portfolio using the provided parameters (`start_date`, `end_date`, `initial_total_value`). Requires Authentication and authorization (user must own the portfolio).
 * **Request Body:**
     ```json
     {
-      "portfolio_id": 1
-      // Potentially include override assumptions if not stored with portfolio
-      // "start_date": "2025-04-15",
-      // "end_date": "2055-04-15",
-      // "return_assumption_override": 7.0
+      "start_date": "2025-01-01",
+      "end_date": "2055-01-01",
+      "initial_total_value": 10000.00
     }
     ```
 * **Success Response:** `200 OK`
     ```json
-    {
-      "portfolio_id": 1,
-      "projection_results": [
-        { "date": "2025-12-31", "value": 10500.50 },
-        { "date": "2026-12-31", "value": 11250.75 },
+    [
+        { "date": "2025-12-31", "value": 10700.00 },
+        { "date": "2026-12-31", "value": 11449.00 },
         // ... more data points
-      ]
-    }
+    ]
     ```
-* **Error Responses:** `400 Bad Request` (Missing portfolio ID), `401 Unauthorized`, `403 Forbidden`, `404 Not Found` (Portfolio not found), `500 Internal Server Error` (Calculation error)
+* **Error Responses:** `400 Bad Request` (Invalid parameters), `401 Unauthorized`, `403 Forbidden` (Not owner), `404 Not Found` (Portfolio not found), `500 Internal Server Error` (Calculation error)

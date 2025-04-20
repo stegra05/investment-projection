@@ -48,21 +48,27 @@ export const login = async (credentials) => {
 };
 
 /**
- * Logs out the current user.
+ * Logs out the current user by removing tokens from local storage.
+ * This function does not interact with the backend API endpoint for logout
+ * (if one exists) but handles the client-side cleanup.
  */
 export const logout = () => {
   // Remove token from local storage
   localStorage.removeItem('token');
-  // Remove the default auth header - No longer needed
+  localStorage.removeItem('refreshToken'); // Ensure refresh token is also removed
+  // Remove the default auth header - No longer needed with apiClient interceptor
   // delete axios.defaults.headers.common['Authorization'];
   // Optionally: Redirect user to login page or update app state
-  console.log('User logged out.');
+  console.log('User logged out, tokens cleared.');
 };
 
 /**
  * Retrieves the profile of the currently logged-in user.
- * Requires a valid JWT token to be set in the Authorization header.
- * @returns {Promise<object>} The user profile data.
+ * Uses the token stored in localStorage via the apiClient interceptor.
+ * Handles unauthorized errors by logging the user out.
+ * @returns {Promise<object>} The user profile data (e.g., id, username, email).
+ * @throws {Error} Throws an error if the request fails, including a specific error
+ *                 for session expiration requiring re-login.
  */
 export const getUserProfile = async () => {
   try {
@@ -101,15 +107,30 @@ export const isLoggedIn = () => {
 
 // TODO: Add functions for password reset API calls when backend is ready
 // const requestPasswordReset = async (email) => { ... }
-// const resetPassword = async (token, newPassword) => { ... }
 
-// Refresh the access token using a valid refresh JWT
+/**
+ * Refreshes the access token using a valid refresh token.
+ * @param {string} refreshToken - The current refresh token.
+ * @returns {Promise<string>} The new access token.
+ * @throws {Error} Throws an error if the refresh request fails.
+ */
 export const refreshAccessToken = async (refreshToken) => {
-  // Pass the refresh token in the Authorization header
-  const response = await apiClient.post('/auth/refresh', null, {
-    headers: { Authorization: `Bearer ${refreshToken}` },
-  });
-  return response.data.access_token;
+  try {
+    // Pass the refresh token in the Authorization header
+    const response = await apiClient.post('/auth/refresh', null, {
+      headers: { Authorization: `Bearer ${refreshToken}` },
+    });
+    const newAccessToken = response.data.access_token;
+    if (newAccessToken) {
+      localStorage.setItem('token', newAccessToken); // Store the new token
+    }
+    return newAccessToken;
+  } catch (error) {
+    console.error('Refresh token error:', error.response ? error.response.data : error.message);
+    // If refresh fails (e.g., invalid/expired refresh token), log the user out
+    logout();
+    throw error.response ? error.response.data : new Error('Session expired. Please log in again.');
+  }
 };
 
 const authService = {

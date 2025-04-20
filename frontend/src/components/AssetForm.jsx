@@ -2,8 +2,22 @@ import React, { useState, useEffect } from 'react';
 import assetService from '../services/assetService';
 import { PlusIcon } from '@heroicons/react/24/outline';
 
-// Form to add or edit an asset
-export default function AssetForm({ portfolioId, existingAsset, onSaved, onCancel }) {
+/**
+ * A form component for creating or editing an asset within a portfolio.
+ *
+ * Handles input fields for asset type (including custom), name/ticker, allocation,
+ * and expected return. Manages loading and error states. Calls appropriate
+ * service functions (createAsset, updateAsset) on submit.
+ *
+ * @param {object} props - The component props.
+ * @param {string|number} props.portfolioId - The ID of the portfolio this asset belongs to.
+ * @param {object} [props.existingAsset=null] - If provided, the form will be pre-filled with this asset's data
+ *                                             for editing. If null, the form is for creating a new asset.
+ * @param {Function} props.onSaved - Callback function executed successfully after creating or updating an asset.
+ * @param {Function} [props.onCancel] - Optional callback function executed when the cancel button is clicked.
+ * @returns {JSX.Element} The AssetForm component.
+ */
+export default function AssetForm({ portfolioId, existingAsset = null, onSaved, onCancel }) {
   const isEditing = Boolean(existingAsset);
   const [assetType, setAssetType] = useState('');
   const [customAssetType, setCustomAssetType] = useState('');

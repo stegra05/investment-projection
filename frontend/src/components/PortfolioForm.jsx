@@ -2,6 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getPortfolioById, createPortfolio, updatePortfolio } from '../services/portfolioService';
 
+/**
+ * A page component for creating a new portfolio or editing an existing one.
+ *
+ * Fetches portfolio data based on the URL parameter (`id`) if editing.
+ * Provides input fields for portfolio name and description.
+ * Handles form submission for creating or updating the portfolio via portfolioService.
+ * Navigates the user upon successful save or if loading fails.
+ *
+ * @returns {JSX.Element} The PortfolioForm page component.
+ */
 function PortfolioForm() {
   const { id } = useParams();
   const isEditing = Boolean(id);

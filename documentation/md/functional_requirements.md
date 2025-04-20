@@ -20,8 +20,7 @@ This document outlines the functional requirements for the Investment Planning P
 * **M-5: Future Change Planning:** Users must be able to define and schedule future changes to their portfolio (e.g., contributions, withdrawals, reallocations) over a specified timeline.
 * **M-6: Projection Visualization:** The system must calculate and display a visual representation (e.g., a graph) of the projected future value of the portfolio based on initial state, expected returns, and planned future changes.
 * **M-7: User Registration & Login:** Users must be able to create an account and log in to save and access their portfolio data securely.
-* **M-8: Password Management:** The system must provide secure password management features (e.g., password reset).
-* **M-9: Simple Interface:** The user interface must be clean and logically structured, even for advanced features.
+* **M-8: Simple Interface:** The user interface must be clean and logically structured, even for advanced features.
 
 ## 3. Should-have Requirements
 
@@ -33,6 +32,7 @@ This document outlines the functional requirements for the Investment Planning P
 * **S-4: Scenario Comparison:** Users should be able to create and visually compare projections based on different assumptions or strategies.
 * **S-5: Portfolio Comparison:** Users should be able to visually compare the projections of different saved portfolios.
 * **S-6: Risk Visualization:** The system should provide some visualization of potential projection variability or risk (e.g., displaying optimistic/pessimistic outcome ranges).
+* **S-7: Password Management:** The system should provide secure password management features (e.g., password reset).
 
 ## 4. Could-have Requirements
 

@@ -18,6 +18,7 @@ class PlannedFutureChange(db.Model):
     portfolio = db.relationship('Portfolio', back_populates='planned_changes')
 
     def to_dict(self):
+        """Serialize the PlannedFutureChange object to a dictionary."""
         return {
             'change_id': self.change_id,
             'portfolio_id': self.portfolio_id,

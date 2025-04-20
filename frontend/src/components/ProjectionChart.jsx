@@ -10,6 +10,17 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
+/**
+ * Component responsible for running portfolio projections and displaying the results in a line chart.
+ *
+ * Provides input fields for projection parameters (start date, end date, initial value).
+ * Calls the `runProjection` service on button click and handles loading/error states.
+ * Renders the projection data using `recharts` LineChart.
+ *
+ * @param {object} props - The component props.
+ * @param {string|number} props.portfolioId - The ID of the portfolio for which to run the projection.
+ * @returns {JSX.Element} The ProjectionChart component.
+ */
 export default function ProjectionChart({ portfolioId }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);

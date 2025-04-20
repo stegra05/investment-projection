@@ -21,12 +21,14 @@ class User(db.Model):
     portfolios = db.relationship('Portfolio', back_populates='user', lazy='dynamic')
 
     def set_password(self, password):
+        """Hash the provided password using bcrypt and store the hash."""
         # Encode password to bytes, generate salt, and hash
         pwhash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         # Store the hash as a decoded string
         self.password_hash = pwhash.decode('utf-8')
 
     def check_password(self, password):
+        """Check if the provided password matches the stored hash using bcrypt."""
         # Encode the plaintext password and the stored hash to bytes for comparison
         return bcrypt.checkpw(password.encode('utf-8'), self.password_hash.encode('utf-8'))
 
