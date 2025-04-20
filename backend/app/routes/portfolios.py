@@ -34,32 +34,49 @@ def get_change_or_404(portfolio, change_id):
 
 # --- Portfolio Routes (Task 5.3) ---
 
+@portfolios_bp.route('/hello', methods=['GET'])
+def debug_hello():
+    return jsonify({"msg": "Hello from portfolios"}), 200
+
+@portfolios_bp.route('/headers', methods=['GET'])
+def debug_headers():
+    from flask import current_app
+    headers = {k: v for k, v in request.headers.items()}
+    current_app.logger.debug(f"Incoming headers: {headers}")
+    return jsonify(headers), 200
+
 @portfolios_bp.route('', methods=['GET'])
 @jwt_required()
 def get_user_portfolios():
     """Retrieves a list of portfolios belonging to the authenticated user."""
-    current_user_id = int(get_jwt_identity())
-    portfolios = Portfolio.query.filter_by(user_id=current_user_id).all()
-    return jsonify([p.to_dict() for p in portfolios]), 200
+    try:
+        current_user_id = int(get_jwt_identity())
+        portfolios = Portfolio.query.filter_by(user_id=current_user_id).all()
+        return jsonify([p.to_dict() for p in portfolios]), 200
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        abort(500, description=f"Error fetching portfolios: {e}")
 
 @portfolios_bp.route('', methods=['POST'])
 @jwt_required()
 def create_portfolio():
     """Creates a new portfolio for the authenticated user."""
-    current_user_id = int(get_jwt_identity())
-    data = request.get_json()
-
-    if not data or not data.get('name'):
-        abort(400, description="Missing 'name' in request body.")
-
-    new_portfolio = Portfolio(
-        user_id=current_user_id,
-        name=data['name'],
-        description=data.get('description')
-    )
-    db.session.add(new_portfolio)
-    db.session.commit()
-    return jsonify(new_portfolio.to_dict()), 201
+    try:
+        current_user_id = int(get_jwt_identity())
+        data = request.get_json()
+        if not data or not data.get('name'):
+            abort(400, description="Missing 'name' in request body.")
+        new_portfolio = Portfolio(
+            user_id=current_user_id,
+            name=data['name'],
+            description=data.get('description')
+        )
+        db.session.add(new_portfolio)
+        db.session.commit()
+        return jsonify(new_portfolio.to_dict()), 201
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        abort(500, description=f"Error creating portfolio: {e}")
 
 @portfolios_bp.route('/<int:portfolio_id>', methods=['GET'])
 @jwt_required()

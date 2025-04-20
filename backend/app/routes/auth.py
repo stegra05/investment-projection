@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from app import db
 from app.models.user import User
-from flask_jwt_extended import create_access_token, jwt_required
+from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt_identity, jwt_required
 from sqlalchemy import or_
 
 # Define the blueprint: 'auth', prefix: /api/v1/auth
@@ -43,10 +43,12 @@ def login():
 
     if user and user.check_password(password):
         access_token = create_access_token(identity=str(user.id))
-        # Return token and user object for frontend consumption
+        refresh_token = create_refresh_token(identity=str(user.id))
+        # Return both tokens and user info
         return jsonify(
             message="Login successful.",
             access_token=access_token,
+            refresh_token=refresh_token,
             user={
                 "id": user.id,
                 "username": user.username,
@@ -62,6 +64,14 @@ def logout():
     # JWT logout is primarily handled client-side by discarding the token.
     # Server-side blocklisting can be added for more robust security if needed.
     return jsonify({"message": "Logout successful (token needs to be discarded client-side)"}), 200
+
+@auth_bp.route('/refresh', methods=['POST'])
+@jwt_required(refresh=True)
+def refresh():
+    """Refresh access token using a valid refresh token."""
+    current_user_id = get_jwt_identity()
+    new_access_token = create_access_token(identity=current_user_id)
+    return jsonify(access_token=new_access_token), 200
 
 # Potential future endpoints:
 # @auth_bp.route('/request-password-reset', methods=['POST'])

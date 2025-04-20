@@ -1,10 +1,13 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import authService from '../services/authService'; // Import the service
+import authService from '../services/authService'; // Import the service (includes refreshAccessToken)
+import { refreshAccessToken } from '../services/authService';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
+  // Store the refresh-token for sliding-window refresh
+  const [refreshToken, setRefreshToken] = useState(localStorage.getItem('refreshToken'));
   const [user, setUser] = useState(() => {
       const storedUser = localStorage.getItem('user');
       try {
@@ -37,12 +40,22 @@ export const AuthProvider = ({ children }) => {
     }
 }, [token]);
 
+  // Persist refresh token to localStorage when it changes
+  useEffect(() => {
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken);
+    } else {
+      localStorage.removeItem('refreshToken');
+    }
+  }, [refreshToken]);
 
   const login = async (credentials) => {
     setLoading(true);
     try {
       const data = await authService.login(credentials);
       setToken(data.token);
+      // Save refresh token for sliding-window refresh
+      setRefreshToken(data.refreshToken);
       setUser(data.user);
       setLoading(false);
       return data; // Return data for potential use in component
@@ -59,19 +72,43 @@ export const AuthProvider = ({ children }) => {
     try {
       await authService.logout(); // Call service (might do nothing if only client-side)
       setToken(null);
+      // Clear refresh token on logout
+      setRefreshToken(null);
       setUser(null);
     } catch (error) {
         console.error("Logout failed:", error);
         // Even if service call fails, clear client state
         setToken(null);
+        setRefreshToken(null);
         setUser(null);
     } finally {
         setLoading(false);
     }
   };
 
+  // -------------- Sliding-Window Token Refresh --------------
+  useEffect(() => {
+    // Only set up if we have a refresh token
+    if (!refreshToken) return;
+    // Refresh every 10 minutes
+    const intervalMs = 10 * 60 * 1000;
+    const intervalId = setInterval(async () => {
+      try {
+        const newAccess = await refreshAccessToken(refreshToken);
+        setToken(newAccess);
+        console.debug('Refreshed access token');
+      } catch (err) {
+        console.error('Access token refresh failed, logging out:', err);
+        // If refresh fails (e.g. expired), log the user out
+        await logout();
+      }
+    }, intervalMs);
+    return () => clearInterval(intervalId);
+  }, [refreshToken]);
+
   const value = {
     token,
+    refreshToken,
     user,
     isAuthenticated: !!token,
     loading,

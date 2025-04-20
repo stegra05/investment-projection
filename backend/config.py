@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 
 # Load environment variables from .env file
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -7,6 +8,9 @@ load_dotenv(os.path.join(basedir, '.env'))
 
 class Config:
     """Base configuration class."""
+    # Extend JWT lifetimes to keep active users logged in
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=7)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
     # Use a dedicated JWT secret key, falling back to SECRET_KEY if not set
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or os.environ.get('SECRET_KEY') or 'jwt-secret-string'
@@ -29,8 +33,8 @@ class Config:
 class DevelopmentConfig(Config):
     """Development configuration."""
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
-        'postgresql:///investment_projection_dev'
+    # Use PostgreSQL for development via Unix socket by default
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or 'postgresql:///investment_projection_dev'
 
 class TestingConfig(Config):
     """Testing configuration."""

@@ -17,6 +17,9 @@ def create_app(config_name='default'): # Changed argument name for clarity
     app = Flask(__name__)
     # Look up the config class from the dictionary using the name
     app.config.from_object(config[config_name])
+    # Explicitly configure JWT to use the Authorization header with 'Bearer' prefix
+    app.config['JWT_HEADER_NAME'] = 'Authorization'
+    app.config['JWT_HEADER_TYPE'] = 'Bearer'
 
     # Initialize Flask extensions here
     db.init_app(app)

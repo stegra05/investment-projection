@@ -37,11 +37,12 @@ const login = async (credentials) => {
   console.log('Login API response data:', response.data);
   // Accept either access_token or token for compatibility
   const token = response.data.access_token || response.data.token;
-  if (token) {
-    return { token, user: response.data.user };
+  const refreshToken = response.data.refresh_token;
+  if (token && refreshToken) {
+    return { token, refreshToken, user: response.data.user };
   }
-  // Throw an error if no token field found
-  throw new Error('Login response did not include a token.');
+  // Throw an error if tokens not provided
+  throw new Error('Login response did not include expected tokens.');
 };
 
 const logout = async () => {
@@ -66,10 +67,20 @@ const logout = async () => {
 // const requestPasswordReset = async (email) => { ... }
 // const resetPassword = async (token, newPassword) => { ... }
 
+// Refresh the access token using a valid refresh JWT
+export const refreshAccessToken = async (refreshToken) => {
+  // Pass the refresh token in the Authorization header
+  const response = await apiClient.post('/auth/refresh', null, {
+    headers: { Authorization: `Bearer ${refreshToken}` },
+  });
+  return response.data.access_token;
+};
+
 const authService = {
   register,
   login,
   logout,
+  refreshAccessToken,
   // requestPasswordReset,
   // resetPassword,
 };

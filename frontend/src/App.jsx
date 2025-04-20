@@ -5,6 +5,9 @@ import DashboardPage from './pages/DashboardPage';
 import RegistrationPage from './pages/RegistrationPage';
 import RequestPasswordResetPage from './pages/RequestPasswordResetPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import PortfolioListPage from './pages/PortfolioListPage';
+import PortfolioDetailPage from './pages/PortfolioDetailPage';
+import PortfolioForm from './components/PortfolioForm';
 import { useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css'; // Keep default styles for now
@@ -26,6 +29,9 @@ function App() {
             <>
               <li>
                 <Link to="/">Dashboard</Link>
+              </li>
+              <li>
+                <Link to="/portfolios">Portfolios</Link>
               </li>
               <li>
                 <span>Welcome, {user?.username || 'User'}!</span>
@@ -59,6 +65,38 @@ function App() {
               <DashboardPage />
             </ProtectedRoute>
           } 
+        />
+        <Route 
+          path="/portfolios" 
+          element={
+            <ProtectedRoute>
+              <PortfolioListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route 
+          path="/portfolios/new" 
+          element={
+            <ProtectedRoute>
+              <PortfolioForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route 
+          path="/portfolios/:id" 
+          element={
+            <ProtectedRoute>
+              <PortfolioDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route 
+          path="/portfolios/:id/edit" 
+          element={
+            <ProtectedRoute>
+              <PortfolioForm />
+            </ProtectedRoute>
+          }
         />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegistrationPage />} />
