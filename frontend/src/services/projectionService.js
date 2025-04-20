@@ -21,7 +21,7 @@ export const runProjection = async (projectionParams) => {
     }
 
     // Use portfolioId in the endpoint path
-    const endpoint = `/portfolios/${projectionParams.portfolioId}/project`;
+    const endpoint = `/portfolios/${projectionParams.portfolioId}/projections`;
 
     // Send other parameters in the request body
     const bodyParams = { ...projectionParams };

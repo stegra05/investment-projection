@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getPortfolio, createPortfolio, updatePortfolio } from '../services/portfolioService';
+import { getPortfolioById, createPortfolio, updatePortfolio } from '../services/portfolioService';
 
 function PortfolioForm() {
   const { id } = useParams();
@@ -15,7 +15,7 @@ function PortfolioForm() {
 
   useEffect(() => {
     if (isEditing) {
-      getPortfolio(id)
+      getPortfolioById(id)
         .then((data) => {
           setName(data.name);
           setDescription(data.description || '');

@@ -25,12 +25,14 @@ export default function ProjectionChart({ portfolioId }) {
     setError('');
     setLoading(true);
     try {
-      const result = await runProjection(
+      // Pass parameters as a single object
+      const params = {
         portfolioId,
-        startDate,
-        endDate,
-        parseFloat(initialValue)
-      );
+        start_date: startDate,
+        end_date: endDate,
+        initial_total_value: initialValue, // Backend expects string for Decimal
+      };
+      const result = await runProjection(params);
       // The backend returns an array directly, so handle both possibilities
       const projData = Array.isArray(result)
         ? result

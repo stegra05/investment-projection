@@ -4,7 +4,21 @@ import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 function AssetListItem({ asset, onEdit, onDelete }) {
   // Format percentage and return nicely
   const formatPercent = (value) => value != null ? `${value}%` : 'N/A';
-  const formatReturn = (value) => value != null ? `${value.toFixed(1)}%` : 'N/A';
+
+  const formatReturn = (value) => {
+    // Check if value is null or undefined first
+    if (value == null) {
+      return 'N/A';
+    }
+    // Try to parse the value as a float
+    const numValue = parseFloat(value);
+    // Check if parsing was successful and it's a valid number
+    if (!isNaN(numValue)) {
+      return `${numValue.toFixed(1)}%`;
+    }
+    // If parsing failed or it's not a number, return 'N/A'
+    return 'N/A';
+  };
 
   return (
     <li style={styles.listItem}>

@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || '/api', // Use environment variable or default
+  // Use Vite env variable or default to versioned API prefix
+  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
 });
 
 // Add a request interceptor to include the token in headers

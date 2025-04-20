@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       // Forward `/api/*` to backend at port 5000 (use IPv4 to avoid IPv6 lookup issues)
-      '/api': {
+      '/api/v1': {
         target: 'http://127.0.0.1:5000',
         changeOrigin: true,
         secure: false,

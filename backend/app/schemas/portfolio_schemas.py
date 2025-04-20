@@ -8,9 +8,9 @@ from app.enums import AssetType, ChangeType # Import Enums
 # --- Base Schemas (for common fields/config) ---
 class OrmBaseModel(BaseModel):
     class Config:
-        orm_mode = True # Enable reading data directly from ORM models
-        allow_population_by_field_name = True
-        anystr_strip_whitespace = True # Strip whitespace from strings
+        from_attributes = True  # Enable reading data directly from ORM models (Pydantic V2)
+        populate_by_name = True # Replaces allow_population_by_field_name
+        str_strip_whitespace = True # Replaces anystr_strip_whitespace
 
 # --- Planned Change Schemas ---
 class PlannedChangeBase(OrmBaseModel):
@@ -99,9 +99,11 @@ class PortfolioSchema(PortfolioBase):
     assets: Optional[List[AssetSchema]] = []
     planned_changes: Optional[List[PlannedChangeSchema]] = Field([], alias='changes') # Match ORM relationship name if different
 
-    class Config(OrmBaseModel.Config):
-        # Ensure nested models are also processed from ORM
-        pass
+    # Config is now inherited correctly from OrmBaseModel
+    # class Config(OrmBaseModel.Config):
+    #     # Ensure nested models are also processed from ORM
+    #     # from_attributes = True # Now inherited
+    #     pass
 
 # Update Forward Refs if needed (often automatic in newer Pydantic/Python)
 # PortfolioSchema.update_forward_refs()

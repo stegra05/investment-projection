@@ -29,14 +29,15 @@ export const login = async (credentials) => {
   try {
     // const response = await axios.post(`${API_URL}/auth/login`, credentials);
     const response = await apiClient.post('/auth/login', credentials);
-    if (response.data.access_token) {
-      localStorage.setItem('token', response.data.access_token);
-      // Set default auth header for subsequent requests - No longer needed, interceptor handles this
-      // axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.access_token}`;
+    const { access_token, refresh_token, user } = response.data;
+    if (access_token) {
+      localStorage.setItem('token', access_token);
+      localStorage.setItem('refreshToken', refresh_token);
     } else {
       console.warn('No access token received during login.');
     }
-    return response.data;
+    // Return normalized keys for AuthContext
+    return { token: access_token, refreshToken: refresh_token, user };
   } catch (error) {
     console.error('Login error:', error.response ? error.response.data : error.message);
     // Remove token if login fails? Consider security implications.

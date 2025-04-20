@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { getPortfolio } from '../services/portfolioService';
+import { getPortfolioById } from '../services/portfolioService';
 import { PlusIcon } from '@heroicons/react/24/outline';
 
 // Import custom hooks
@@ -102,7 +102,7 @@ export default function PortfolioDetailPage() {
     setLoading(true); // Set loading true when refetching
     setPageError(null); // Clear previous page errors
     try {
-      const data = await getPortfolio(portfolioId);
+      const data = await getPortfolioById(portfolioId);
       setPortfolio(data);
     } catch (err) {
       console.error('Failed to load portfolio:', err);
