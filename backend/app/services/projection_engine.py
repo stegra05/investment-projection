@@ -28,26 +28,10 @@ from sqlalchemy.orm import joinedload
 #     change_type = 'Contribution' # or 'Withdrawal', 'Reallocation'
 #     amount = Decimal('0.00')
 
+# --- Helper Functions ---
 
-def calculate_projection(portfolio_id: int, start_date: datetime.date, end_date: datetime.date, initial_total_value: Decimal):
-    """
-    Calculates the future value projection for a given portfolio.
-
-    Args:
-        portfolio_id: The ID of the portfolio.
-        start_date: The date to start the projection from.
-        end_date: The date to end the projection.
-        initial_total_value: The total value of the portfolio at the start_date.
-
-    Returns:
-        A list of tuples, where each tuple contains (date, total_value)
-        for each month end in the projection period.
-
-    Raises:
-        ValueError: If the portfolio with the given ID is not found.
-    """
-
-    # --- 1. Fetch Data --- 
+def _fetch_and_prepare_data(portfolio_id: int):
+    """Fetches portfolio, assets, and planned changes, pre-processing changes."""
     portfolio = Portfolio.query.options(
         joinedload(Portfolio.assets),
         joinedload(Portfolio.planned_changes)
@@ -57,7 +41,6 @@ def calculate_projection(portfolio_id: int, start_date: datetime.date, end_date:
         raise ValueError(f"Portfolio with id {portfolio_id} not found.")
 
     assets = portfolio.assets
-    # Fetch all changes associated with the portfolio. Filtering happens in the loop.
     planned_changes = portfolio.planned_changes
 
     # Pre-process planned changes for efficient lookup
@@ -68,22 +51,10 @@ def calculate_projection(portfolio_id: int, start_date: datetime.date, end_date:
             changes_by_month[key] = []
         changes_by_month[key].append(change)
 
-    # --- Mock Data for Development ---
-    # assets = [
-    #     Asset(id=1, asset_type='Stock', allocation_value=Decimal('6000'), manual_expected_return=Decimal('7.5')),
-    #     Asset(id=2, asset_type='Bond', allocation_value=Decimal('4000'), manual_expected_return=Decimal('3.0')),
-    #     # Asset(id=3, asset_type='Cash', allocation_percentage=Decimal('10'), manual_expected_return=Decimal('1.0')), # Example percentage
-    # ]
-    # planned_changes = [
-    #     PlannedFutureChange(id=1, portfolio_id=portfolio_id, change_date=start_date + relativedelta(months=3), change_type='Contribution', amount=Decimal('500')),
-    #     PlannedFutureChange(id=2, portfolio_id=portfolio_id, change_date=start_date + relativedelta(months=6), change_type='Withdrawal', amount=Decimal('200')), # Assume positive amount for withdrawal type
-    #     PlannedFutureChange(id=3, portfolio_id=portfolio_id, change_date=start_date + relativedelta(months=6), change_type='Contribution', amount=Decimal('100')),
-    #     PlannedFutureChange(id=4, portfolio_id=portfolio_id, change_date=start_date + relativedelta(months=8), change_type='Reallocation', amount=Decimal('0')), # Ignored in V1
-    # ]
-    # --- End Mock Data ---
+    return assets, changes_by_month
 
-
-    # --- 2. Initialization ---
+def _initialize_projection(assets: list[Asset], initial_total_value: Decimal | None):
+    """Initializes asset values, monthly returns, and total value."""
     current_asset_values = {}
     monthly_asset_returns = {}
     calculated_initial_total = Decimal('0.0')
@@ -95,9 +66,6 @@ def calculate_projection(portfolio_id: int, start_date: datetime.date, end_date:
             initial_value = Decimal(asset.allocation_value)
         elif asset.allocation_percentage is not None and initial_total_value is not None:
             initial_value = (Decimal(asset.allocation_percentage) / Decimal('100')) * initial_total_value
-        # Note: If initial_total_value is None and only percentages are given,
-        # this logic needs adjustment. The caller/API layer should ensure
-        # initial_total_value is provided if needed.
 
         current_asset_values[asset.asset_id] = initial_value
         calculated_initial_total += initial_value
@@ -106,32 +74,115 @@ def calculate_projection(portfolio_id: int, start_date: datetime.date, end_date:
         monthly_return = Decimal('0.0')
         if asset.manual_expected_return is not None:
             try:
-                # Ensure database value is treated as Decimal
                 r_annual = Decimal(asset.manual_expected_return) / Decimal('100')
                 # (1 + R_annual_i)^(1/12) - 1
                 monthly_return = (Decimal('1.0') + r_annual) ** (Decimal('1.0') / Decimal('12.0')) - Decimal('1.0')
             except (InvalidOperation, TypeError):
-                 # Handle potential invalid decimal conversion or if None sneaks through
                 monthly_return = Decimal('0.0')
         monthly_asset_returns[asset.asset_id] = monthly_return
 
-    # Optional Validation: Check if sum of initial asset values matches initial_total_value
-    tolerance = Decimal('0.01') # Adjust tolerance as needed
+    # Optional Validation
+    tolerance = Decimal('0.01')
     if initial_total_value is not None and abs(calculated_initial_total - initial_total_value) > tolerance:
-        # This might indicate inconsistent data (e.g., sum of allocation_values doesn't match a stored total,
-        # or percentages don't sum to 100% if initial_total_value was derived from them)
-        # Log a warning or decide on stricter handling (e.g., raise error)
         print(f"Warning: Initial calculated asset values sum ({calculated_initial_total:.2f}) "
-              f"differs from provided initial_total_value ({initial_total_value:.2f}) for portfolio {portfolio_id}. Proceeding.")
-        # Depending on requirements, you might want to normalize initial values here or raise an error.
+              f"differs from provided initial_total_value ({initial_total_value:.2f}). Proceeding.")
+        # Use the provided initial_total_value if available, otherwise the calculated sum.
+        start_total_value = initial_total_value
+    else:
+        # Use calculated total if no initial_total_value provided or if they match closely.
+        start_total_value = initial_total_value if initial_total_value is not None else calculated_initial_total
 
 
-    projection_results = [(start_date, initial_total_value if initial_total_value is not None else calculated_initial_total)]
-    # Use calculated_initial_total if initial_total_value wasn't provided (e.g. only value allocations exist)
-    current_total_value = initial_total_value if initial_total_value is not None else calculated_initial_total
+    return current_asset_values, monthly_asset_returns, start_total_value
+
+
+def _calculate_single_month(
+    current_date: datetime.date,
+    current_asset_values: dict[int, Decimal],
+    monthly_asset_returns: dict[int, Decimal],
+    changes_by_month: dict[tuple[int, int], list[PlannedFutureChange]]
+):
+    """Calculates the projection for a single month."""
+    value_i_pre_cashflow = {}
+    total_value_pre_cashflow = Decimal('0.0')
+
+    # --- Calculate Asset Growth ---
+    for asset_id, current_value in current_asset_values.items():
+        current_value_dec = Decimal(current_value) # Ensure Decimal
+        growth = current_value_dec * monthly_asset_returns[asset_id]
+        value_i_pre_cashflow[asset_id] = current_value_dec + growth
+        total_value_pre_cashflow += value_i_pre_cashflow[asset_id]
+
+    # --- Process Planned Changes ---
+    net_change_month = Decimal('0.0')
+    current_month_key = (current_date.year, current_date.month)
+    month_changes = changes_by_month.get(current_month_key, [])
+
+    for change in month_changes:
+        change_amount = Decimal(change.amount) # Ensure Decimal
+        if change.change_type == 'Contribution':
+            net_change_month += change_amount
+        elif change.change_type == 'Withdrawal':
+            net_change_month -= change_amount
+
+    # --- Distribute Cash Flow & Calculate Final Monthly Values ---
+    value_i_final = {}
+    current_total_value_month = total_value_pre_cashflow # Start with pre-cashflow total
+
+    if total_value_pre_cashflow > Decimal('0.0'):
+        for asset_id, pre_cashflow_val in value_i_pre_cashflow.items():
+            try:
+                cash_flow_i = net_change_month * (pre_cashflow_val / total_value_pre_cashflow)
+                final_value = pre_cashflow_val + cash_flow_i
+                value_i_final[asset_id] = final_value
+            except InvalidOperation:
+                print(f"Warning: Invalid operation during cash flow distribution for asset {asset_id}. Skipping.")
+                value_i_final[asset_id] = pre_cashflow_val
+
+        # Recalculate total from final asset values
+        current_total_value_month = sum(value_i_final.values())
+    else:
+        # Handle zero/negative pre-cashflow value
+        current_total_value_month = total_value_pre_cashflow + net_change_month
+        value_i_final = value_i_pre_cashflow.copy()
+        if net_change_month != Decimal('0.0'):
+            print(f"Warning: Portfolio value at {current_date.strftime('%Y-%m')} was {total_value_pre_cashflow:.2f}. "
+                  f"Applied net change {net_change_month:.2f} directly.")
+
+    return value_i_final, current_total_value_month
+
+
+# --- Main Projection Function ---
+
+def calculate_projection(portfolio_id: int, start_date: datetime.date, end_date: datetime.date, initial_total_value: Decimal | None):
+    """
+    Calculates the future value projection for a given portfolio by orchestrating
+    data fetching, initialization, and monthly calculations.
+
+    Args:
+        portfolio_id: The ID of the portfolio.
+        start_date: The date to start the projection from.
+        end_date: The date to end the projection.
+        initial_total_value: The total value of the portfolio at the start_date (optional).
+
+    Returns:
+        A list of tuples, where each tuple contains (date, total_value)
+        for each month end in the projection period.
+
+    Raises:
+        ValueError: If the portfolio with the given ID is not found.
+    """
+    # --- 1. Fetch & Prepare ---
+    assets, changes_by_month = _fetch_and_prepare_data(portfolio_id)
+
+    # --- 2. Initialize ---
+    current_asset_values, monthly_asset_returns, current_total_value = \
+        _initialize_projection(assets, initial_total_value)
+
+    projection_results = [(start_date, current_total_value)]
 
     current_date = start_date
-    # Ensure the loop includes the start month and goes up to the end_date
+    # Loop until the first day of the month *after* the end_date
     loop_end_date = end_date.replace(day=1) + relativedelta(months=1)
 
     # --- 3. Monthly Projection Loop ---
@@ -140,87 +191,28 @@ def calculate_projection(portfolio_id: int, start_date: datetime.date, end_date:
         # Ensure we don't project past the requested end_date
         actual_month_end = min(month_end_date, end_date)
 
-        value_i_pre_cashflow = {}
-        total_value_pre_cashflow = Decimal('0.0')
+        # --- 3.a Calculate next month's values ---
+        next_asset_values, next_total_value = _calculate_single_month(
+            current_date,
+            current_asset_values,
+            monthly_asset_returns,
+            changes_by_month
+        )
 
-        # --- 3.a Calculate Asset Growth ---
-        for asset_id, current_value in current_asset_values.items():
-            # Ensure current_value is Decimal
-            current_value_dec = Decimal(current_value)
-            growth = current_value_dec * monthly_asset_returns[asset_id]
-            value_i_pre_cashflow[asset_id] = current_value_dec + growth
-            total_value_pre_cashflow += value_i_pre_cashflow[asset_id]
-
-        # --- 3.b Process Planned Changes for the Month ---
-        net_change_month = Decimal('0.0')
-        # Efficiently get changes for the current month using the pre-processed dictionary
-        current_month_key = (current_date.year, current_date.month)
-        month_changes = changes_by_month.get(current_month_key, [])
-        # month_changes = [
-        #     change for change in planned_changes
-        #     if change.change_date.year == current_date.year and change.change_date.month == current_date.month
-        # ]
-
-        for change in month_changes:
-            # Ensure amount from DB is Decimal
-            change_amount = Decimal(change.amount)
-            if change.change_type == 'Contribution':
-                net_change_month += change_amount
-            elif change.change_type == 'Withdrawal':
-                net_change_month -= change_amount # Subtract withdrawal amount
-            # Ignore 'Reallocation' for V1
-
-        # --- 3.c Distribute Cash Flow & Calculate Final Monthly Values ---
-        value_i_final = {}
-        # Start with the pre-cashflow total, then adjust
-        current_total_value = total_value_pre_cashflow
-
-        if total_value_pre_cashflow > Decimal('0.0'):
-            # Pro-rata distribution only if there's a positive value to distribute over
-            for asset_id, pre_cashflow_val in value_i_pre_cashflow.items():
-                try:
-                    cash_flow_i = net_change_month * (pre_cashflow_val / total_value_pre_cashflow)
-                    final_value = pre_cashflow_val + cash_flow_i
-                    value_i_final[asset_id] = final_value
-                except InvalidOperation:
-                    # Handle potential division errors if pre_cashflow_val is somehow invalid
-                    print(f"Warning: Invalid operation during cash flow distribution for asset {asset_id}. Skipping cash flow for this asset.")
-                    value_i_final[asset_id] = pre_cashflow_val # Keep pre-cashflow value
-
-            # Recalculate total from final asset values after pro-rata distribution
-            current_total_value = sum(value_i_final.values())
-
-        else:
-            # Handle zero or negative total value pre-cashflow
-            # If portfolio value is zero or negative, cash flow distribution is complex.
-            # Simplest V1: Add/subtract net change directly to the total value.
-            # Asset values remain unchanged proportionally (which might not be realistic, but avoids division by zero).
-            current_total_value = total_value_pre_cashflow + net_change_month
-            value_i_final = value_i_pre_cashflow.copy() # Keep asset values as they were pre-cashflow
-
-            if net_change_month != Decimal('0.0'):
-                 print(f"Warning: Portfolio value at {current_date.strftime('%Y-%m')} was {total_value_pre_cashflow:.2f}. "
-                       f"Applied net change {net_change_month:.2f} directly. Pro-rata distribution skipped.")
-
-
-        # --- 3.d Update Tracking ---
-        current_asset_values = value_i_final.copy() # Update asset values for the next iteration
-
-        # --- 3.e Store Result ---
-        # Use the actual_month_end which respects the overall end_date
+        # --- 3.b Update Tracking & Store Result ---
+        current_asset_values = next_asset_values
+        current_total_value = next_total_value
         projection_results.append((actual_month_end, current_total_value))
 
         # Move to the next month
         current_date += relativedelta(months=1)
 
-        # Exit loop if we have passed the end_date
+        # Exit loop if we have recorded the value for the final month end
         if actual_month_end >= end_date:
              break
 
-
-    # --- 4. Output ---
-    # Ensure output values are Decimals for consistency if needed downstream,
-    # although standard floats might be sufficient for charting.
+    # --- 4. Format Output ---
+    # Ensure output values remain Decimals
     return [(date, Decimal(value)) for date, value in projection_results]
 
 # Example Usage (can be removed or moved to tests later)

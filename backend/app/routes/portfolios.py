@@ -4,31 +4,77 @@ from app.models import Portfolio, Asset, PlannedFutureChange
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from decimal import Decimal, InvalidOperation
 from datetime import date
+import functools
+from pydantic import ValidationError # Import Pydantic validation error
+
+# Import Pydantic Schemas
+from app.schemas.portfolio_schemas import (
+    PortfolioSchema, PortfolioCreateSchema, PortfolioUpdateSchema,
+    AssetSchema, AssetCreateSchema, AssetUpdateSchema,
+    PlannedChangeSchema, PlannedChangeCreateSchema, PlannedChangeUpdateSchema
+)
 
 # Define the blueprint: 'portfolios', prefix: /api/v1/portfolios
 portfolios_bp = Blueprint('portfolios', __name__, url_prefix='/api/v1/portfolios')
 
+# --- Decorators ---
+
+def verify_portfolio_ownership(f):
+    """Decorator to fetch portfolio by ID, verify ownership, and inject portfolio."""
+    @functools.wraps(f)
+    @jwt_required() # Ensures user is logged in first
+    def wrapper(*args, **kwargs):
+        portfolio_id = kwargs.get('portfolio_id')
+        if portfolio_id is None:
+            abort(500, "Developer error: portfolio_id missing in route arguments for ownership check.")
+
+        try:
+            user_id_str = get_jwt_identity()
+            current_user_id = int(user_id_str)
+        except (ValueError, TypeError):
+             abort(401, "Invalid user identity in token.")
+
+        portfolio = Portfolio.query.options(
+            # Eager load details needed for PortfolioSchema serialization
+            db.joinedload(Portfolio.assets),
+            db.joinedload(Portfolio.planned_changes)
+        ).get(portfolio_id)
+
+        if portfolio is None:
+            abort(404, description=f"Portfolio with id {portfolio_id} not found.")
+
+        if portfolio.user_id != current_user_id:
+            abort(403, description="User does not have permission to access this portfolio.")
+
+        kwargs['portfolio'] = portfolio
+        return f(*args, **kwargs)
+    return wrapper
+
+
 # --- Helper Functions ---
 
-def get_portfolio_or_404(portfolio_id, user_id):
-    """Gets a portfolio by ID and checks ownership, aborting if not found or not owned."""
-    portfolio = Portfolio.query.get_or_404(portfolio_id)
-    if portfolio.user_id != user_id:
-        abort(403, description="User does not have permission to access this portfolio.") # Forbidden
-    return portfolio
-
-def get_asset_or_404(portfolio, asset_id):
+def get_asset_or_404(portfolio: Portfolio, asset_id: int):
      """Gets an asset by ID within a portfolio, aborting if not found."""
+     # We can directly check the loaded assets if the portfolio was eager loaded
+     for asset in portfolio.assets:
+         if asset.asset_id == asset_id:
+             return asset
+     # Fallback query if not found in eager loaded list (shouldn't happen with correct decorator loading)
      asset = Asset.query.filter_by(portfolio_id=portfolio.portfolio_id, asset_id=asset_id).first()
      if asset is None:
-         abort(404, description="Asset not found within this portfolio.")
+         abort(404, description=f"Asset with id {asset_id} not found within portfolio {portfolio.portfolio_id}.")
      return asset
 
-def get_change_or_404(portfolio, change_id):
+def get_change_or_404(portfolio: Portfolio, change_id: int):
      """Gets a planned change by ID within a portfolio, aborting if not found."""
+     # Check eager loaded changes
+     for change in portfolio.planned_changes: # Assuming relationship name is planned_changes
+        if change.change_id == change_id:
+            return change
+     # Fallback query
      change = PlannedFutureChange.query.filter_by(portfolio_id=portfolio.portfolio_id, change_id=change_id).first()
      if change is None:
-         abort(404, description="Planned change not found within this portfolio.")
+         abort(404, description=f"Planned change with id {change_id} not found within portfolio {portfolio.portfolio_id}.")
      return change
 
 
@@ -51,8 +97,14 @@ def get_user_portfolios():
     """Retrieves a list of portfolios belonging to the authenticated user."""
     try:
         current_user_id = int(get_jwt_identity())
-        portfolios = Portfolio.query.filter_by(user_id=current_user_id).all()
-        return jsonify([p.to_dict() for p in portfolios]), 200
+        # Eager load details for serialization
+        portfolios = Portfolio.query.options(
+             db.joinedload(Portfolio.assets),
+             db.joinedload(Portfolio.planned_changes)
+         ).filter_by(user_id=current_user_id).all()
+        # Use Pydantic schema for serialization
+        result = [PortfolioSchema.from_orm(p).dict(by_alias=True) for p in portfolios]
+        return jsonify(result), 200
     except Exception as e:
         import traceback; traceback.print_exc()
         abort(500, description=f"Error fetching portfolios: {e}")
@@ -63,237 +115,260 @@ def create_portfolio():
     """Creates a new portfolio for the authenticated user."""
     try:
         current_user_id = int(get_jwt_identity())
-        data = request.get_json()
-        if not data or not data.get('name'):
-            abort(400, description="Missing 'name' in request body.")
+        json_data = request.get_json()
+        if not json_data:
+            abort(400, description="Request body cannot be empty.")
+
+        # Validate input using Pydantic schema
+        try:
+            portfolio_data = PortfolioCreateSchema.parse_obj(json_data)
+        except ValidationError as e:
+            abort(400, description=e.errors())
+
         new_portfolio = Portfolio(
             user_id=current_user_id,
-            name=data['name'],
-            description=data.get('description')
+            **portfolio_data.dict() # Use validated data
         )
         db.session.add(new_portfolio)
         db.session.commit()
-        return jsonify(new_portfolio.to_dict()), 201
+        db.session.refresh(new_portfolio) # Refresh to get DB defaults like ID
+
+        # Serialize output using Pydantic schema
+        return jsonify(PortfolioSchema.from_orm(new_portfolio).dict(by_alias=True)), 201
     except Exception as e:
+        db.session.rollback()
         import traceback; traceback.print_exc()
         abort(500, description=f"Error creating portfolio: {e}")
 
 @portfolios_bp.route('/<int:portfolio_id>', methods=['GET'])
-@jwt_required()
-def get_portfolio_details(portfolio_id):
+@verify_portfolio_ownership
+def get_portfolio_details(portfolio_id, portfolio):
     """Retrieves details for a specific portfolio, including assets and planned changes."""
-    current_user_id = int(get_jwt_identity())
-    portfolio = get_portfolio_or_404(portfolio_id, current_user_id)
-    return jsonify(portfolio.to_dict(include_details=True)), 200
+    # Portfolio is already eager loaded by the decorator
+    # Serialize using Pydantic schema (includes details based on schema definition)
+    return jsonify(PortfolioSchema.from_orm(portfolio).dict(by_alias=True)), 200
 
 @portfolios_bp.route('/<int:portfolio_id>', methods=['PUT', 'PATCH'])
-@jwt_required()
-def update_portfolio(portfolio_id):
+@verify_portfolio_ownership
+def update_portfolio(portfolio_id, portfolio):
     """Updates details for a specific portfolio."""
-    current_user_id = int(get_jwt_identity())
-    portfolio = get_portfolio_or_404(portfolio_id, current_user_id)
-    data = request.get_json()
-
-    if not data:
+    json_data = request.get_json()
+    if not json_data:
         abort(400, description="Request body cannot be empty for update.")
 
-    if 'name' in data:
-        portfolio.name = data['name']
-    if 'description' in data:
-        portfolio.description = data['description']
-    # Add other updatable fields as needed
+    # Validate input using Pydantic schema
+    try:
+        update_data = PortfolioUpdateSchema.parse_obj(json_data)
+    except ValidationError as e:
+        abort(400, description=e.errors())
 
-    db.session.commit()
-    return jsonify(portfolio.to_dict()), 200
+    # Update model fields from validated data (only non-None fields)
+    for key, value in update_data.dict(exclude_unset=True).items():
+         setattr(portfolio, key, value)
+
+    try:
+        db.session.commit()
+        db.session.refresh(portfolio)
+         # Serialize output using Pydantic schema
+        return jsonify(PortfolioSchema.from_orm(portfolio).dict(by_alias=True)), 200
+    except Exception as e:
+        db.session.rollback()
+        abort(500, description=f"Error updating portfolio: {e}")
 
 @portfolios_bp.route('/<int:portfolio_id>', methods=['DELETE'])
-@jwt_required()
-def delete_portfolio(portfolio_id):
+@verify_portfolio_ownership
+def delete_portfolio(portfolio_id, portfolio):
     """Deletes a specific portfolio."""
-    current_user_id = int(get_jwt_identity())
-    portfolio = get_portfolio_or_404(portfolio_id, current_user_id)
-
-    db.session.delete(portfolio)
-    db.session.commit()
-    return jsonify({"message": "Portfolio deleted successfully"}), 200 # Or 204 No Content
+    try:
+        db.session.delete(portfolio)
+        db.session.commit()
+        return jsonify({"message": "Portfolio deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        abort(500, description=f"Error deleting portfolio: {e}")
 
 
 # --- Asset Routes (Task 5.4) ---
 
 @portfolios_bp.route('/<int:portfolio_id>/assets', methods=['POST'])
-@jwt_required()
-def add_asset(portfolio_id):
+@verify_portfolio_ownership
+def add_asset(portfolio_id, portfolio):
     """Adds a new asset to a specific portfolio."""
-    current_user_id = int(get_jwt_identity())
-    portfolio = get_portfolio_or_404(portfolio_id, current_user_id)
-    data = request.get_json()
+    json_data = request.get_json()
+    if not json_data:
+        abort(400, description="Request body cannot be empty.")
 
-    required_fields = ['asset_type']
-    # Require one and only one allocation type
-    allocation_percentage = data.get('allocation_percentage')
-    allocation_value = data.get('allocation_value')
-
-    if not data or not all(field in data for field in required_fields):
-        abort(400, description="Missing required fields (e.g., 'asset_type').")
-    if (allocation_percentage is None and allocation_value is None) or \
-       (allocation_percentage is not None and allocation_value is not None):
-        abort(400, description="Exactly one of 'allocation_percentage' or 'allocation_value' must be provided.")
+    # Validate using Pydantic (includes allocation exclusivity check)
+    try:
+        asset_data = AssetCreateSchema.parse_obj(json_data)
+    except ValidationError as e:
+        abort(400, description=e.errors())
 
     try:
         new_asset = Asset(
             portfolio_id=portfolio.portfolio_id,
-            asset_type=data['asset_type'],
-            name_or_ticker=data.get('name_or_ticker'),
-            allocation_percentage=Decimal(allocation_percentage) if allocation_percentage is not None else None,
-            allocation_value=Decimal(allocation_value) if allocation_value is not None else None,
-            manual_expected_return=Decimal(data['manual_expected_return']) if data.get('manual_expected_return') is not None else None
+            **asset_data.dict()
         )
-        # Add validation for percentage range (0-100) if needed
-        # if new_asset.allocation_percentage is not None and not (0 <= new_asset.allocation_percentage <= 100):
-        #     abort(400, description="Allocation percentage must be between 0 and 100.")
-
         db.session.add(new_asset)
         db.session.commit()
-        return jsonify(new_asset.to_dict()), 201
-    except (InvalidOperation, ValueError) as e:
+        db.session.refresh(new_asset)
+        # Serialize output
+        return jsonify(AssetSchema.from_orm(new_asset).dict()), 201
+    except (InvalidOperation, ValueError) as e: # Should be caught by Pydantic, but keep as safety
+         db.session.rollback()
          abort(400, description=f"Invalid numeric value provided: {e}")
+    except Exception as e:
+         db.session.rollback()
+         abort(500, description=f"Error adding asset: {e}")
 
 
 @portfolios_bp.route('/<int:portfolio_id>/assets/<int:asset_id>', methods=['PUT', 'PATCH'])
-@jwt_required()
-def update_asset(portfolio_id, asset_id):
+@verify_portfolio_ownership
+def update_asset(portfolio_id, asset_id, portfolio):
     """Updates an existing asset within a portfolio."""
-    current_user_id = int(get_jwt_identity())
-    portfolio = get_portfolio_or_404(portfolio_id, current_user_id)
     asset = get_asset_or_404(portfolio, asset_id)
-    data = request.get_json()
-
-    if not data:
+    json_data = request.get_json()
+    if not json_data:
         abort(400, description="Request body cannot be empty for update.")
 
+    # Validate input
     try:
-        # Track if allocation type is changing to maintain exclusivity
-        allocation_type_changing = ('allocation_percentage' in data or 'allocation_value' in data)
+        update_data = AssetUpdateSchema.parse_obj(json_data)
+    except ValidationError as e:
+        abort(400, description=e.errors())
 
-        if 'asset_type' in data:
-            asset.asset_type = data['asset_type']
-        if 'name_or_ticker' in data:
-            asset.name_or_ticker = data['name_or_ticker']
+    validated_dict = update_data.dict(exclude_unset=True)
 
-        if 'allocation_percentage' in data:
-            if data['allocation_percentage'] is None:
-                 asset.allocation_percentage = None
-            else:
-                asset.allocation_percentage = Decimal(data['allocation_percentage'])
-                asset.allocation_value = None # Ensure exclusivity
-        if 'allocation_value' in data:
-            if data['allocation_value'] is None:
-                 asset.allocation_value = None
-            else:
-                asset.allocation_value = Decimal(data['allocation_value'])
-                asset.allocation_percentage = None # Ensure exclusivity
+    try:
+        # Update fields
+        allocation_updated = False
+        for key, value in validated_dict.items():
+            setattr(asset, key, value)
+            # If one allocation type is set, unset the other
+            if key == 'allocation_percentage' and value is not None:
+                asset.allocation_value = None
+                allocation_updated = True
+            elif key == 'allocation_value' and value is not None:
+                asset.allocation_percentage = None
+                allocation_updated = True
 
-        if 'manual_expected_return' in data:
-            asset.manual_expected_return = Decimal(data['manual_expected_return']) if data['manual_expected_return'] is not None else None
-
-        # Re-check exclusivity if not explicitly handled by update logic
-        if not allocation_type_changing and asset.allocation_percentage is not None and asset.allocation_value is not None:
-             # This case should ideally not happen if logic above is correct, but as safety:
-             abort(400, description="Asset cannot have both allocation_percentage and allocation_value set.")
+        # Final validation after updates
         if asset.allocation_percentage is None and asset.allocation_value is None:
+             # This might happen if user PATCHes both to null, which might be invalid
              abort(400, description="Asset must have either allocation_percentage or allocation_value set.")
 
         db.session.commit()
-        return jsonify(asset.to_dict()), 200
+        db.session.refresh(asset)
+        # Serialize output
+        return jsonify(AssetSchema.from_orm(asset).dict()), 200
     except (InvalidOperation, ValueError) as e:
+         db.session.rollback()
          abort(400, description=f"Invalid numeric value provided: {e}")
+    except Exception as e:
+         db.session.rollback()
+         abort(500, description=f"Error updating asset: {e}")
 
 
 @portfolios_bp.route('/<int:portfolio_id>/assets/<int:asset_id>', methods=['DELETE'])
-@jwt_required()
-def delete_asset(portfolio_id, asset_id):
+@verify_portfolio_ownership
+def delete_asset(portfolio_id, asset_id, portfolio):
     """Deletes an asset from a portfolio."""
-    current_user_id = int(get_jwt_identity())
-    portfolio = get_portfolio_or_404(portfolio_id, current_user_id)
     asset = get_asset_or_404(portfolio, asset_id)
-
-    db.session.delete(asset)
-    db.session.commit()
-    return jsonify({"message": "Asset deleted successfully"}), 200 # Or 204
+    try:
+        db.session.delete(asset)
+        db.session.commit()
+        return jsonify({"message": "Asset deleted successfully"}), 200
+    except Exception as e:
+         db.session.rollback()
+         abort(500, description=f"Error deleting asset: {e}")
 
 
 # --- Planned Future Change Routes (Task 5.5) ---
 
 @portfolios_bp.route('/<int:portfolio_id>/changes', methods=['POST'])
-@jwt_required()
-def add_planned_change(portfolio_id):
+@verify_portfolio_ownership
+def add_planned_change(portfolio_id, portfolio):
     """Adds a new planned future change to a specific portfolio."""
-    current_user_id = int(get_jwt_identity())
-    portfolio = get_portfolio_or_404(portfolio_id, current_user_id)
-    data = request.get_json()
+    json_data = request.get_json()
+    if not json_data:
+        abort(400, description="Request body cannot be empty.")
 
-    required_fields = ['change_type', 'change_date']
-    if not data or not all(field in data for field in required_fields):
-        abort(400, description="Missing required fields ('change_type', 'change_date').")
-
+    # Validate input using Pydantic schema (includes type/amount check)
     try:
-        change_date_obj = date.fromisoformat(data['change_date'])
-    except (ValueError, TypeError):
-        abort(400, description="Invalid date format for 'change_date'. Use YYYY-MM-DD.")
+        change_data = PlannedChangeCreateSchema.parse_obj(json_data)
+    except ValidationError as e:
+        abort(400, description=e.errors())
+    # Removed manual date parsing & type/amount checks - handled by schema
 
     try:
         new_change = PlannedFutureChange(
             portfolio_id=portfolio.portfolio_id,
-            change_type=data['change_type'],
-            change_date=change_date_obj,
-            amount=Decimal(data['amount']) if data.get('amount') is not None else None,
-            description=data.get('description')
+            **change_data.dict()
         )
         db.session.add(new_change)
         db.session.commit()
-        return jsonify(new_change.to_dict()), 201
-    except (InvalidOperation, ValueError) as e:
-         abort(400, description=f"Invalid numeric value for 'amount': {e}")
+        db.session.refresh(new_change)
+        # Serialize output
+        return jsonify(PlannedChangeSchema.from_orm(new_change).dict(by_alias=True)), 201
+    except (InvalidOperation, ValueError) as e: # Should be caught by Pydantic
+        db.session.rollback()
+        abort(400, description=f"Invalid numeric value for 'amount': {e}")
+    except Exception as e:
+        db.session.rollback()
+        abort(500, description=f"Error adding planned change: {e}")
+
 
 @portfolios_bp.route('/<int:portfolio_id>/changes/<int:change_id>', methods=['PUT', 'PATCH'])
-@jwt_required()
-def update_planned_change(portfolio_id, change_id):
-    """Updates an existing planned future change within a portfolio."""
-    current_user_id = int(get_jwt_identity())
-    portfolio = get_portfolio_or_404(portfolio_id, current_user_id)
+@verify_portfolio_ownership
+def update_planned_change(portfolio_id, change_id, portfolio):
+    """Updates an existing planned change within a portfolio."""
     change = get_change_or_404(portfolio, change_id)
-    data = request.get_json()
-
-    if not data:
+    json_data = request.get_json()
+    if not json_data:
         abort(400, description="Request body cannot be empty for update.")
 
+    # Validate input
     try:
-        if 'change_type' in data:
-            change.change_type = data['change_type']
-        if 'change_date' in data:
-            try:
-                change.change_date = date.fromisoformat(data['change_date'])
-            except (ValueError, TypeError):
-                abort(400, description="Invalid date format for 'change_date'. Use YYYY-MM-DD.")
-        if 'amount' in data:
-             change.amount = Decimal(data['amount']) if data['amount'] is not None else None
-        if 'description' in data:
-            change.description = data['description']
+        update_data = PlannedChangeUpdateSchema.parse_obj(json_data)
+    except ValidationError as e:
+        abort(400, description=e.errors())
+    # Removed manual date parsing
+
+    validated_dict = update_data.dict(exclude_unset=True)
+
+    try:
+        # Update model fields
+        for key, value in validated_dict.items():
+            setattr(change, key, value)
+
+        # Re-validate consistency after potential updates
+        # (Pydantic validator on update schema might not catch all cases if fields are missing)
+        if change.change_type in ['Contribution', 'Withdrawal'] and change.amount is None:
+            abort(400, description=f"'{change.change_type}' requires an 'amount'.")
+        if change.change_type == 'Reallocation' and change.amount is not None:
+            abort(400, description="'Reallocation' change type should not include an 'amount'.")
 
         db.session.commit()
-        return jsonify(change.to_dict()), 200
-    except (InvalidOperation, ValueError) as e:
+        db.session.refresh(change)
+        # Serialize output
+        return jsonify(PlannedChangeSchema.from_orm(change).dict(by_alias=True)), 200
+    except (InvalidOperation, ValueError) as e: # Should be caught by Pydantic
+        db.session.rollback()
         abort(400, description=f"Invalid numeric value for 'amount': {e}")
+    except Exception as e:
+        db.session.rollback()
+        abort(500, description=f"Error updating planned change: {e}")
 
 
 @portfolios_bp.route('/<int:portfolio_id>/changes/<int:change_id>', methods=['DELETE'])
-@jwt_required()
-def delete_planned_change(portfolio_id, change_id):
-    """Deletes a planned future change from a portfolio."""
-    current_user_id = int(get_jwt_identity())
-    portfolio = get_portfolio_or_404(portfolio_id, current_user_id)
+@verify_portfolio_ownership
+def delete_planned_change(portfolio_id, change_id, portfolio):
+    """Deletes a planned change from a portfolio."""
     change = get_change_or_404(portfolio, change_id)
-
-    db.session.delete(change)
-    db.session.commit()
-    return jsonify({"message": "Planned change deleted successfully"}), 200 # Or 204 
+    try:
+        db.session.delete(change)
+        db.session.commit()
+        return jsonify({"message": "Planned change deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        abort(500, description=f"Error deleting planned change: {e}") 
