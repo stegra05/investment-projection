@@ -64,11 +64,11 @@ This WBS breaks down the high-level tasks from the project README [cite: 98] int
     - 8.7. Implement UI for password reset flow [DONE - Placeholders]
 
 ## 9. Frontend Portfolio Input/Management UI (T9) [cite: 122]
-    - 9.1. Create UI components for displaying list of portfolios
-    - 9.2. Create UI form/component for creating/editing a portfolio
-    - 9.3. Create UI components for adding/editing assets within a portfolio [cite: 40, 41]
-    - 9.4. Create UI components for defining/editing planned future changes [cite: 44]
-    - 9.5. Integrate UI components with backend Portfolio/Asset/Change APIs [cite: 128]
+    - 9.1. Create UI components for displaying list of portfolios [DONE]
+    - 9.2. Create UI form/component for creating/editing a portfolio [DONE]
+    - 9.3. Create UI components for adding/editing assets within a portfolio [cite: 40, 41] [DONE]
+    - 9.4. Create UI components for defining/editing planned future changes [cite: 44] [DONE]
+    - 9.5. Integrate UI components with backend Portfolio/Asset/Change APIs [cite: 128] [DONE]
 
 ## 10. Frontend Projection Visualization Display (T10) [cite: 125]
     - 10.1. Select and install a charting library (e.g., Chart.js, Recharts)

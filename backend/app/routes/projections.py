@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from decimal import Decimal, InvalidOperation
 import datetime
@@ -103,10 +103,10 @@ def create_portfolio_projection(portfolio_id):
         return jsonify({"message": "Invalid format for initial_total_value. Please provide a valid decimal string."}), 400
 
     # --- Authorization Check: Ensure user owns the portfolio --- 
-    portfolio = Portfolio.query.filter_by(id=portfolio_id, user_id=current_user_id).first()
+    portfolio = Portfolio.query.filter_by(portfolio_id=portfolio_id, user_id=current_user_id).first()
     if not portfolio:
         # Distinguish between not found and not authorized
-        if Portfolio.query.filter_by(id=portfolio_id).first():
+        if Portfolio.query.filter_by(portfolio_id=portfolio_id).first():
              return jsonify({"message": "Forbidden: You do not own this portfolio."}), 403
         else:
              return jsonify({"message": "Portfolio not found."}), 404
@@ -137,5 +137,9 @@ def create_portfolio_projection(portfolio_id):
         return jsonify({"message": f"Error calculating projection: {e}"}), 400 
     except Exception as e:
         # Catch-all for unexpected errors during calculation
-        print(f"ERROR calculating projection for portfolio {portfolio_id}: {e}") # Log the error
-        return jsonify({"message": "An internal error occurred during projection calculation."}), 500 
+        current_app.logger.exception(f"Error calculating projection for portfolio {portfolio_id}")
+        # Return exception details for debugging
+        return jsonify({
+            "message": "An internal error occurred during projection calculation.",
+            "error": str(e)
+        }), 500 

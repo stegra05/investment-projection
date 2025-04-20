@@ -4,6 +4,7 @@ import { getPortfolio } from '../services/portfolioService';
 import assetService from '../services/assetService';
 import axios from 'axios';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import ProjectionChart from '../components/ProjectionChart';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
 
@@ -380,6 +381,10 @@ export default function PortfolioDetailPage() {
             ))}
           </ul>
         )}
+      </section>
+      <section style={{ marginTop: 'var(--space-xxl)' }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Projection</h2>
+        <ProjectionChart portfolioId={id} />
       </section>
     </main>
   );

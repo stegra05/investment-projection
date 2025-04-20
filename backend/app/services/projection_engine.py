@@ -50,7 +50,7 @@ def calculate_projection(portfolio_id: int, start_date: datetime.date, end_date:
     # --- 1. Fetch Data --- 
     portfolio = Portfolio.query.options(
         joinedload(Portfolio.assets),
-        joinedload(Portfolio.planned_future_changes)
+        joinedload(Portfolio.planned_changes)
     ).get(portfolio_id)
 
     if not portfolio:
@@ -58,7 +58,7 @@ def calculate_projection(portfolio_id: int, start_date: datetime.date, end_date:
 
     assets = portfolio.assets
     # Fetch all changes associated with the portfolio. Filtering happens in the loop.
-    planned_changes = portfolio.planned_future_changes
+    planned_changes = portfolio.planned_changes
 
     # Pre-process planned changes for efficient lookup
     changes_by_month = {}
@@ -99,7 +99,7 @@ def calculate_projection(portfolio_id: int, start_date: datetime.date, end_date:
         # this logic needs adjustment. The caller/API layer should ensure
         # initial_total_value is provided if needed.
 
-        current_asset_values[asset.id] = initial_value
+        current_asset_values[asset.asset_id] = initial_value
         calculated_initial_total += initial_value
 
         # Calculate Monthly Asset Returns (R_step_i)
@@ -113,7 +113,7 @@ def calculate_projection(portfolio_id: int, start_date: datetime.date, end_date:
             except (InvalidOperation, TypeError):
                  # Handle potential invalid decimal conversion or if None sneaks through
                 monthly_return = Decimal('0.0')
-        monthly_asset_returns[asset.id] = monthly_return
+        monthly_asset_returns[asset.asset_id] = monthly_return
 
     # Optional Validation: Check if sum of initial asset values matches initial_total_value
     tolerance = Decimal('0.01') # Adjust tolerance as needed
