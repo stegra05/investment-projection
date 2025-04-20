@@ -1,5 +1,6 @@
 import React from 'react';
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import styles from './ChangeList.module.css'; // Import CSS Module
 
 /**
  * Represents a single planned future change item in the ChangeList.
@@ -31,23 +32,24 @@ function ChangeListItem({ change, onEdit, onDelete }) {
   // Format amount (consider currency formatting later)
   const formatAmount = (amount) => {
       if (amount == null) return 'N/A';
-      return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      // Use Intl.NumberFormat for better localization and currency handling later
+      return parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   return (
-    <li style={styles.listItem}>
-      <div style={styles.changeDetails}>
-        <strong style={styles.changeType}>{change.change_type}</strong>
-        <span style={styles.changeDate}>Date: {formatDate(change.change_date)}</span>
-        <span style={styles.changeAmount}>Amount: {formatAmount(change.amount)}</span>
-        {change.description && <p style={styles.changeDescription}>Description: {change.description}</p>}
+    <li className={styles.listItem}>
+      <div className={styles.changeDetails}>
+        <strong className={styles.changeType}>{change.change_type}</strong>
+        <span className={styles.changeDate}>Date: {formatDate(change.change_date)}</span>
+        <span className={styles.changeAmount}>Amount: {formatAmount(change.amount)}</span>
+        {change.description && <p className={styles.changeDescription}>Description: {change.description}</p>}
       </div>
-      <div style={styles.actions}>
-        <button onClick={() => onEdit(change)} style={styles.actionButton} aria-label={`Edit change on ${formatDate(change.change_date)}`}>
-          <PencilIcon style={{ ...styles.icon, color: 'var(--color-text-secondary-light)' }} />
+      <div className={styles.actions}>
+        <button onClick={() => onEdit(change)} className={styles.actionButton} aria-label={`Edit change on ${formatDate(change.change_date)}`}>
+          <PencilIcon className={`${styles.icon} ${styles.iconEdit}`} />
         </button>
-        <button onClick={() => onDelete(change)} style={styles.actionButton} aria-label={`Delete change on ${formatDate(change.change_date)}`}>
-          <TrashIcon style={{ ...styles.icon, color: 'var(--color-error-light)' }} />
+        <button onClick={() => onDelete(change)} className={styles.actionButton} aria-label={`Delete change on ${formatDate(change.change_date)}`}>
+          <TrashIcon className={`${styles.icon} ${styles.iconDelete}`} />
         </button>
       </div>
     </li>
@@ -68,11 +70,11 @@ function ChangeListItem({ change, onEdit, onDelete }) {
  */
 export default function ChangeList({ changes, onEdit, onDelete }) {
   if (!changes || changes.length === 0) {
-    return <p style={styles.noItemsText}>No planned changes have been added yet.</p>;
+    return <p className={styles.noItemsText}>No planned changes have been added yet.</p>;
   }
 
   return (
-    <ul style={styles.list}>
+    <ul className={styles.list}>
       {changes.map((change) => (
         <ChangeListItem key={change.change_id} change={change} onEdit={onEdit} onDelete={onDelete} />
       ))}
@@ -80,71 +82,4 @@ export default function ChangeList({ changes, onEdit, onDelete }) {
   );
 }
 
-// Shared styles - identical to AssetList for now, could be abstracted
-const styles = {
-    list: {
-      listStyle: 'none',
-      padding: 0,
-      marginTop: 'var(--space-m)',
-    },
-    listItem: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start', // Align items to the top for potentially multi-line descriptions
-      padding: 'var(--space-m)',
-      border: '1px solid var(--color-border-light)',
-      borderRadius: '4px',
-      marginBottom: 'var(--space-s)',
-      background: 'var(--color-ui-background-light)',
-    },
-    changeDetails: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 'var(--space-xxs)',
-      flexGrow: 1,
-      marginRight: 'var(--space-m)', // Add margin to prevent text touching buttons
-    },
-    changeType: {
-      fontWeight: 600,
-      fontSize: '1rem',
-      color: 'var(--color-text-primary-light)',
-    },
-    changeDate: {
-      fontSize: '0.875rem',
-      color: 'var(--color-text-secondary-light)',
-    },
-    changeAmount: {
-      fontSize: '0.875rem',
-      color: 'var(--color-text-secondary-light)',
-      fontVariantNumeric: 'tabular-nums',
-    },
-    changeDescription: {
-        fontSize: '0.875rem',
-        color: 'var(--color-text-secondary-light)',
-        margin: 'var(--space-xs) 0 0 0', // Add some top margin
-        lineHeight: 1.4,
-    },
-    actions: {
-      display: 'flex',
-      gap: 'var(--space-s)',
-      flexShrink: 0, // Prevent actions from shrinking
-    },
-    actionButton: {
-      background: 'transparent',
-      border: 'none',
-      cursor: 'pointer',
-      padding: 'var(--space-xxs)',
-    },
-    icon: {
-      width: '1rem',
-      height: '1rem',
-    },
-    noItemsText: {
-        padding: 'var(--space-m)',
-        textAlign: 'center',
-        color: 'var(--color-text-secondary-light)',
-        border: '1px dashed var(--color-border-light)',
-        borderRadius: '4px',
-        marginTop: 'var(--space-m)',
-    }
-  }; 
+// Removed inline styles object 

@@ -1,0 +1,117 @@
+/* Styles for PortfolioDetailPage.module.css */
+
+.main {
+    margin: var(--space-xl) auto;
+    padding: var(--space-l);
+    max-width: 800px; /* Adjust as needed */
+    color: var(--color-text-primary);
+    /* Consider adding a background if needed to contrast app background */
+    /* background-color: var(--color-ui-background); */
+    /* border-radius: 8px; */
+}
+
+.pageTitle {
+    /* H1 styles from typography DLS rule */
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: var(--space-xs);
+    color: var(--color-text-primary);
+}
+
+.portfolioDescription {
+    /* Body text styles */
+    margin-bottom: var(--space-xl);
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+.section {
+    margin-bottom: var(--space-xxl);
+}
+
+.sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-m);
+    padding-bottom: var(--space-s);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.sectionTitle {
+    /* H2 styles from typography DLS rule */
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 0;
+    color: var(--color-text-primary);
+}
+
+/* Follows Button DLS rule - Secondary Variant */
+.addButton {
+    /* Base resets (assuming not handled globally) */
+    appearance: none;
+    text-decoration: none;
+    text-align: center;
+    font-family: inherit;
+
+    /* Layout */
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+
+    /* Style */
+    background-color: transparent;
+    border: 1px solid var(--color-primary);
+    color: var(--color-primary);
+    padding: var(--space-s) var(--space-m); /* Use consistent button padding */
+    border-radius: 6px; /* Standard radius */
+    font-size: 0.875rem; /* Or 1rem if preferred */
+    font-weight: 500; /* Medium weight */
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.addButton:hover {
+     /* Hover for secondary button */
+     background-color: rgba(var(--color-primary-rgb), 0.1); /* Needs --color-primary-rgb */
+}
+
+.addButton:focus,
+.addButton:focus-visible {
+     /* Focus for secondary button */
+     outline: 2px solid var(--color-primary);
+     outline-offset: 2px;
+     /* box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.3); */
+}
+
+.addButtonIcon {
+    width: 1rem;
+    height: 1rem;
+    display: block;
+}
+
+.loadingText {
+    padding: var(--space-xl);
+    text-align: center;
+    font-size: 1.25rem; /* H3-ish size */
+    color: var(--color-text-secondary);
+}
+
+/* Common error message style */
+.errorText {
+    padding: var(--space-l);
+    color: var(--color-error); /* Use theme-aware error color */
+    /* Use RGBA for background transparency - Define --color-error-rgb if possible */
+    /* background: rgba(var(--color-error-rgb), 0.1); */
+    background: rgba(222, 53, 11, 0.1); /* Fallback light mode - needs dark mode adjustment */
+    border: 1px solid var(--color-error);
+    border-radius: 4px;
+    text-align: center;
+    margin-bottom: var(--space-l);
+}
+
+/* Add dark mode adjustments for error background if needed */
+/* html[data-theme='dark'] .errorText { ... } */ 

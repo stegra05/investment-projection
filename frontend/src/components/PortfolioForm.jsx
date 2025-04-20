@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getPortfolioById, createPortfolio, updatePortfolio } from '../services/portfolioService';
+import styles from './PortfolioForm.module.css';
 
 /**
  * A page component for creating a new portfolio or editing an existing one.
@@ -25,6 +26,7 @@ function PortfolioForm() {
 
   useEffect(() => {
     if (isEditing) {
+      setLoading(true);
       getPortfolioById(id)
         .then((data) => {
           setName(data.name);
@@ -34,89 +36,92 @@ function PortfolioForm() {
         })
         .catch((err) => {
           console.error('Failed to load portfolio:', err);
-          setError('Could not load portfolio.');
+          setError('Could not load portfolio details.');
         })
         .finally(() => setLoading(false));
     }
-  }, [id, isEditing]);
+  }, [id, isEditing, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
+      let savedPortfolio;
       if (isEditing) {
-        await updatePortfolio(id, { name, description });
-        navigate(`/portfolios/${id}`);
+        savedPortfolio = await updatePortfolio(id, { name, description });
       } else {
-        await createPortfolio({ name, description });
-        navigate('/portfolios');
+        savedPortfolio = await createPortfolio({ name, description });
       }
+      navigate(`/portfolios/${savedPortfolio.portfolio_id || id}`);
     } catch (err) {
       console.error('Save failed:', err);
-      setError(err.response?.data?.message || 'Save failed');
+      setError(err.response?.data?.message || 'Failed to save portfolio. Please check the details.');
     }
   };
 
   if (loading) {
-    return <p style={{ padding: 'var(--space-l)' }}>Loading...</p>;
+    return <p className={styles.loadingText}>Loading...</p>;
   }
 
   return (
-    <main style={{ margin: 'var(--space-xl) auto', padding: 'var(--space-l)', maxWidth: '600px' }}>
-      <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: 'var(--space-m)' }}>
+    <main className={styles.formContainer}>
+      <h1 className={styles.title}>
         {isEditing ? 'Edit Portfolio' : 'New Portfolio'}
       </h1>
-      {error && <p style={{ color: 'var(--color-error)', marginBottom: 'var(--space-m)' }}>{error}</p>}
+      {error && <p className={styles.errorMessage}>{error}</p>}
+
       {isEditing && (
-        <div style={{ display: 'flex', flexDirection: 'column', marginBottom: 'var(--space-m)' }}>
-          <label htmlFor="createdAt" style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-xs)' }}>Created At</label>
-          <input
-            id="createdAt"
-            type="text"
-            value={createdAt ? new Date(createdAt).toLocaleString() : ''}
-            disabled
-            style={{ padding: 'var(--space-s)', border: '1px solid var(--color-border)', borderRadius: '4px', background: 'var(--color-ui-background)', color: 'var(--color-text-secondary)' }}
-          />
+        <div className={styles.metaInfoContainer}>
+          <div className={styles.formGroup}>
+            <label htmlFor="createdAt" className={styles.label}>Created At</label>
+            <input
+              id="createdAt"
+              type="text"
+              value={createdAt ? new Date(createdAt).toLocaleString() : 'N/A'}
+              disabled
+              className={`${styles.inputField} ${styles.inputFieldDisabled}`}
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label htmlFor="updatedAt" className={styles.label}>Last Updated</label>
+            <input
+              id="updatedAt"
+              type="text"
+              value={updatedAt ? new Date(updatedAt).toLocaleString() : 'N/A'}
+              disabled
+              className={`${styles.inputField} ${styles.inputFieldDisabled}`}
+            />
+          </div>
         </div>
       )}
-      {isEditing && (
-        <div style={{ display: 'flex', flexDirection: 'column', marginBottom: 'var(--space-m)' }}>
-          <label htmlFor="updatedAt" style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-xs)' }}>Last Updated</label>
-          <input
-            id="updatedAt"
-            type="text"
-            value={updatedAt ? new Date(updatedAt).toLocaleString() : ''}
-            disabled
-            style={{ padding: 'var(--space-s)', border: '1px solid var(--color-border)', borderRadius: '4px', background: 'var(--color-ui-background)', color: 'var(--color-text-secondary)' }}
-          />
-        </div>
-      )}
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-m)' }}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <label htmlFor="name" style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-xs)' }}>Name</label>
+
+      <form onSubmit={handleSubmit} className={styles.portfolioForm}>
+        <div className={styles.formGroup}>
+          <label htmlFor="name" className={styles.label}>Name</label>
           <input
             id="name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            style={{ padding: 'var(--space-s)', border: '1px solid var(--color-border)', borderRadius: '4px', background: 'var(--color-ui-background)', color: 'inherit' }}
+            className={styles.inputField}
+            placeholder="e.g., Retirement Savings, House Down Payment"
           />
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <label htmlFor="description" style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-xs)' }}>Description</label>
+
+        <div className={styles.formGroup}>
+          <label htmlFor="description" className={styles.label}>Description (Optional)</label>
           <textarea
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
-            style={{ padding: 'var(--space-s)', border: '1px solid var(--color-border)', borderRadius: '4px', background: 'var(--color-ui-background)', color: 'inherit' }}
+            className={styles.textareaField}
+            placeholder="Add a brief description of this portfolio's purpose..."
           />
         </div>
-        <button
-          type="submit"
-          style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-text-on-primary)', border: 'none', padding: 'var(--space-s)', borderRadius: '4px', fontSize: '1rem', fontWeight: 500, cursor: 'pointer' }}
-        >
+
+        <button type="submit" className={styles.submitButton}>
           {isEditing ? 'Save Changes' : 'Create Portfolio'}
         </button>
       </form>

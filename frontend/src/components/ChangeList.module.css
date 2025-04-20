@@ -1,0 +1,97 @@
+/* Styles for ChangeList.module.css */
+
+.list {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--space-m);
+}
+
+.listItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* Align top for multi-line descriptions */
+    padding: var(--space-m);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    margin-bottom: var(--space-s);
+    background: var(--color-ui-background);
+    transition: background-color 0.15s ease-in-out;
+}
+
+.listItem:hover {
+  background-color: rgba(var(--color-primary-rgb), 0.05); /* Assuming --color-primary-rgb */
+}
+
+.changeDetails {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xxs);
+    flex-grow: 1;
+    margin-right: var(--space-m); /* Keep space from buttons */
+}
+
+.changeType {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--color-text-primary);
+}
+
+.changeDate,
+.changeAmount,
+.changeDescription {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+}
+
+.changeAmount {
+    font-variant-numeric: tabular-nums;
+}
+
+.changeDescription {
+    margin: var(--space-xs) 0 0 0; /* Top margin */
+    line-height: 1.4;
+}
+
+.actions {
+    display: flex;
+    gap: var(--space-s);
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+.actionButton {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: var(--space-xxs);
+    border-radius: 4px;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.actionButton:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    /* Adjust dark mode if needed */
+}
+
+.icon {
+    width: 1rem;
+    height: 1rem;
+    display: block;
+}
+
+.iconEdit {
+    color: var(--color-text-secondary);
+}
+
+.iconDelete {
+    color: var(--color-error);
+}
+
+.noItemsText {
+    padding: var(--space-m);
+    text-align: center;
+    color: var(--color-text-secondary);
+    border: 1px dashed var(--color-border);
+    border-radius: 4px;
+    margin-top: var(--space-m);
+    background-color: rgba(var(--color-border-rgb), 0.1); /* Assuming --color-border-rgb */
+} 

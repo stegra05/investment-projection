@@ -1,0 +1,138 @@
+/* Styles for RegistrationPage.module.css */
+/* Reusing styles from LoginPage.module.css where possible */
+/* Import common styles if abstracted later: @import '../styles/forms.css'; */
+
+.registrationContainer {
+    margin: var(--space-xl) auto;
+    padding: var(--space-l);
+    background-color: var(--color-ui-background);
+    color: var(--color-text-primary);
+    border-radius: 8px;
+    max-width: 400px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+    font-size: 2rem; /* H1 */
+    font-weight: 700;
+    margin-bottom: var(--space-m);
+    text-align: center;
+}
+
+.errorMessage {
+    color: var(--color-error);
+    background-color: rgba(var(--color-error-rgb), 0.1); /* Needs --color-error-rgb */
+    border: 1px solid var(--color-error);
+    padding: var(--space-s);
+    margin-bottom: var(--space-m);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+.registrationForm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-m);
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+}
+
+.label {
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-xs);
+}
+
+.inputGroup {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-s);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background-color: var(--color-ui-background);
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.inputGroup:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2); /* Needs --color-primary-rgb */
+}
+
+.inputIcon {
+    width: 1rem;
+    height: 1rem;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+}
+
+.inputField {
+    background: transparent;
+    border: none;
+    outline: none;
+    width: 100%;
+    color: inherit;
+    font-size: 1rem;
+    padding: 0;
+}
+
+.inputField::placeholder {
+    color: var(--color-text-secondary);
+    opacity: 0.7;
+}
+
+.submitButton {
+    appearance: none;
+    font-family: inherit;
+    text-align: center;
+    background-color: var(--color-primary);
+    color: var(--color-text-on-primary);
+    padding: var(--space-s) var(--space-m);
+    font-size: 1rem;
+    font-weight: 500;
+    border: 1px solid var(--color-primary);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.submitButton:hover {
+    background-color: #04337a; /* Darker primary - define var */
+    border-color: #04337a;
+}
+
+.submitButton:focus,
+.submitButton:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.submitButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: var(--color-border);
+    border-color: var(--color-border);
+    color: var(--color-text-secondary);
+}
+
+.linkText {
+    margin-top: var(--space-m);
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+
+.link {
+    color: var(--color-primary);
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+.link:hover {
+    text-decoration: none;
+} 

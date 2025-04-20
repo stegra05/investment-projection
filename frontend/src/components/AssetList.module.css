@@ -1,0 +1,96 @@
+.list {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--space-m);
+}
+
+.listItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-m);
+    border: 1px solid var(--color-border); /* Use theme-aware var */
+    border-radius: 4px; /* Consider --border-radius-medium if defined */
+    margin-bottom: var(--space-s);
+    background: var(--color-ui-background); /* Use theme-aware var */
+}
+
+/* Add hover effect for list items */
+.listItem:hover {
+  background-color: rgba(var(--color-primary-rgb), 0.05); /* Assuming --color-primary-rgb is defined */
+  /* Or define a specific hover background color variable */
+}
+
+
+.assetDetails {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xxs);
+}
+
+.assetName {
+    font-weight: 600; /* Semi-bold */
+    font-size: 1rem;
+    color: var(--color-text-primary); /* Use theme-aware var */
+}
+
+.assetType {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary); /* Use theme-aware var */
+}
+
+.allocation {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary); /* Use theme-aware var */
+    font-variant-numeric: tabular-nums;
+}
+
+.expectedReturn {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary); /* Use theme-aware var */
+    font-variant-numeric: tabular-nums;
+}
+
+.actions {
+    display: flex;
+    gap: var(--space-s);
+}
+
+.actionButton {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: var(--space-xxs); /* Small padding for click area */
+    border-radius: 4px; /* Add radius for consistency */
+    transition: background-color 0.15s ease-in-out; /* Add hover transition */
+}
+
+.actionButton:hover {
+    background-color: rgba(0, 0, 0, 0.05); /* Subtle hover */
+    /* Adjust for dark mode if needed */
+}
+
+.icon {
+    width: 1rem;
+    height: 1rem;
+    display: block; /* Prevent potential inline spacing issues */
+}
+
+/* Specific icon colors */
+.iconEdit {
+    color: var(--color-text-secondary); /* Use theme-aware secondary */
+}
+
+.iconDelete {
+    color: var(--color-error); /* Use theme-aware error */
+}
+
+.noItemsText {
+    padding: var(--space-m);
+    text-align: center;
+    color: var(--color-text-secondary); /* Use theme-aware var */
+    border: 1px dashed var(--color-border); /* Use theme-aware var */
+    border-radius: 4px;
+    margin-top: var(--space-m);
+    background-color: rgba(var(--color-border-rgb), 0.1); /* Subtle background, assuming --color-border-rgb exists */
+} 

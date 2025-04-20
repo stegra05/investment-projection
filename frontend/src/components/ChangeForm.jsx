@@ -2,8 +2,17 @@ import React, { useState, useEffect } from 'react';
 // import axios from 'axios'; // Use apiClient instead
 import apiClient from '../services/apiClient'; // Import the shared apiClient
 import { PlusIcon } from '@heroicons/react/24/outline';
+import styles from './ChangeForm.module.css'; // Import CSS Module
 
 // const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'; // Handled by apiClient
+
+// Enum for ChangeType might be better defined elsewhere and imported
+const changeTypeOptions = [
+    'Contribution',
+    'Withdrawal',
+    'Rebalance', // Example, adjust based on actual needs
+    // Add other common types
+];
 
 /**
  * A form component for creating or editing a planned future change within a portfolio.
@@ -26,38 +35,38 @@ export default function ChangeForm({ portfolioId, existingChange = null, onSaved
   const [changeDate, setChangeDate] = useState('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
-  const [loading, setLoading] = useState(isEditing);
   const [error, setError] = useState('');
-  const token = localStorage.getItem('token');
 
   useEffect(() => {
     if (isEditing && existingChange) {
       setChangeType(existingChange.change_type || '');
       // Ensure date is in yyyy-mm-dd format for input type="date"
       setChangeDate(existingChange.change_date ? new Date(existingChange.change_date).toISOString().split('T')[0] : '');
-      setAmount(existingChange.amount ?? '');
-      setDescription(existingChange.description ?? '');
-      setLoading(false);
+      setAmount(existingChange.amount != null ? String(existingChange.amount) : ''); // Handle null/undefined amount, ensure string
+      setDescription(existingChange.description || '');
     } else {
         // Reset form for adding new
         setChangeType('');
         setChangeDate('');
         setAmount('');
         setDescription('');
-        setLoading(false);
     }
+    setError(''); // Clear error when form initializes or existingChange changes
   }, [existingChange, isEditing]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    // No need to check token explicitly, apiClient handles it
-    // if (!token) {
-    //     setError('Authentication error. Please log in again.');
-    //     return;
-    // }
-    if (!changeType || !changeDate || amount === '') {
+
+    // Validate required fields
+    if (!changeType || !changeDate || amount === '') { // Ensure amount is not an empty string
         setError('Change Type, Date, and Amount are required fields.');
+        return;
+    }
+
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount)) {
+        setError('Amount must be a valid number.');
         return;
     }
 
@@ -65,10 +74,9 @@ export default function ChangeForm({ portfolioId, existingChange = null, onSaved
       const payload = {
         change_type: changeType,
         change_date: changeDate,
-        amount: parseFloat(amount),
-        description,
+        amount: parsedAmount, // Send parsed number
+        description, // Use shorthand
       };
-      // const config = { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } }; // Not needed with apiClient
 
       if (isEditing && existingChange) {
         await apiClient.put(`/portfolios/${portfolioId}/changes/${existingChange.change_id}`, payload);
@@ -84,75 +92,85 @@ export default function ChangeForm({ portfolioId, existingChange = null, onSaved
     }
   };
 
-  if (loading) {
-    return <p>Loading change details...</p>;
-  }
-
   return (
-    <form onSubmit={handleSubmit} style={{ marginBottom: 'var(--space-l)', border: '1px solid var(--color-border-light)', padding: 'var(--space-m)', borderRadius: '4px', background: 'var(--color-ui-background-light)' }}>
-      <h3 style={{ marginTop: 0, marginBottom: 'var(--space-m)', fontSize: '1.25rem', fontWeight: 600 }}>
+    <form onSubmit={handleSubmit} className={styles.formContainer}>
+      <h3 className={styles.formTitle}>
         {isEditing ? 'Edit Planned Change' : 'Add New Planned Change'}
       </h3>
-      {error && <p style={{ color: 'var(--color-error-light)', marginBottom: 'var(--space-m)', background: 'rgba(222, 53, 11, 0.1)', padding: 'var(--space-s)', borderRadius: '4px' }}>{error}</p>}
+      {error && <p className={styles.errorMessage}>{error}</p>}
 
-      <div style={{ marginBottom: 'var(--space-m)' }}>
-        <label style={{ display: 'block', marginBottom: 'var(--space-xs)', fontSize: '0.875rem', color: 'var(--color-text-secondary-light)' }}>Change Type*</label>
+      {/* Change Type Input (Using Select) */}
+      <div className={styles.formGroup}>
+        <label htmlFor="changeType" className={styles.label}>Change Type*</label>
+        {/* Consider using a <select> for predefined types */}
         <input
-          type="text"
-          placeholder="e.g., Contribution, Withdrawal, Rebalance"
+          id="changeType"
+          type="text" 
+          list="changeTypeOptions"
+          placeholder="e.g., Contribution, Withdrawal" // Updated placeholder
           value={changeType}
           onChange={(e) => setChangeType(e.target.value)}
           required
-          style={{ width: '100%', padding: 'var(--space-s)', border: '1px solid var(--color-border-light)', borderRadius: '4px', background: 'var(--color-ui-background-light)', color: 'var(--color-text-primary-light)' }}
+          className={styles.inputField}
         />
+         <datalist id="changeTypeOptions">
+            {changeTypeOptions.map(option => <option key={option} value={option} />)}
+        </datalist>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-m)', marginBottom: 'var(--space-m)' }}>
-        <div>
-            <label style={{ display: 'block', marginBottom: 'var(--space-xs)', fontSize: '0.875rem', color: 'var(--color-text-secondary-light)' }}>Date*</label>
+      {/* Date and Amount Inputs (Grid Layout) */}
+      <div className={styles.gridContainer}>
+        <div className={styles.formGroup}>
+            <label htmlFor="changeDate" className={styles.label}>Date*</label>
             <input
+              id="changeDate"
               type="date"
               value={changeDate}
               onChange={(e) => setChangeDate(e.target.value)}
               required
-              style={{ width: '100%', padding: 'var(--space-s)', border: '1px solid var(--color-border-light)', borderRadius: '4px', background: 'var(--color-ui-background-light)', color: 'var(--color-text-primary-light)' }}
+              className={styles.inputField}
             />
         </div>
-        <div>
-            <label style={{ display: 'block', marginBottom: 'var(--space-xs)', fontSize: '0.875rem', color: 'var(--color-text-secondary-light)' }}>Amount*</label>
+        <div className={styles.formGroup}>
+            <label htmlFor="amount" className={styles.label}>Amount*</label>
             <input
-              type="number"
-              placeholder="e.g., 5000, -1000"
+              id="amount"
+              type="number" // Use number type for better input handling
+              step="0.01" // Allow decimals
+              placeholder="e.g., 5000 or -1000" // Updated placeholder
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               required
-              style={{ width: '100%', padding: 'var(--space-s)', border: '1px solid var(--color-border-light)', borderRadius: '4px', background: 'var(--color-ui-background-light)', color: 'var(--color-text-primary-light)', fontVariantNumeric: 'tabular-nums' }}
+              className={`${styles.inputField} ${styles.inputFieldNumeric}`}
             />
         </div>
       </div>
 
-      <div style={{ marginBottom: 'var(--space-l)' }}>
-        <label style={{ display: 'block', marginBottom: 'var(--space-xs)', fontSize: '0.875rem', color: 'var(--color-text-secondary-light)' }}>Description (optional)</label>
+      {/* Description Input */}
+      <div className={styles.formGroup}>
+        <label htmlFor="description" className={styles.label}>Description (Optional)</label>
         <textarea
-          placeholder="e.g., Annual IRA contribution, House down payment"
+          id="description"
+          placeholder="e.g., Annual IRA contribution, House down payment" // Keep placeholder
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={2}
-          style={{ width: '100%', padding: 'var(--space-s)', border: '1px solid var(--color-border-light)', borderRadius: '4px', background: 'var(--color-ui-background-light)', color: 'var(--color-text-primary-light)' }}
+          className={styles.textareaField}
         />
       </div>
 
-      <div style={{ display: 'flex', gap: 'var(--space-s)', justifyContent: 'flex-end' }}>
+      {/* Action Buttons */}
+      <div className={styles.actionsContainer}>
         {onCancel && (
-          <button type="button" onClick={onCancel} style={{ background: 'transparent', border: '1px solid var(--color-border-light)', color: 'var(--color-text-secondary-light)', padding: 'var(--space-s) var(--space-m)', borderRadius: '4px', cursor: 'pointer' }}>
+          <button type="button" onClick={onCancel} className={`${styles.button} ${styles.buttonSecondary}`}>
             Cancel
           </button>
         )}
         <button
           type="submit"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-xs)', backgroundColor: 'var(--color-primary)', color: 'var(--color-text-on-primary-light)', border: 'none', padding: 'var(--space-s) var(--space-m)', borderRadius: '4px', cursor: 'pointer' }}
+          className={`${styles.button} ${styles.buttonPrimary}`}
         >
-          <PlusIcon style={{ width: '1rem', height: '1rem' }} />
+          <PlusIcon className={styles.buttonIcon} />
           {isEditing ? 'Update Change' : 'Add Change'}
         </button>
       </div>

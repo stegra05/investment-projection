@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import assetService from '../services/assetService';
 import { PlusIcon } from '@heroicons/react/24/outline';
+import styles from './AssetForm.module.css'; // Import CSS Module
+
+// Predefined asset types (could be fetched or managed elsewhere)
+const assetTypeOptions = [
+    { value: 'Stock', label: 'Stock' },
+    { value: 'Bond', label: 'Bond' },
+    { value: 'ETF', label: 'ETF' },
+    { value: 'Mutual Fund', label: 'Mutual Fund' },
+    { value: 'Real Estate', label: 'Real Estate' },
+    { value: 'Cash', label: 'Cash/Equivalent' },
+    { value: 'Other', label: 'Other (Custom)' },
+];
 
 /**
  * A form component for creating or editing an asset within a portfolio.
@@ -22,33 +34,34 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaved, 
   const [assetType, setAssetType] = useState('');
   const [customAssetType, setCustomAssetType] = useState('');
   const [ticker, setTicker] = useState('');
-  const [allocationPercentage, setAllocationPercentage] = useState(0);
-  const [expectedReturn, setExpectedReturn] = useState(0);
-  const [loading, setLoading] = useState(isEditing);
+  // Use strings for input values, parse on submit
+  const [allocationPercentage, setAllocationPercentage] = useState('0');
+  const [expectedReturn, setExpectedReturn] = useState('0');
+  // Removed loading state, wasn't really used here
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (isEditing && existingAsset) {
-        if (['Stock', 'Bond'].includes(existingAsset.asset_type)) {
+        const predefinedType = assetTypeOptions.find(opt => opt.value === existingAsset.asset_type);
+        if (predefinedType && existingAsset.asset_type !== 'Other') {
             setAssetType(existingAsset.asset_type);
-            setCustomAssetType(''); // Reset custom type if standard is selected
+            setCustomAssetType(''); // Reset custom type
         } else {
             setAssetType('Other');
-            setCustomAssetType(existingAsset.asset_type);
+            setCustomAssetType(existingAsset.asset_type || ''); // Set custom type if not predefined or explicitly 'Other'
         }
         setTicker(existingAsset.name_or_ticker || '');
-        setAllocationPercentage(existingAsset.allocation_percentage ?? 0);
-        setExpectedReturn(existingAsset.manual_expected_return ?? 0);
-        setLoading(false);
+        setAllocationPercentage(String(existingAsset.allocation_percentage ?? 0));
+        setExpectedReturn(String(existingAsset.manual_expected_return ?? 0));
     } else {
         // Reset form for adding new asset
         setAssetType('');
         setCustomAssetType('');
         setTicker('');
-        setAllocationPercentage(0);
-        setExpectedReturn(0);
-        setLoading(false);
+        setAllocationPercentage('0');
+        setExpectedReturn('0');
     }
+    setError(''); // Clear error on init or change
   }, [existingAsset, isEditing]);
 
 
@@ -59,19 +72,27 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaved, 
       const finalAssetType = assetType === 'Other' ? customAssetType : assetType;
       // Basic validation
       if (!finalAssetType || !ticker) {
-          setError('Asset Type and Name/Ticker are required.');
+          setError('Asset Type and Name/Ticker are required fields.');
           return;
       }
       if (assetType === 'Other' && !customAssetType) {
-          setError('Please specify the custom asset type.');
+          setError('Please specify the custom asset type name when selecting "Other".');
+          return;
+      }
+
+      const parsedAllocation = parseFloat(allocationPercentage);
+      const parsedReturn = parseFloat(expectedReturn);
+
+      if (isNaN(parsedAllocation) || isNaN(parsedReturn)) {
+          setError('Allocation and Expected Return must be valid numbers.');
           return;
       }
 
       const payload = {
         asset_type: finalAssetType,
         name_or_ticker: ticker,
-        allocation_percentage: parseFloat(allocationPercentage) || 0,
-        manual_expected_return: parseFloat(expectedReturn) || 0,
+        allocation_percentage: parsedAllocation,
+        manual_expected_return: parsedReturn,
       };
 
       if (isEditing && existingAsset) {
@@ -86,90 +107,103 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaved, 
     }
   };
 
-  if (loading) {
-    return <p>Loading asset details...</p>;
-  }
+  // No loading check needed here
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginBottom: 'var(--space-l)', border: '1px solid var(--color-border-light)', padding: 'var(--space-m)', borderRadius: '4px', background: 'var(--color-ui-background-light)' }}>
-      <h3 style={{ marginTop: 0, marginBottom: 'var(--space-m)', fontSize: '1.25rem', fontWeight: 600 }}>
+    <form onSubmit={handleSubmit} className={styles.formContainer}>
+      <h3 className={styles.formTitle}>
         {isEditing ? 'Edit Asset' : 'Add New Asset'}
       </h3>
-      {error && <p style={{ color: 'var(--color-error-light)', marginBottom: 'var(--space-m)', background: 'rgba(222, 53, 11, 0.1)', padding: 'var(--space-s)', borderRadius: '4px' }}>{error}</p>}
-      <div style={{ marginBottom: 'var(--space-m)' }}>
-        <label style={{ display: 'block', marginBottom: 'var(--space-xs)', fontSize: '0.875rem', color: 'var(--color-text-secondary-light)' }}>Asset Type*</label>
+      {error && <p className={styles.errorMessage}>{error}</p>}
+
+      {/* Asset Type Select */}
+      <div className={styles.formGroup}>
+        <label htmlFor="assetType" className={styles.label}>Asset Type*</label>
         <select
+          id="assetType"
           value={assetType}
           onChange={(e) => setAssetType(e.target.value)}
           required
-          style={{ width: '100%', padding: 'var(--space-s)', border: '1px solid var(--color-border-light)', borderRadius: '4px', background: 'var(--color-ui-background-light)', color: 'var(--color-text-primary-light)' }}
+          className={styles.selectField} // Use select specific class
         >
           <option value="" disabled>-- Select Asset Type --</option>
-          <option value="Stock">Stock</option>
-          <option value="Bond">Bond</option>
-          {/* Consider adding more common types like ETF, Mutual Fund, Real Estate, Cash? */}
-          <option value="Other">Other (custom)</option>
+          {assetTypeOptions.map(option => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
         </select>
+
+        {/* Custom Asset Type Input (Conditional) */}
         {assetType === 'Other' && (
           <input
             type="text"
-            placeholder="Enter custom asset type"
+            placeholder="Enter custom asset type name (e.g., Cryptocurrency)"
             value={customAssetType}
             onChange={(e) => setCustomAssetType(e.target.value)}
             required={assetType === 'Other'}
-            style={{ width: '100%', padding: 'var(--space-s)', marginTop: 'var(--space-s)', border: '1px solid var(--color-border-light)', borderRadius: '4px', background: 'var(--color-ui-background-light)', color: 'var(--color-text-primary-light)' }}
+            className={`${styles.inputField} ${styles.customTypeInput}`}
           />
         )}
       </div>
-      <div style={{ marginBottom: 'var(--space-m)' }}>
-        <label style={{ display: 'block', marginBottom: 'var(--space-xs)', fontSize: '0.875rem', color: 'var(--color-text-secondary-light)' }}>Name/Ticker*</label>
+
+      {/* Name/Ticker Input */}
+      <div className={styles.formGroup}>
+        <label htmlFor="ticker" className={styles.label}>Name/Ticker*</label>
         <input
+          id="ticker"
           type="text"
           placeholder="e.g., AAPL, VTI, My Rental Property"
           value={ticker}
           onChange={(e) => setTicker(e.target.value)}
           required
-          style={{ width: '100%', padding: 'var(--space-s)', border: '1px solid var(--color-border-light)', borderRadius: '4px', background: 'var(--color-ui-background-light)', color: 'var(--color-text-primary-light)' }}
+          className={styles.inputField}
         />
       </div>
-      <div style={{ marginBottom: 'var(--space-m)' }}>
-        <label style={{ display: 'block', marginBottom: 'var(--space-xs)', fontSize: '0.875rem', color: 'var(--color-text-secondary-light)' }}>Target Allocation (%)</label>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-s)'}}>
+
+      {/* Allocation Range Slider */}
+      <div className={styles.formGroup}>
+        <label htmlFor="allocation" className={styles.label}>Target Allocation (%)</label>
+        <div className={styles.rangeGroup}>
             <input
+              id="allocation"
               type="range"
               min="0" max="100" step="1"
               value={allocationPercentage}
               onChange={(e) => setAllocationPercentage(e.target.value)}
-              style={{ flexGrow: 1, accentColor: 'var(--color-primary)' }}
+              className={styles.rangeInput}
             />
-            <span style={{ fontVariantNumeric: 'tabular-nums', minWidth: '4ch', textAlign: 'right' }}>{allocationPercentage}%</span>
+            <span className={styles.rangeValue}>{allocationPercentage}%</span>
         </div>
       </div>
-      <div style={{ marginBottom: 'var(--space-l)' }}>
-        <label style={{ display: 'block', marginBottom: 'var(--space-xs)', fontSize: '0.875rem', color: 'var(--color-text-secondary-light)' }}>Manual Expected Return (%, optional)</label>
-         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-s)'}}>
+
+      {/* Expected Return Range Slider */}
+      <div className={styles.formGroup}>
+        <label htmlFor="expectedReturn" className={styles.label}>Manual Expected Return (%, optional)</label>
+         <div className={styles.rangeGroup}>
             <input
+              id="expectedReturn"
               type="range"
               min="-10" max="25" step="0.1" // Adjusted range
               value={expectedReturn}
               onChange={(e) => setExpectedReturn(e.target.value)}
-              style={{ flexGrow: 1, accentColor: 'var(--color-primary)' }}
+              className={styles.rangeInput}
             />
-             <span style={{ fontVariantNumeric: 'tabular-nums', minWidth: '5ch', textAlign: 'right' }}>{parseFloat(expectedReturn).toFixed(1)}%</span>
+             <span className={styles.rangeValue}>{parseFloat(expectedReturn).toFixed(1)}%</span>
         </div>
-        <small style={{ display: 'block', marginTop: 'var(--space-xs)', color: 'var(--color-text-secondary-light)'}}>Leave at 0 to let the system estimate (if possible for the asset type).</small>
+        <small className={styles.inputHint}>Leave at 0 to let the system estimate return (if possible for the asset type).</small>
       </div>
-      <div style={{ display: 'flex', gap: 'var(--space-s)', justifyContent: 'flex-end' }}>
+
+      {/* Action Buttons */}
+      <div className={styles.actionsContainer}>
          {onCancel && (
-          <button type="button" onClick={onCancel} style={{ background: 'transparent', border: '1px solid var(--color-border-light)', color: 'var(--color-text-secondary-light)', padding: 'var(--space-s) var(--space-m)', borderRadius: '4px', cursor: 'pointer' }}>
+          <button type="button" onClick={onCancel} className={`${styles.button} ${styles.buttonSecondary}`}>
             Cancel
           </button>
         )}
         <button
           type="submit"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-xs)', backgroundColor: 'var(--color-primary)', color: 'var(--color-text-on-primary-light)', border: 'none', padding: 'var(--space-s) var(--space-m)', borderRadius: '4px', cursor: 'pointer' }}
+          className={`${styles.button} ${styles.buttonPrimary}`}
         >
-          <PlusIcon style={{ width: '1rem', height: '1rem' }} />
+          <PlusIcon className={styles.buttonIcon} />
           {isEditing ? 'Update Asset' : 'Add Asset'}
         </button>
       </div>
