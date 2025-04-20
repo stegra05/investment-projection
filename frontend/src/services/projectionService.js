@@ -1,46 +1,58 @@
-import axios from 'axios';
+import apiClient from './apiClient';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
+// Base URL for the projection endpoints
+// const API_URL = process.env.REACT_APP_API_URL || '/api'; // Handled by apiClient
 
-// Create an axios instance for projection API calls
-const apiClient = axios.create({
-  baseURL: API_URL,
-  headers: { 'Content-Type': 'application/json' },
-});
-
-// Add auth token to each request if available
-apiClient.interceptors.request.use(
-  (config) => {
-    // Debug: log the request details
-    console.debug('[projectionService] Request:', config.method?.toUpperCase(), config.baseURL + config.url);
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+/**
+ * Runs a financial projection based on portfolio and simulation parameters.
+ * @param {object} projectionParams - The parameters for the projection.
+ * @param {string|number} projectionParams.portfolioId - The ID of the portfolio to use.
+ * @param {number} projectionParams.years - The number of years to project.
+ * @param {number} [projectionParams.simulations=1000] - The number of Monte Carlo simulations to run.
+ * @param {number} [projectionParams.contribution=0] - Annual contribution amount.
+ * // Add other relevant parameters (e.g., withdrawal strategy, rebalancing rules)
+ * @returns {Promise<object>} The projection results.
+ */
+export const runProjection = async (projectionParams) => {
+  try {
+    // Ensure portfolioId is provided
+    if (!projectionParams || !projectionParams.portfolioId) {
+      throw new Error('Portfolio ID is required to run a projection.');
     }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
-// Trigger projection calculation for a portfolio
-export const runProjection = async (portfolioId, startDate, endDate, initialTotalValue) => {
-  // Build JSON body with required fields
-  const body = {
-    start_date: startDate,
-    end_date: endDate,
-    initial_total_value: initialTotalValue.toString(),
-  };
-  console.debug('[projectionService] Body:', body);
-  // Call the nested projections endpoint for the given portfolio
-  const response = await apiClient.post(
-    `/portfolios/${portfolioId}/projections`,
-    body
-  );
-  return response.data;
+    // Use portfolioId in the endpoint path
+    const endpoint = `/portfolios/${projectionParams.portfolioId}/project`;
+
+    // Send other parameters in the request body
+    const bodyParams = { ...projectionParams };
+    delete bodyParams.portfolioId; // Remove portfolioId from body as it's in the URL
+
+    const response = await apiClient.post(endpoint, bodyParams);
+    return response.data;
+  } catch (error) {
+    console.error('Error running projection:', error.response ? error.response.data : error.message);
+    throw error;
+  }
+};
+
+/**
+ * Fetches past projection results for a specific portfolio.
+ * @param {string|number} portfolioId - The ID of the portfolio.
+ * @returns {Promise<Array>} A list of past projection results.
+ */
+export const getPastProjections = async (portfolioId) => {
+  try {
+    const response = await apiClient.get(`/portfolios/${portfolioId}/projections`); // Endpoint assumed
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching past projections for portfolio ${portfolioId}:`, error.response ? error.response.data : error.message);
+    throw error;
+  }
 };
 
 const projectionService = {
   runProjection,
+  getPastProjections,
 };
 
 export default projectionService; 

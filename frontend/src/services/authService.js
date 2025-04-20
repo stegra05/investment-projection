@@ -1,66 +1,101 @@
-import axios from 'axios';
+import apiClient from './apiClient';
 
-const API_URL = process.env.VITE_API_URL || '/api/v1';
+// Base URL for the authentication endpoints
+// const API_URL = process.env.REACT_APP_API_URL || '/api';
+// No longer needed, baseURL is in apiClient
 
-// Configure axios instance for API calls
-// This allows setting base URL and potentially other defaults
-const apiClient = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add a request interceptor to include the token if available
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-const register = async (userData) => {
-  console.log('Calling register API with:', userData);
-  const response = await apiClient.post(`/auth/register`, userData);
-  return response.data; // Backend likely returns a success message
-};
-
-const login = async (credentials) => {
-  console.log('Calling login API with:', credentials);
-  const response = await apiClient.post(`/auth/login`, credentials);
-  console.log('Login API response data:', response.data);
-  // Accept either access_token or token for compatibility
-  const token = response.data.access_token || response.data.token;
-  const refreshToken = response.data.refresh_token;
-  if (token && refreshToken) {
-    return { token, refreshToken, user: response.data.user };
-  }
-  // Throw an error if tokens not provided
-  throw new Error('Login response did not include expected tokens.');
-};
-
-const logout = async () => {
-  // Call backend logout endpoint if it exists and requires action (like blacklisting token)
-  // For simple JWT, client-side removal might be sufficient.
-  // Check api_specification.md if /auth/logout needs to be called.
+/**
+ * Registers a new user.
+ * @param {object} userData - The user registration data (e.g., username, email, password).
+ * @returns {Promise<object>} The response data from the server.
+ */
+export const register = async (userData) => {
   try {
-     // Assuming /auth/logout exists and expects a POST request (perhaps with the token implicitly via interceptor)
-     await apiClient.post(`/auth/logout`);
-     console.log('Called backend /auth/logout endpoint.');
+    // const response = await axios.post(`${API_URL}/auth/register`, userData);
+    const response = await apiClient.post('/auth/register', userData);
+    return response.data;
   } catch (error) {
-      console.error("Backend logout call failed (might be expected if endpoint doesn't exist or requires no action):", error);
-      // Proceed with client-side logout regardless
+    console.error('Registration error:', error.response ? error.response.data : error.message);
+    throw error.response ? error.response.data : new Error('Registration failed');
   }
+};
 
-  // Client-side cleanup (handled by AuthContext)
-  console.log('authService.logout completed (client-side cleanup handled by context)');
-  return Promise.resolve(); // Service itself doesn't need to remove token now
+/**
+ * Logs in a user.
+ * @param {object} credentials - The user login credentials (e.g., email, password).
+ * @returns {Promise<object>} The response data containing the JWT token.
+ */
+export const login = async (credentials) => {
+  try {
+    // const response = await axios.post(`${API_URL}/auth/login`, credentials);
+    const response = await apiClient.post('/auth/login', credentials);
+    if (response.data.access_token) {
+      localStorage.setItem('token', response.data.access_token);
+      // Set default auth header for subsequent requests - No longer needed, interceptor handles this
+      // axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.access_token}`;
+    } else {
+      console.warn('No access token received during login.');
+    }
+    return response.data;
+  } catch (error) {
+    console.error('Login error:', error.response ? error.response.data : error.message);
+    // Remove token if login fails? Consider security implications.
+    localStorage.removeItem('token');
+    // delete axios.defaults.headers.common['Authorization']; // No longer needed
+    throw error.response ? error.response.data : new Error('Login failed');
+  }
+};
+
+/**
+ * Logs out the current user.
+ */
+export const logout = () => {
+  // Remove token from local storage
+  localStorage.removeItem('token');
+  // Remove the default auth header - No longer needed
+  // delete axios.defaults.headers.common['Authorization'];
+  // Optionally: Redirect user to login page or update app state
+  console.log('User logged out.');
+};
+
+/**
+ * Retrieves the profile of the currently logged-in user.
+ * Requires a valid JWT token to be set in the Authorization header.
+ * @returns {Promise<object>} The user profile data.
+ */
+export const getUserProfile = async () => {
+  try {
+    // The interceptor in apiClient will automatically add the Authorization header
+    // const token = localStorage.getItem('token');
+    // if (!token) {
+    //   throw new Error('No token found, please log in.');
+    // }
+    // const response = await axios.get(`${API_URL}/auth/profile`, {
+    //   headers: {
+    //     Authorization: `Bearer ${token}`
+    //   }
+    // });
+    const response = await apiClient.get('/auth/profile');
+    return response.data;
+  } catch (error) {
+    console.error('Get profile error:', error.response ? error.response.data : error.message);
+    // If error is due to unauthorized (e.g., expired token), handle logout
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      console.log('Unauthorized access or token expired, logging out.');
+      logout();
+      // Optionally throw a specific error or trigger redirect
+      throw new Error('Session expired. Please log in again.');
+    }
+    throw error.response ? error.response.data : new Error('Failed to fetch profile');
+  }
+};
+
+/**
+ * Checks if a user is currently logged in (simple check based on token existence).
+ * @returns {boolean} True if a token exists, false otherwise.
+ */
+export const isLoggedIn = () => {
+  return !!localStorage.getItem('token');
 };
 
 // TODO: Add functions for password reset API calls when backend is ready
@@ -83,6 +118,8 @@ const authService = {
   refreshAccessToken,
   // requestPasswordReset,
   // resetPassword,
+  getUserProfile,
+  isLoggedIn,
 };
 
 export default authService; 

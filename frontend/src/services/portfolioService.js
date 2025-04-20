@@ -1,63 +1,86 @@
-import axios from 'axios';
+import apiClient from './apiClient';
 
-const API_URL = process.env.VITE_API_URL || '/api/v1';
+// Base URL for the portfolio endpoints
+// const API_URL = process.env.REACT_APP_API_URL || '/api'; // Handled by apiClient
 
-// Create an axios instance for portfolio API calls
-const apiClient = axios.create({
-  baseURL: API_URL,
-  headers: { 'Content-Type': 'application/json' },
-});
-
-// Log each request for debugging
-apiClient.interceptors.request.use(
-  (config) => {
-    console.debug('[portfolioService] Request:', config.method?.toUpperCase(), config.baseURL + config.url);
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    } else {
-      console.warn('[portfolioService] No auth token found');
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Fetch all portfolios for the authenticated user
+/**
+ * Fetches all portfolios for the current user.
+ * @returns {Promise<Array>} A list of portfolios.
+ */
 export const getPortfolios = async () => {
-  const endpoint = API_URL.endsWith('/') ? `${API_URL}portfolios` : `${API_URL}/portfolios`;
-  console.debug('[portfolioService] GET', endpoint);
-  const response = await apiClient.get('/portfolios');
-  return response.data;
+  try {
+    const response = await apiClient.get('/portfolios');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching portfolios:', error.response ? error.response.data : error.message);
+    throw error;
+  }
 };
 
-// Fetch details of a single portfolio by ID
-export const getPortfolio = async (portfolioId) => {
-  const response = await apiClient.get(`/portfolios/${portfolioId}`);
-  return response.data;
+/**
+ * Fetches a single portfolio by its ID.
+ * @param {string|number} portfolioId - The ID of the portfolio to fetch.
+ * @returns {Promise<object>} The portfolio details.
+ */
+export const getPortfolioById = async (portfolioId) => {
+  try {
+    const response = await apiClient.get(`/portfolios/${portfolioId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching portfolio ${portfolioId}:`, error.response ? error.response.data : error.message);
+    throw error;
+  }
 };
 
-// Create a new portfolio
+/**
+ * Creates a new portfolio.
+ * @param {object} portfolioData - The data for the new portfolio.
+ * @returns {Promise<object>} The newly created portfolio.
+ */
 export const createPortfolio = async (portfolioData) => {
-  const response = await apiClient.post('/portfolios', portfolioData);
-  return response.data;
+  try {
+    const response = await apiClient.post('/portfolios', portfolioData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating portfolio:', error.response ? error.response.data : error.message);
+    throw error;
+  }
 };
 
-// Update an existing portfolio
+/**
+ * Updates an existing portfolio.
+ * @param {string|number} portfolioId - The ID of the portfolio to update.
+ * @param {object} portfolioData - The updated data for the portfolio.
+ * @returns {Promise<object>} The updated portfolio.
+ */
 export const updatePortfolio = async (portfolioId, portfolioData) => {
-  const response = await apiClient.put(`/portfolios/${portfolioId}`, portfolioData);
-  return response.data;
+  try {
+    const response = await apiClient.put(`/portfolios/${portfolioId}`, portfolioData);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating portfolio ${portfolioId}:`, error.response ? error.response.data : error.message);
+    throw error;
+  }
 };
 
-// Delete a portfolio
+/**
+ * Deletes a portfolio.
+ * @param {string|number} portfolioId - The ID of the portfolio to delete.
+ * @returns {Promise<object>} Confirmation response from the server.
+ */
 export const deletePortfolio = async (portfolioId) => {
-  const response = await apiClient.delete(`/portfolios/${portfolioId}`);
-  return response.status === 204;
+  try {
+    const response = await apiClient.delete(`/portfolios/${portfolioId}`);
+    return response.data; // Usually an empty object or success message
+  } catch (error) {
+    console.error(`Error deleting portfolio ${portfolioId}:`, error.response ? error.response.data : error.message);
+    throw error;
+  }
 };
 
 const portfolioService = {
   getPortfolios,
-  getPortfolio,
+  getPortfolioById,
   createPortfolio,
   updatePortfolio,
   deletePortfolio,
