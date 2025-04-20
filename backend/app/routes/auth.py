@@ -5,10 +5,29 @@ from flask_jwt_extended import create_access_token, create_refresh_token, get_jw
 from sqlalchemy import or_
 # Import the limiter instance from the app factory
 from app import limiter
+import re # Add re import for regex validation
 
 # Define the blueprint: 'auth', prefix: /api/v1/auth
 # Following API spec (prefix /api/v1/)
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/v1/auth')
+
+# --- Password Validation Helper ---
+MIN_PASSWORD_LENGTH = 8
+
+def is_password_complex(password):
+    """Checks if the password meets complexity requirements."""
+    if len(password) < MIN_PASSWORD_LENGTH:
+        return False, f"Password must be at least {MIN_PASSWORD_LENGTH} characters long."
+    if not re.search(r"[A-Z]", password):
+        return False, "Password must contain at least one uppercase letter."
+    if not re.search(r"[a-z]", password):
+        return False, "Password must contain at least one lowercase letter."
+    if not re.search(r"[0-9]", password):
+        return False, "Password must contain at least one digit."
+    if not re.search(r"[!@#$%^&*()_+=\-\[\]{};':"\\|,.<>/?~\`]", password):
+        return False, "Password must contain at least one special character."
+    # TODO: Implement breached password check (e.g., using Have I Been Pwned API)
+    return True, ""
 
 @auth_bp.route('/register', methods=['POST'])
 @limiter.limit("10/minute") # Apply rate limit
@@ -20,6 +39,12 @@ def register():
 
     if not username or not email or not password:
         return jsonify({"message": "Missing username, email, or password"}), 400
+
+    # --- Add Password Validation ---
+    is_complex, message = is_password_complex(password)
+    if not is_complex:
+        return jsonify({"message": message}), 400
+    # --- End Password Validation ---
 
     if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
         return jsonify({"message": "Username or email already exists"}), 409
