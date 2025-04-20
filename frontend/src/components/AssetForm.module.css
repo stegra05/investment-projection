@@ -48,7 +48,7 @@
 .rangeGroup {
     display: flex;
     align-items: center;
-    gap: var(--space-m);
+    gap: var(--space-s); /* Adjusted gap */
 }
 
 .rangeInput {
@@ -59,6 +59,7 @@
     background: var(--color-border); /* Optional: Track background */
     border-radius: 4px; /* Optional: Track radius */
     appearance: none; /* Needed for further track/thumb styling */
+    border: none;
 }
 
 /* Optional: Style thumb */
@@ -71,23 +72,62 @@
     cursor: pointer;
 }
 
+/* Restore Moz thumb style */
 .rangeInput::-moz-range-thumb {
     width: 16px;
     height: 16px;
     background: var(--color-primary);
     border-radius: 50%;
     cursor: pointer;
-    border: none;
+    border: none; /* This was misplaced */
 }
 
+/* Style for the number input paired with the range slider */
+.rangeValueInput {
+    /* Match base input styles but with fixed width */
+    /* Use styles from the reusable Input component if possible, otherwise replicate */
+    font-size: 1rem;
+    color: var(--color-text-primary);
+    background-color: var(--color-ui-background);
+    border: 1px solid var(--color-border);
+    padding: var(--space-xs) var(--space-s); /* Smaller padding */
+    border-radius: 6px;
+    width: 6ch; /* Fixed width for ~3 digits + decimal */
+    text-align: right;
+    /* Remove spinner buttons for cleaner look */
+    -moz-appearance: textfield;
+}
 
+.rangeValueInput::-webkit-outer-spin-button,
+.rangeValueInput::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Focus state for the number input */
+.rangeValueInput:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2); /* Needs --color-primary-rgb */
+    outline: none;
+}
+
+/* Style for the unit label (e.g., %) */
+.rangeUnit {
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+    margin-left: var(--space-xxs);
+}
+
+/* Restore comment for old .rangeValue style */
+/*
 .rangeValue {
     font-variant-numeric: tabular-nums;
-    min-width: 5ch; /* Ensure space for e.g., 100.0% */
+    min-width: 5ch; // Ensure space for e.g., 100.0%
     text-align: right;
     font-size: 0.875rem;
     color: var(--color-text-secondary);
 }
+*/
 
 .inputHint {
     display: block;

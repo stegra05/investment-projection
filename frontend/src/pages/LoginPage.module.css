@@ -47,6 +47,13 @@
     margin-bottom: var(--space-xs);
 }
 
+/* Add style for the required indicator */
+.requiredIndicator {
+    color: var(--color-error); /* Use error color for visibility */
+    margin-left: var(--space-xxs);
+    font-weight: bold;
+}
+
 .inputGroup {
     /* Container for icon + input */
     display: flex;
@@ -64,6 +71,17 @@
     border-color: var(--color-primary);
     /* Optional: box-shadow from input DLS */
     box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2); /* Needs --color-primary-rgb */
+}
+
+/* Style for the input group when containing an invalid input */
+.inputGroup.inputError {
+    border-color: var(--color-error);
+}
+
+.inputGroup.inputError:focus-within {
+     /* Keep error border on focus, but add error focus ring */
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 2px rgba(var(--color-error-rgb), 0.3); /* Needs --color-error-rgb */
 }
 
 .inputIcon {
@@ -86,7 +104,7 @@
 
 .inputField::placeholder {
     color: var(--color-text-secondary); /* Style placeholder */
-    opacity: 0.7;
+    opacity: 0.7; /* This was previously misplaced, keeping it here for placeholder */
 }
 
 .submitButton {
@@ -150,4 +168,12 @@
 
 .link:hover {
     text-decoration: none;
-} 
+}
+
+/* Style for the inline error message below the input */
+.errorMessageInline {
+    color: var(--color-error);
+    font-size: 0.75rem; /* Small text */
+    margin-top: var(--space-xxs);
+    padding-left: calc(1rem + var(--space-xs) + var(--space-s)); /* Align with input text, accounting for icon, gap, and group padding */
+}

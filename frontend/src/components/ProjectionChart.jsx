@@ -8,7 +8,92 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  ReferenceLine,
 } from 'recharts';
+import { format } from 'date-fns';
+
+// Import shared components
+import Input from './Input';
+import Button from './Button';
+
+// Helper function to format currency
+const formatCurrency = (value) => {
+  // Basic currency formatting, adjust locale and options as needed
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
+
+// Helper function to format date ticks (e.g., 'Jan 24')
+const formatDateTick = (tickItem) => {
+  try {
+    return format(new Date(tickItem), 'MMM yy'); // Adjust format string as needed
+  } catch (e) {
+    return tickItem; // Fallback if date parsing fails
+  }
+};
+
+// Custom Tooltip Component
+const CustomTooltip = ({ active, payload, label, data }) => {
+  if (active && payload && payload.length) {
+    const currentDate = new Date(label);
+    const formattedDate = format(currentDate, 'MMM yyyy');
+    const currentValue = payload[0].value;
+    const formattedValue = formatCurrency(currentValue);
+
+    // Find previous data point
+    let previousValue = null;
+    let valueChange = null;
+    let changeFormatted = null;
+    const currentIndex = data.findIndex(item => item.date === label);
+
+    if (currentIndex > 0 && data[currentIndex - 1]) {
+      previousValue = data[currentIndex - 1].value;
+      valueChange = currentValue - previousValue;
+      changeFormatted = formatCurrency(valueChange);
+    }
+
+    // Use theme variables for styling
+    const textColorSecondary = 'var(--color-text-secondary)';
+    const borderColor = 'var(--color-border)';
+    const uiBackgroundColor = 'var(--color-ui-background)';
+    const textColorPrimary = 'var(--color-text-primary)';
+    const textColorPositive = 'var(--color-success-dark)'; // Assuming green for positive change
+    const textColorNegative = 'var(--color-error-dark)'; // Assuming red for negative change
+
+    return (
+      <div style={{
+        backgroundColor: uiBackgroundColor,
+        border: `1px solid ${borderColor}`,
+        borderRadius: '6px',
+        padding: 'var(--space-s)',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)', // Added subtle shadow
+        fontSize: '0.875rem' // Consistent font size
+      }}>
+        <p style={{ color: textColorSecondary, marginBottom: 'var(--space-xs)', fontWeight: '500' }}>
+          {formattedDate}
+        </p>
+        <p style={{ color: textColorPrimary, margin: 0, fontWeight: '600' }}>
+          {`Value: ${formattedValue}`}
+        </p>
+        {valueChange !== null && (
+          <p style={{
+            color: valueChange >= 0 ? textColorPositive : textColorNegative,
+            margin: 'var(--space-xxs) 0 0 0',
+            fontSize: '0.75rem'
+          }}>
+            {`Change: ${valueChange >= 0 ? '+' : ''}${changeFormatted}`}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return null;
+};
 
 /**
  * Component responsible for running portfolio projections and displaying the results in a line chart.
@@ -19,9 +104,10 @@ import {
  *
  * @param {object} props - The component props.
  * @param {string|number} props.portfolioId - The ID of the portfolio for which to run the projection.
+ * @param {Array<object>} [props.futureChanges=[]] - Array of planned future change objects (e.g., { date: 'YYYY-MM-DD', type: 'contribution', ... }).
  * @returns {JSX.Element} The ProjectionChart component.
  */
-export default function ProjectionChart({ portfolioId }) {
+export default function ProjectionChart({ portfolioId, futureChanges = [] }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -36,15 +122,13 @@ export default function ProjectionChart({ portfolioId }) {
     setError('');
     setLoading(true);
     try {
-      // Pass parameters as a single object
       const params = {
         portfolioId,
         start_date: startDate,
         end_date: endDate,
-        initial_total_value: initialValue, // Backend expects string for Decimal
+        initial_total_value: initialValue,
       };
       const result = await runProjection(params);
-      // The backend returns an array directly, so handle both possibilities
       const projData = Array.isArray(result)
         ? result
         : result.projection_results || [];
@@ -63,65 +147,155 @@ export default function ProjectionChart({ portfolioId }) {
     }
   };
 
+  // --- Style Variables ---
+  // Retrieve CSS variables (consider a hook or context for better management)
+  // For simplicity, we assume they are available globally or passed down
+  // These might need dynamic fetching in a real app (e.g., getComputedStyle)
+  const textColorSecondary = 'var(--color-text-secondary)';
+  const borderColor = 'var(--color-border)';
+  const uiBackgroundColor = 'var(--color-ui-background)';
+  const accentColor = 'var(--color-primary)';
+  const textColorPrimary = 'var(--color-text-primary)';
+
   return (
     <div style={{ marginTop: 'var(--space-m)' }}>
-      {/* Projection parameter inputs */}
-      <div style={{ marginBottom: 'var(--space-m)' }}>
-        <label style={{ display: 'block', marginBottom: 'var(--space-xs)', color: 'var(--color-text-secondary)' }}>Start Date</label>
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          style={{ width: '100%', padding: 'var(--space-s)', border: '1px solid var(--color-border)', borderRadius: '4px' }}
-        />
-      </div>
-      <div style={{ marginBottom: 'var(--space-m)' }}>
-        <label style={{ display: 'block', marginBottom: 'var(--space-xs)', color: 'var(--color-text-secondary)' }}>End Date</label>
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          style={{ width: '100%', padding: 'var(--space-s)', border: '1px solid var(--color-border)', borderRadius: '4px' }}
-        />
-      </div>
-      <div style={{ marginBottom: 'var(--space-m)' }}>
-        <label style={{ display: 'block', marginBottom: 'var(--space-xs)', color: 'var(--color-text-secondary)' }}>Initial Total Value</label>
-        <input
-          type="number"
-          step="0.01"
-          value={initialValue}
-          onChange={(e) => setInitialValue(e.target.value)}
-          style={{ width: '100%', padding: 'var(--space-s)', border: '1px solid var(--color-border)', borderRadius: '4px' }}
-        />
-      </div>
-      {error && <p style={{ color: 'var(--color-error)', marginBottom: 'var(--space-m)' }}>{error}</p>}
-      <button
-        onClick={handleRunProjection}
-        disabled={loading}
-        style={{
-          backgroundColor: 'var(--color-primary)',
-          color: 'var(--color-text-on-primary)',
-          border: 'none',
-          padding: 'var(--space-s)',
-          borderRadius: '4px',
-          fontSize: '1rem',
-        }}
-      >
-        {loading ? 'Running...' : 'Run Projection'}
-      </button>
-      {data.length > 0 && (
-        <div style={{ width: '100%', height: 300, marginTop: 'var(--space-l)' }}>
-          <ResponsiveContainer>
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-              <XAxis dataKey="date" stroke="var(--color-text-secondary)" />
-              <YAxis stroke="var(--color-text-secondary)" />
-              <Tooltip contentStyle={{ backgroundColor: 'var(--color-ui-background)', borderColor: 'var(--color-border)' }} />
-              <Line type="monotone" dataKey="value" stroke="var(--color-accent-green)" strokeWidth={2} dot={{ r: 3 }} />
+      {/* Chart Area or Placeholder */}
+      <div style={{
+        width: '100%',
+        height: 350,
+        display: 'flex',
+        flexDirection: 'column', // Stack content vertically for error state
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: loading || error ? 'var(--color-app-background)' : 'transparent', // Use app background for loading/error
+        border: loading || error ? `1px dashed ${borderColor}` : 'none', // Show border only for loading/error/initial
+        borderRadius: '6px',
+        marginBottom: 'var(--space-l)',
+        color: textColorSecondary,
+        textAlign: 'center', // Center text
+        padding: 'var(--space-m)' // Add padding for content inside
+      }}>
+        {loading ? (
+          <p>Loading chart...</p>
+        ) : error ? (
+          <>
+            <p style={{ color: 'var(--color-error-dark)', marginBottom: 'var(--space-s)' }}>
+              Error: {error}
+            </p>
+            <Button onClick={handleRunProjection} variant="secondary" size="small">
+              Retry Projection
+            </Button>
+          </>
+        ) : data.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke={borderColor}
+              />
+              <XAxis
+                dataKey="date"
+                stroke={textColorSecondary}
+                tickFormatter={formatDateTick}
+                fontSize="0.75rem"
+                dy={5}
+              />
+              <YAxis
+                stroke={textColorSecondary}
+                tickFormatter={formatCurrency}
+                fontSize="0.75rem"
+                dx={-5}
+              />
+              <Tooltip
+                content={<CustomTooltip data={data} />}
+                cursor={{ stroke: accentColor, strokeWidth: 1, strokeDasharray: '3 3' }}
+              />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke={accentColor}
+                strokeWidth={2}
+                dot={{ r: 3, strokeWidth: 1, fill: accentColor }}
+                activeDot={{ r: 5 }}
+              />
+              {futureChanges.map((change, index) => (
+                <ReferenceLine
+                  key={`ref-${index}-${change.date}`}
+                  x={change.date}
+                  stroke="var(--color-secondary)"
+                  strokeDasharray="3 3"
+                >
+                  <ReferenceLine.Label
+                    value={`${change.type === 'contribution' ? '+' : '-'}`}
+                    position="insideTopRight"
+                    fill="var(--color-secondary)"
+                    fontSize="0.75rem"
+                    dy={-10}
+                  />
+                </ReferenceLine>
+              ))}
             </LineChart>
           </ResponsiveContainer>
+        ) : (
+          // Initial placeholder state
+          <p>Configure and run projection to view results.</p>
+        )}
+      </div>
+
+      {/* Control Panel */}
+      <div style={{
+        border: `1px solid ${borderColor}`,
+        borderRadius: '8px', // Slightly larger radius for panel
+        padding: 'var(--space-l)', // More padding for the panel
+        backgroundColor: uiBackgroundColor,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)' // Subtle shadow for panel
+      }}>
+        <h3 style={{ marginTop: 0, marginBottom: 'var(--space-m)', fontSize: '1.25rem', color: textColorPrimary, borderBottom: `1px solid ${borderColor}`, paddingBottom: 'var(--space-s)' }}>
+          Configure Projection
+        </h3>
+
+        {/* Input Row */}
+        <div style={{ display: 'flex', gap: 'var(--space-m)', flexWrap: 'wrap', marginBottom: 'var(--space-m)' }}>
+          <div style={{ flex: '1 1 150px' }}>
+            <Input
+              label="Start Date"
+              id="startDate"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </div>
+          <div style={{ flex: '1 1 150px' }}>
+            <Input
+              label="End Date"
+              id="endDate"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
+          <div style={{ flex: '1 1 200px' }}>
+            <Input
+              label="Initial Total Value"
+              id="initialValue"
+              type="number"
+              step="0.01"
+              placeholder="e.g., 10000"
+              value={initialValue}
+              onChange={(e) => setInitialValue(e.target.value)}
+            />
+          </div>
         </div>
-      )}
+
+        {/* Action Button */}
+        <Button
+          onClick={handleRunProjection}
+          disabled={loading}
+          variant="primary"
+        >
+          {loading ? 'Running...' : 'Run Projection'}
+        </Button>
+      </div>
     </div>
   );
 } 

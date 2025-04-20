@@ -48,6 +48,12 @@
     margin-bottom: var(--space-xs);
 }
 
+.requiredIndicator {
+    color: var(--color-error);
+    margin-left: var(--space-xxs);
+    font-weight: bold;
+}
+
 .inputGroup {
     display: flex;
     align-items: center;
@@ -62,6 +68,15 @@
 .inputGroup:focus-within {
     border-color: var(--color-primary);
     box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2); /* Needs --color-primary-rgb */
+}
+
+.inputGroup.inputError {
+    border-color: var(--color-error);
+}
+
+.inputGroup.inputError:focus-within {
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 2px rgba(var(--color-error-rgb), 0.3); /* Needs --color-error-rgb */
 }
 
 .inputIcon {
@@ -84,6 +99,13 @@
 .inputField::placeholder {
     color: var(--color-text-secondary);
     opacity: 0.7;
+}
+
+.errorMessageInline {
+    color: var(--color-error);
+    font-size: 0.75rem;
+    margin-top: var(--space-xxs);
+    padding-left: calc(1rem + var(--space-xs) + var(--space-s));
 }
 
 .submitButton {

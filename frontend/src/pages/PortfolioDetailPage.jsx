@@ -9,9 +9,7 @@ import { useAssetManagement } from '../hooks/useAssetManagement';
 import { useChangeManagement } from '../hooks/useChangeManagement';
 
 // Import extracted components
-import AssetForm from '../components/AssetForm';
 import AssetList from '../components/AssetList';
-import ChangeForm from '../components/ChangeForm';
 import ChangeList from '../components/ChangeList';
 import ProjectionChart from '../components/ProjectionChart';
 
@@ -27,26 +25,21 @@ export default function PortfolioDetailPage() {
   // State for handling errors from save/delete actions specifically
   const [actionError, setActionError] = useState(null);
 
-  // Use existing hooks for managing assets and changes (without the success callback)
+  // Use existing hooks for managing assets and changes
+  // We still need the handlers to potentially trigger modals/navigation later
   const {
-    showAssetForm,
-    assetToEdit,
     handleAddAssetClick,
     handleEditAssetClick,
-    handleCancelAssetForm,
     handleSaveAsset: saveAssetHook,
     handleDeleteAsset: deleteAssetHook,
-    error: assetHookError, // Get potential error state from hook (e.g., if set internally)
+    error: assetHookError,
     isProcessing: isAssetProcessing,
     setError: setAssetErrorHook,
   } = useAssetManagement(portfolioId);
 
   const {
-    showChangeForm,
-    changeToEdit,
     handleAddChangeClick,
     handleEditChangeClick,
-    handleCancelChangeForm,
     handleSaveChange: saveChangeHook,
     handleDeleteChange: deleteChangeHook,
     error: changeHookError,
@@ -56,27 +49,31 @@ export default function PortfolioDetailPage() {
 
   // --- Action Handlers with Refetching --- 
 
+  // These handlers will likely be called from the modal/edit page components in the future
   const handleSaveAssetAndRefetch = async (assetData) => {
-    setActionError(null); // Clear previous action errors
-    setAssetErrorHook(null); // Clear hook internal error
+    setActionError(null); 
+    setAssetErrorHook(null); 
     try {
       await saveAssetHook(assetData);
-      await refetchPortfolio(); // Refetch portfolio data on success
+      await refetchPortfolio(); 
+      // Close modal/navigate back (logic to be added when modal/page is implemented)
     } catch (err) {
-      // Error is already logged in the hook, hook might set its internal error state
-      // We can set a page-level action error here for display if needed
       setActionError(assetHookError || 'Failed to save asset.');
+      // Keep modal open or show error on edit page 
     }
   };
 
   const handleDeleteAssetAndRefetch = async (asset) => {
     setActionError(null);
     setAssetErrorHook(null);
-    try {
-      await deleteAssetHook(asset);
-      await refetchPortfolio();
-    } catch (err) {
-      setActionError(assetHookError || 'Failed to delete asset.');
+    // Confirmation dialog might be good here before deleting
+    if (window.confirm(`Are you sure you want to delete asset "${asset.name}"?`)) {
+      try {
+        await deleteAssetHook(asset);
+        await refetchPortfolio();
+      } catch (err) {
+        setActionError(assetHookError || 'Failed to delete asset.');
+      }
     }
   };
 
@@ -86,41 +83,69 @@ export default function PortfolioDetailPage() {
     try {
       await saveChangeHook(changeData);
       await refetchPortfolio();
+      // Close modal/navigate back
     } catch (err) {
       setActionError(changeHookError || 'Failed to save change.');
+      // Keep modal open or show error on edit page
     }
   };
 
   const handleDeleteChangeAndRefetch = async (change) => {
     setActionError(null);
     setChangeErrorHook(null);
-    try {
-      await deleteChangeHook(change);
-      await refetchPortfolio();
-    } catch (err) {
-      setActionError(changeHookError || 'Failed to delete change.');
+    // Confirmation dialog
+    if (window.confirm(`Are you sure you want to delete this change?`)) {
+      try {
+        await deleteChangeHook(change);
+        await refetchPortfolio();
+      } catch (err) {
+        setActionError(changeHookError || 'Failed to delete change.');
+      }
     }
   };
 
+  // --- Event Handlers for Triggering Modals/Navigation (Placeholders) --- 
+  // These will replace the direct calls from buttons/list items
+
+  const openAddAssetModal = () => {
+    handleAddAssetClick(); // May need adjustment based on modal implementation
+    console.log("Open Add Asset Modal/Page...");
+    // TODO: Implement modal opening logic or navigation
+  };
+
+  const openEditAssetModal = (asset) => {
+    handleEditAssetClick(asset); // Sets assetToEdit in the hook
+    console.log("Open Edit Asset Modal/Page for:", asset);
+    // TODO: Implement modal opening logic or navigation, passing asset data
+  };
+
+  const openAddChangeModal = () => {
+    handleAddChangeClick();
+    console.log("Open Add Change Modal/Page...");
+    // TODO: Implement modal opening logic or navigation
+  };
+
+  const openEditChangeModal = (change) => {
+    handleEditChangeClick(change);
+    console.log("Open Edit Change Modal/Page for:", change);
+    // TODO: Implement modal opening logic or navigation, passing change data
+  };
+
+
   // --- Render Logic --- 
 
-  // Loading state (uses loading from usePortfolioData)
-  if (loading) { // Simplified loading check
+  if (loading) {
     return <p className={styles.loadingText}>Loading portfolio...</p>;
   }
 
-  // Error state for initial load (uses error from usePortfolioData)
-  if (pageError && !portfolio) { // Show page error if portfolio couldn't be loaded
+  if (pageError && !portfolio) {
     return <p className={styles.errorText}>{pageError}</p>;
   }
 
-  // Portfolio not found state (if loading is false, no error, but no portfolio)
   if (!portfolio) {
     return <p className={styles.errorText}>Portfolio data is unavailable.</p>;
   }
 
-  // Combine hook errors for potential display (optional)
-  // Prioritize page load error, then specific action errors
   const currentError = pageError || actionError;
 
   return (
@@ -130,41 +155,26 @@ export default function PortfolioDetailPage() {
         <p className={styles.portfolioDescription}>{portfolio.description}</p>
       )}
 
-      {/* Display page load or action errors */} 
       {currentError && <p className={styles.errorText}>{currentError}</p>}
 
       {/* Assets Section */} 
       <section className={styles.section}>
         <header className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Assets</h2>
-          {!showAssetForm && ( 
-            <button
-              onClick={handleAddAssetClick}
-              className={styles.addButton}
-              disabled={isAssetProcessing} // Disable if asset operation is processing
-            >
-              <PlusIcon className={styles.addButtonIcon} /> Add Asset
-            </button>
-          )}
+          {/* Always show Add button, trigger modal/navigation */}
+          <button
+            onClick={openAddAssetModal} // Use the new handler
+            className={styles.addButton}
+            disabled={isAssetProcessing || isChangeProcessing} // Disable if any operation is processing
+          >
+            <PlusIcon className={styles.addButtonIcon} /> Add Asset
+          </button>
         </header>
-        {/* Display asset hook specific errors right above the form/list? Optional */} 
-        {/* {assetHookError && <p className={styles.warningText}>{assetHookError}</p>} */} 
-        {showAssetForm && (
-          <AssetForm
-            portfolioId={portfolioId}
-            existingAsset={assetToEdit}
-            onSaved={handleSaveAssetAndRefetch} // Use the new wrapper function
-            onCancel={handleCancelAssetForm}
-            isProcessing={isAssetProcessing} // Pass processing state
-            // Pass setError maybe? Or let the form handle its validation errors?
-            // setError={setAssetErrorHook} 
-          />
-        )}
         <AssetList
-          assets={portfolio.assets || []} // Ensure assets is an array
-          onEdit={handleEditAssetClick}
-          onDelete={handleDeleteAssetAndRefetch} // Use the new wrapper function
-          disabled={isAssetProcessing || isChangeProcessing} // Disable list actions during any processing
+          assets={portfolio.assets || []} 
+          onEdit={openEditAssetModal} // Use the new handler
+          onDelete={handleDeleteAssetAndRefetch} // Keep existing delete
+          disabled={isAssetProcessing || isChangeProcessing} 
         />
       </section>
 
@@ -172,32 +182,20 @@ export default function PortfolioDetailPage() {
       <section className={styles.section}>
         <header className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Planned Changes</h2>
-           {!showChangeForm && ( 
-              <button 
-                onClick={handleAddChangeClick} 
-                className={styles.addButton}
-                disabled={isChangeProcessing} // Disable if change operation is processing
-              >
-                <PlusIcon className={styles.addButtonIcon} /> Add Change
-              </button>
-           )}
+          {/* Always show Add button, trigger modal/navigation */}
+          <button 
+            onClick={openAddChangeModal} // Use the new handler
+            className={styles.addButton}
+            disabled={isAssetProcessing || isChangeProcessing} 
+          >
+            <PlusIcon className={styles.addButtonIcon} /> Add Change
+          </button>
         </header>
-        {/* {changeHookError && <p className={styles.warningText}>{changeHookError}</p>} */} 
-        {showChangeForm && (
-          <ChangeForm
-            portfolioId={portfolioId}
-            existingChange={changeToEdit}
-            onSaved={handleSaveChangeAndRefetch} // Use the new wrapper function
-            onCancel={handleCancelChangeForm}
-            isProcessing={isChangeProcessing}
-            // setError={setChangeErrorHook}
-          />
-        )}
         <ChangeList
-          changes={portfolio.planned_changes || []} // Ensure changes is an array
-          onEdit={handleEditChangeClick}
-          onDelete={handleDeleteChangeAndRefetch} // Use the new wrapper function
-          disabled={isAssetProcessing || isChangeProcessing} // Disable list actions during any processing
+          changes={portfolio.planned_changes || []} 
+          onEdit={openEditChangeModal} // Use the new handler
+          onDelete={handleDeleteChangeAndRefetch} // Keep existing delete
+          disabled={isAssetProcessing || isChangeProcessing} 
         />
       </section>
 
@@ -205,8 +203,8 @@ export default function PortfolioDetailPage() {
       <section className={styles.section}>
         <header className={styles.sectionHeader}>
              <h2 className={styles.sectionTitle}>Projection</h2>
+             {/* No add button for projection */}
         </header>
-        {/* Display loading/error state specific to projection if needed */}
         <ProjectionChart portfolioId={portfolioId} />
       </section>
     </main>

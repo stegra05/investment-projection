@@ -66,6 +66,18 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaved, 
     setError(''); // Clear error on init or change (using setError from hook)
   }, [existingAsset, isEditing, setError]); // <-- Add setError dependency
 
+  // Helper to handle updates from either slider or number input
+  const handleValueChange = (setter) => (e) => {
+    const value = e.target.value;
+    // Allow empty string temporarily in number input, default to 0 if needed later
+    setter(value);
+  };
+
+  // Helper to parse value for submission, handling potential empty strings
+  const parseNumericValue = (value, defaultValue = 0) => {
+    const parsed = parseFloat(value);
+    return isNaN(parsed) ? defaultValue : parsed;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -82,13 +94,16 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaved, 
           return;
       }
 
-      const parsedAllocation = parseFloat(allocationPercentage);
-      const parsedReturn = parseFloat(expectedReturn);
+      // Use helper to parse values, ensuring they are numeric before sending
+      const parsedAllocation = parseNumericValue(allocationPercentage);
+      const parsedReturn = parseNumericValue(expectedReturn);
 
-      if (isNaN(parsedAllocation) || isNaN(parsedReturn)) {
-          setError('Allocation and Expected Return must be valid numbers.');
-          return;
+      // Additional validation for range if needed
+      if (parsedAllocation < 0 || parsedAllocation > 100) {
+        setError('Allocation must be between 0% and 100%.');
+        return;
       }
+      // Add range validation for expected return if necessary (-10 to 25)
 
       const payload = {
         asset_type: finalAssetType,
@@ -157,37 +172,57 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaved, 
         />
       </div>
 
-      {/* Allocation Range Slider */}
+      {/* Allocation Range Slider & Number Input */}
       <div className={styles.formGroup}>
-        <label htmlFor="allocation" className={styles.label}>Target Allocation (%)</label>
+        <label htmlFor="allocationRange" className={styles.label}>Target Allocation (%)</label>
         <div className={styles.rangeGroup}>
             <input
-              id="allocation"
+              id="allocationRange"
               type="range"
               min="0" max="100" step="1"
-              value={allocationPercentage}
-              onChange={(e) => setAllocationPercentage(e.target.value)}
+              value={parseNumericValue(allocationPercentage)} // Use parsed value for slider
+              onChange={handleValueChange(setAllocationPercentage)}
               className={styles.rangeInput}
             />
-            <span className={styles.rangeValue}>{allocationPercentage}%</span>
+            {/* Number input synced with the slider */}
+            <Input
+              id="allocationNumber"
+              type="number"
+              min="0" max="100" step="1"
+              value={allocationPercentage} // Bind directly to string state
+              onChange={handleValueChange(setAllocationPercentage)}
+              className={styles.rangeValueInput}
+              aria-label="Target Allocation Percentage Number Input"
+            />
+            <span className={styles.rangeUnit}>%</span>
         </div>
       </div>
 
-      {/* Expected Return Range Slider */}
+      {/* Expected Return Range Slider & Number Input */}
       <div className={styles.formGroup}>
-        <label htmlFor="expectedReturn" className={styles.label}>Manual Expected Return (%, optional)</label>
+        <label htmlFor="expectedReturnRange" className={styles.label}>Manual Expected Return (%)</label>
          <div className={styles.rangeGroup}>
             <input
-              id="expectedReturn"
+              id="expectedReturnRange"
               type="range"
               min="-10" max="25" step="0.1" // Adjusted range
-              value={expectedReturn}
-              onChange={(e) => setExpectedReturn(e.target.value)}
+              value={parseNumericValue(expectedReturn)} // Use parsed value for slider
+              onChange={handleValueChange(setExpectedReturn)}
               className={styles.rangeInput}
             />
-             <span className={styles.rangeValue}>{parseFloat(expectedReturn).toFixed(1)}%</span>
+            {/* Number input synced with the slider */}
+             <Input
+               id="expectedReturnNumber"
+               type="number"
+               min="-10" max="25" step="0.1"
+               value={expectedReturn} // Bind directly to string state
+               onChange={handleValueChange(setExpectedReturn)}
+               className={styles.rangeValueInput}
+               aria-label="Manual Expected Return Percentage Number Input"
+             />
+             <span className={styles.rangeUnit}>%</span>
         </div>
-        <small className={styles.inputHint}>Leave at 0 to let the system estimate return (if possible for the asset type).</small>
+        <small className={styles.inputHint}>Optional. Leave at 0 to let the system estimate return (if possible).</small>
       </div>
 
       {/* Action Buttons */}
