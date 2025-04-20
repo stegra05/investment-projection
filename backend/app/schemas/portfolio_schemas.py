@@ -97,7 +97,7 @@ class PortfolioSchema(PortfolioBase):
     user_id: int
     # Include nested details when serializing
     assets: Optional[List[AssetSchema]] = []
-    planned_changes: Optional[List[PlannedChangeSchema]] = Field([], alias='changes') # Match ORM relationship name if different
+    planned_changes: Optional[List[PlannedChangeSchema]] = [] # Removed alias='changes'
 
     # Config is now inherited correctly from OrmBaseModel
     # class Config(OrmBaseModel.Config):

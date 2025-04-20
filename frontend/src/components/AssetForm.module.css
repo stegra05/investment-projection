@@ -142,4 +142,70 @@
     gap: var(--space-s);
     justify-content: flex-end;
     margin-top: var(--space-l);
+}
+
+/* Field-Specific Error Message Styling */
+.fieldErrorMessage {
+    color: var(--color-error-light);
+    font-size: 0.75rem; /* Smaller text for field errors */
+    margin-top: var(--space-xs); /* Space below the input */
+}
+
+/* Tooltip Icon Layout */
+.labelWithTooltip {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-xs); /* Replaces margin on label itself */
+}
+
+.labelWithTooltip .label {
+    margin-bottom: 0; /* Remove bottom margin from label inside this container */
+}
+
+.tooltipIcon {
+    width: 1rem; /* 16px */
+    height: 1rem; /* 16px */
+    color: var(--color-text-secondary-light);
+    /* Tooltip container handles cursor: help */
+}
+
+/* Dark Mode Styles - Assuming these exist or are similar */
+[data-theme='dark'] .formContainer {
+    background-color: var(--color-ui-background-dark);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] .formTitle {
+    color: var(--color-text-primary-dark);
+}
+
+[data-theme='dark'] .label {
+    color: var(--color-text-secondary-dark);
+}
+
+[data-theme='dark'] .inputHint {
+    color: var(--color-text-secondary-dark);
+}
+
+[data-theme='dark'] .rangeUnit {
+    color: var(--color-text-secondary-dark);
+}
+
+[data-theme='dark'] .errorMessage {
+    background-color: rgba(var(--color-error-dark-rgb), 0.15);
+    color: var(--color-error-dark);
+    border-color: rgba(var(--color-error-dark-rgb), 0.4);
+}
+
+[data-theme='dark'] .fieldErrorMessage {
+    color: var(--color-error-dark);
+}
+
+[data-theme='dark'] .tooltipIcon {
+    color: var(--color-text-secondary-dark);
+}
+
+[data-theme='dark'] .actionsContainer {
+    border-top-color: var(--color-border-dark);
 } 

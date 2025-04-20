@@ -8,13 +8,13 @@ import styles from './Textarea.module.css';
  * @param {object} props - Component props
  * @param {string} props.id - The id for the textarea element and label association.
  * @param {string} props.name - The name attribute for the textarea element.
- * @param {string} props.value - The current value of the textarea.
+ * @param {string | number} props.value - The current value of the textarea.
  * @param {(e: React.ChangeEvent<HTMLTextAreaElement>) => void} props.onChange - Change handler.
  * @param {string} [props.placeholder] - Placeholder text.
  * @param {string} [props.className] - Additional class name for the textarea element.
  * @param {boolean} [props.disabled=false] - If true, disables the textarea.
- * @param {number} [props.rows] - Sets the initial number of rows.
  * @param {boolean} [props.error=false] - If true, applies error styling.
+ * @param {number} [props.rows=4] - Specifies the visible number of lines in a text area.
  * @param {string} [props.required] - Whether the field is required.
  * @param {React.Ref<HTMLTextAreaElement>} [ref] - Forwarded ref to the textarea element.
  */
@@ -27,8 +27,8 @@ const Textarea = React.forwardRef((
     placeholder,
     className = '',
     disabled = false,
-    rows = 3,
     error = false,
+    rows = 4,
     required,
     ...rest
   },

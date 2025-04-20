@@ -1,1 +1,143 @@
- 
+/* Styles for ChangeForm.module.css */
+
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m); /* Consistent spacing */
+}
+
+.formTitle {
+  font-size: 1.25rem; /* H3 size */
+  font-weight: 600; /* Semi-bold */
+  margin-bottom: var(--space-xs); /* Smaller margin */
+  color: var(--color-text-primary);
+  padding-bottom: var(--space-s);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.errorMessage {
+  color: var(--color-error);
+  background-color: rgba(var(--color-error-rgb), 0.1); /* Assuming --color-error-rgb */
+  border: 1px solid var(--color-error);
+  padding: var(--space-s);
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs); /* Space between label and input */
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+
+/* Base styles for text input and textarea */
+.inputField,
+.textareaField {
+  font-size: 1rem;
+  color: var(--color-text-primary);
+  background-color: var(--color-ui-background);
+  border: 1px solid var(--color-border);
+  padding: var(--space-s);
+  border-radius: 6px;
+  width: 100%;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.inputField:focus,
+.textareaField:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2); /* Assuming --color-primary-rgb */
+  outline: none;
+}
+
+.inputFieldNumeric {
+  text-align: right; /* Right-align numbers */
+}
+
+.textareaField {
+  min-height: 80px; /* Provide a minimum height */
+  resize: vertical; /* Allow vertical resize */
+}
+
+/* Add Field-Specific Error Message Styling */
+.fieldErrorMessage {
+  color: var(--color-error-light);
+  font-size: 0.75rem; /* Smaller text for field errors */
+  margin-top: var(--space-xs); /* Space below the input */
+  /* Ensure it appears correctly within the form group */
+}
+
+/* Dark mode for field error */
+[data-theme='dark'] .fieldErrorMessage {
+  color: var(--color-error-dark);
+}
+
+.gridContainer {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two equal columns */
+    gap: var(--space-m);
+}
+
+/* Action Button Styles */
+.actionsContainer {
+  display: flex;
+  justify-content: flex-end; /* Align buttons to the right */
+  gap: var(--space-s);
+  margin-top: var(--space-s); /* Space above buttons */
+  padding-top: var(--space-m);
+  border-top: 1px solid var(--color-border);
+}
+
+.button {
+  padding: var(--space-s) var(--space-m);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: background-color 0.2s ease, opacity 0.2s ease, border-color 0.2s ease;
+  display: inline-flex; /* Align icon and text */
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Primary Button */
+.buttonPrimary {
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary-light); /* Adjust for dark mode if needed */
+  border: 1px solid var(--color-primary);
+}
+
+.buttonPrimary:hover:not(:disabled) {
+  filter: brightness(90%);
+}
+
+/* Secondary Button (e.g., Cancel) */
+.buttonSecondary {
+  background-color: transparent;
+  color: var(--color-text-secondary); /* Use secondary text color */
+  border: 1px solid var(--color-border);
+}
+
+.buttonSecondary:hover:not(:disabled) {
+  background-color: rgba(107, 119, 140, 0.1); /* Subtle neutral hover */
+  border-color: var(--color-text-secondary);
+}
+
+/* Icon styling within button (if used) */
+.buttonIcon {
+    width: 1.125em; /* Slightly larger than 1em */
+    height: 1.125em;
+} 

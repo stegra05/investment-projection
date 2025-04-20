@@ -52,7 +52,15 @@ export const getAssetHistoricalData = async (symbol, range = '1y') => {
  */
 export const createAsset = async (portfolioId, assetData) => {
   try {
-    const response = await apiClient.post(`/portfolios/${portfolioId}/assets`, assetData);
+    const response = await apiClient.post(
+      `/portfolios/${portfolioId}/assets`,
+      assetData,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error(`Error creating asset for portfolio ${portfolioId}:`, error.response ? error.response.data : error.message);

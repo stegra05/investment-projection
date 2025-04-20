@@ -39,9 +39,11 @@ def add_planned_change(portfolio_id, portfolio, validated_data):
         **validated_data.dict()
     )
     db.session.add(new_change)
+    db.session.flush() # Flush to assign the change_id before serialization
     # Commit handled by decorator
-    db.session.refresh(new_change)
+    # db.session.refresh(new_change) # Removed - Refresh needs a flush/commit first. Object state is known.
     # Serialize output
+    # The object should now have its ID populated by the flush.
     return jsonify(PlannedChangeSchema.from_orm(new_change).model_dump(mode='json', by_alias=True)), 201
 
 @changes_bp.route('/<int:change_id>', methods=['PUT', 'PATCH']) # Route relative to '/portfolios/<pid>/changes'
@@ -66,7 +68,7 @@ def update_planned_change(portfolio_id, change_id, portfolio, validated_data):
         abort(400, description="'Reallocation' change type should not include an 'amount'.")
 
     # Commit handled by decorator
-    db.session.refresh(change)
+    # db.session.refresh(change) # Also removed - Refresh might be unnecessary here too after update.
     # Serialize output
     return jsonify(PlannedChangeSchema.from_orm(change).model_dump(mode='json', by_alias=True)), 200
 

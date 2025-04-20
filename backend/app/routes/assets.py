@@ -35,13 +35,15 @@ def get_asset_or_404(portfolio: Portfolio, asset_id: int):
 @handle_api_errors(schema=AssetCreateSchema)
 def add_asset(portfolio_id, portfolio, validated_data): # portfolio injected by verify_..., validated_data by handle_...
     """Adds a new asset to a specific portfolio."""
+    print(">>> ADDING ASSET <<<") # Debug print
     new_asset = Asset(
         portfolio_id=portfolio.portfolio_id, # Use ID from the verified portfolio object
         **validated_data.dict()
     )
     db.session.add(new_asset)
     # Commit handled by decorator
-    db.session.refresh(new_asset)
+    # db.session.refresh(new_asset) # Removed - refresh happens before commit, causing error
+    db.session.flush() # Flush session to get the new asset_id before commit
     # Serialize output
     return jsonify(AssetSchema.from_orm(new_asset).model_dump(mode='json')), 201
 
@@ -58,7 +60,7 @@ def update_asset(portfolio_id, asset_id, portfolio, validated_data):
         setattr(asset, key, value)
 
     # Commit handled by decorator
-    db.session.refresh(asset)
+    # db.session.refresh(asset) # Removed - unnecessary as commit handles update
     # Serialize output
     return jsonify(AssetSchema.from_orm(asset).model_dump(mode='json')), 200
 

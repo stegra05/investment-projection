@@ -2,52 +2,78 @@
 .textarea {
   display: block;
   width: 100%;
-  padding: var(--space-xs) var(--space-s);
+  padding: var(--space-s);
   font-family: inherit;
-  font-size: var(--font-size-body);
+  font-size: 1rem;
   font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-base);
-  color: var(--color-text-primary);
-  background-color: var(--color-ui-background);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-m);
-  min-height: 80px; /* Example minimum height */
-  resize: vertical; /* Allow vertical resize only */
-  transition: border-color var(--transition-duration) ease,
-              background-color var(--transition-duration) ease,
-              box-shadow var(--transition-duration) ease;
+  line-height: 1.5;
+  color: var(--color-text-primary-light);
+  background-color: var(--color-ui-background-light);
+  border: 1px solid var(--color-border-light);
+  border-radius: 6px;
+  min-height: 80px;
+  resize: vertical;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
-.textarea:hover {
-  border-color: color-mix(in srgb, var(--color-border) 70%, black);
-}
-
-html[data-theme='dark'] .textarea:hover {
-    border-color: color-mix(in srgb, var(--color-border) 70%, white);
+.textarea::placeholder {
+  color: var(--color-text-secondary-light);
+  opacity: 0.7;
 }
 
 .textarea:focus,
 .textarea:focus-visible {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent);
+  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
 }
 
 .textarea:disabled {
   cursor: not-allowed;
-  background-color: var(--color-ui-background-disabled, color-mix(in srgb, var(--color-ui-background) 90%, var(--color-text-disabled)));
-  color: var(--color-text-disabled);
-  border-color: color-mix(in srgb, var(--color-border) 80%, transparent);
+  background-color: var(--color-app-background-light);
+  color: var(--color-text-secondary-light);
+  border-color: var(--color-border-light);
   opacity: 0.7;
   resize: none;
 }
 
 /* Error state styling */
 .textarea.error {
-  border-color: var(--color-error);
+  border-color: var(--color-error-light);
 }
 
 .textarea.error:focus,
 .textarea.error:focus-visible {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-error) 30%, transparent);
+  box-shadow: 0 0 0 2px rgba(var(--color-error-light-rgb), 0.2);
+}
+
+/* Dark Mode Styles */
+html[data-theme='dark'] .textarea {
+  color: var(--color-text-primary-dark);
+  background-color: var(--color-ui-background-dark);
+  border-color: var(--color-border-dark);
+}
+
+html[data-theme='dark'] .textarea::placeholder {
+  color: var(--color-text-secondary-dark);
+}
+
+html[data-theme='dark'] .textarea:focus,
+html[data-theme='dark'] .textarea:focus-visible {
+  /* Focus styles remain similar, relying on primary color */
+}
+
+html[data-theme='dark'] .textarea.error {
+  border-color: var(--color-error-dark);
+}
+
+html[data-theme='dark'] .textarea.error:focus,
+html[data-theme='dark'] .textarea.error:focus-visible {
+  box-shadow: 0 0 0 2px rgba(var(--color-error-dark-rgb), 0.2);
+}
+
+html[data-theme='dark'] .textarea:disabled {
+  background-color: var(--color-app-background-dark);
+  color: var(--color-text-secondary-dark);
+  border-color: var(--color-border-dark);
 } 

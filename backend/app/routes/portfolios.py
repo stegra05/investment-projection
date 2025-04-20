@@ -107,9 +107,14 @@ def create_portfolio(validated_data): # Receive validated_data from decorator
 @verify_portfolio_ownership
 def get_portfolio_details(portfolio_id, portfolio):
     """Retrieves details for a specific portfolio, including assets and planned changes."""
-    # Portfolio is already eager loaded by the decorator
-    # Serialize using Pydantic schema (includes details based on schema definition)
-    # Use model_dump with mode='json' for proper enum serialization
+    # Portfolio is already eager loaded by the decorator, but refresh to ensure latest state
+    db.session.refresh(portfolio) # Ensure we have the latest committed state for the portfolio object itself
+    # Explicitly expire the relationship collections to force a reload upon access
+    # This ensures the serialization step below gets the latest associated changes/assets
+    db.session.expire(portfolio, ['assets', 'planned_changes'])
+
+    # Serialize using Pydantic schema. Accessing portfolio.planned_changes here
+    # will now trigger a fresh query due to the expire call above.
     return jsonify(PortfolioSchema.from_orm(portfolio).model_dump(mode='json', by_alias=True)), 200
 
 @portfolios_bp.route('/<int:portfolio_id>', methods=['PUT', 'PATCH'])
