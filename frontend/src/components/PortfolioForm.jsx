@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getPortfolioById, createPortfolio, updatePortfolio } from '../services/portfolioService';
+import Button from './Button';
 import styles from './PortfolioForm.module.css';
 
 /**
@@ -20,6 +21,7 @@ function PortfolioForm() {
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(isEditing);
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdAt, setCreatedAt] = useState('');
   const [updatedAt, setUpdatedAt] = useState('');
   const navigate = useNavigate();
@@ -40,11 +42,12 @@ function PortfolioForm() {
         })
         .finally(() => setLoading(false));
     }
-  }, [id, isEditing, navigate]);
+  }, [id, isEditing]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsSubmitting(true);
     try {
       let savedPortfolio;
       if (isEditing) {
@@ -56,7 +59,12 @@ function PortfolioForm() {
     } catch (err) {
       console.error('Save failed:', err);
       setError(err.response?.data?.message || 'Failed to save portfolio. Please check the details.');
+      setIsSubmitting(false);
     }
+  };
+
+  const handleCancel = () => {
+    navigate(isEditing ? `/portfolios/${id}` : '/portfolios');
   };
 
   if (loading) {
@@ -64,7 +72,7 @@ function PortfolioForm() {
   }
 
   return (
-    <main className={styles.formContainer}>
+    <div className={styles.formContainer}>
       <h1 className={styles.title}>
         {isEditing ? 'Edit Portfolio' : 'New Portfolio'}
       </h1>
@@ -106,6 +114,7 @@ function PortfolioForm() {
             required
             className={styles.inputField}
             placeholder="e.g., Retirement Savings, House Down Payment"
+            disabled={isSubmitting}
           />
         </div>
 
@@ -118,14 +127,29 @@ function PortfolioForm() {
             rows={4}
             className={styles.textareaField}
             placeholder="Add a brief description of this portfolio's purpose..."
+            disabled={isSubmitting}
           />
         </div>
 
-        <button type="submit" className={styles.submitButton}>
-          {isEditing ? 'Save Changes' : 'Create Portfolio'}
-        </button>
+        <div className={styles.formActions}>
+          <Button 
+            type="button" 
+            variant="secondary" 
+            onClick={handleCancel}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            variant="primary" 
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create Portfolio')}
+          </Button>
+        </div>
       </form>
-    </main>
+    </div>
   );
 }
 

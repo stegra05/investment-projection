@@ -1,98 +1,58 @@
 import React from 'react';
-import { Link } from 'react-router-dom'; // Import Link for routing
+import PropTypes from 'prop-types';
 import styles from './Button.module.css';
 
 /**
- * Button Component
- * Renders a styled button with different variants and states.
- * Can also render as a link.
+ * A reusable button component adhering to the design system.
  *
- * @param {object} props - Component props
- * @param {React.ReactNode} props.children - The content of the button.
- * @param {() => void} [props.onClick] - Click handler for button actions.
- * @param {'button' | 'submit' | 'reset'} [props.type='button'] - Button type attribute.
- * @param {'primary' | 'secondary' | 'destructive'} [props.variant='primary'] - Button style variant.
- * @param {boolean} [props.disabled=false] - If true, disables the button.
- * @param {string} [props.className] - Additional class names for the button.
- * @param {string} [props.to] - If provided, renders the button as a React Router Link.
- * @param {React.ElementType} [props.as] - Optional: Render as a different HTML element (e.g., 'a'). href prop needed if 'a'.
- * @param {string} [props.href] - Href if rendered as an anchor ('a').
- * @param {React.ReactNode} [props.iconLeft] - Optional icon element to display to the left of the text.
- * @param {React.ReactNode} [props.iconRight] - Optional icon element to display to the right of the text.
+ * @param {object} props - Component props.
+ * @param {node} props.children - Button content.
+ * @param {function} props.onClick - Click handler.
+ * @param {'button'|'submit'|'reset'} [props.type='button'] - Button type attribute.
+ * @param {'primary'|'secondary'|'destructive'|'icon'} [props.variant='primary'] - Button style variant.
+ * @param {node} [props.icon] - Optional icon element to display before the children.
+ * @param {string} [props.className] - Additional CSS classes.
+ * @param {boolean} [props.disabled] - Whether the button is disabled.
+ * @param {object} [props.rest] - Other native button props.
  */
-const Button = ({
+function Button({
   children,
   onClick,
   type = 'button',
   variant = 'primary',
-  disabled = false,
+  icon,
   className = '',
-  to,
-  as,
-  href,
-  iconLeft,
-  iconRight,
+  disabled = false,
   ...rest
-}) => {
-  const combinedClassName = [
-    styles.button,
-    styles[variant],
+}) {
+  const buttonClasses = [
+    styles.buttonBase,
+    styles[variant], // e.g., styles.primary, styles.secondary
     className,
   ].filter(Boolean).join(' ');
 
-  const content = (
-    <>
-      {iconLeft}
-      {children}
-      {iconRight}
-    </>
-  );
-
-  // Render as React Router Link if 'to' prop is provided
-  if (to) {
-    return (
-      <Link
-        to={to}
-        className={combinedClassName}
-        // Pass disabled state for potential styling/logic if needed
-        // aria-disabled={disabled} // Link doesn't have disabled, use aria
-        onClick={disabled ? (e) => e.preventDefault() : onClick} // Prevent click if disabled
-        {...rest}
-      >
-        {content}
-      </Link>
-    );
-  }
-
-  // Render as a custom element type (e.g., 'a') if 'as' prop is provided
-  if (as) {
-    const Component = as;
-    return (
-      <Component
-        className={combinedClassName}
-        onClick={onClick}
-        href={href} // Important for 'a' tags
-        // Add aria-disabled for accessibility on non-button elements
-        aria-disabled={disabled}
-        {...rest}
-      >
-        {content}
-      </Component>
-    );
-  }
-
-  // Default render as a button element
   return (
     <button
       type={type}
-      className={combinedClassName}
       onClick={onClick}
+      className={buttonClasses}
       disabled={disabled}
       {...rest}
     >
-      {content}
+      {icon && React.cloneElement(icon, { className: styles.icon, 'aria-hidden': true })}
+      {children && <span className={styles.text}>{children}</span>}
     </button>
   );
+}
+
+Button.propTypes = {
+  children: PropTypes.node,
+  onClick: PropTypes.func,
+  type: PropTypes.oneOf(['button', 'submit', 'reset']),
+  variant: PropTypes.oneOf(['primary', 'secondary', 'destructive', 'icon']),
+  icon: PropTypes.element,
+  className: PropTypes.string,
+  disabled: PropTypes.bool,
 };
 
 export default Button; 

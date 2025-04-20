@@ -140,4 +140,18 @@
     background-color: var(--color-border);
     border-color: var(--color-border);
     color: var(--color-text-secondary);
+}
+
+/* Styles for the action buttons container */
+.formActions {
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right */
+    gap: var(--space-s); /* Space between buttons */
+    margin-top: var(--space-l); /* Space above the buttons */
+    padding-top: var(--space-m); /* Space above the buttons */
+    border-top: 1px solid var(--color-border-light); /* Separator line */
+}
+
+html[data-theme='dark'] .formActions {
+    border-top-color: var(--color-border-dark);
 } 

@@ -1,0 +1,90 @@
+/* frontend/src/components/Breadcrumbs.css */
+
+.breadcrumbs-container {
+  padding: var(--space-s) 0; /* Add some vertical padding */
+  margin-bottom: var(--space-m); /* Space below breadcrumbs */
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+html[data-theme='dark'] .breadcrumbs-container {
+  border-bottom-color: var(--color-border-dark);
+}
+
+.breadcrumbs-list {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: var(--font-size-sm, 0.875rem); /* Use secondary text size */
+  color: var(--color-text-secondary-light);
+}
+
+html[data-theme='dark'] .breadcrumbs-list {
+  color: var(--color-text-secondary-dark);
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumb-link,
+.breadcrumb-current {
+  color: inherit;
+  text-decoration: none;
+  padding: 0 var(--space-xxs);
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumb-link:hover,
+.breadcrumb-link:focus {
+  text-decoration: underline;
+  color: var(--color-primary);
+  outline: none;
+}
+
+html[data-theme='dark'] .breadcrumb-link:hover,
+html[data-theme='dark'] .breadcrumb-link:focus {
+    color: var(--color-secondary); /* Or adjust for dark mode */
+}
+
+.breadcrumb-current {
+  font-weight: 500; /* Slightly bolder */
+  color: var(--color-text-primary-light);
+}
+
+html[data-theme='dark'] .breadcrumb-current {
+  color: var(--color-text-primary-dark);
+}
+
+
+.breadcrumb-separator {
+  margin: 0 var(--space-xxs);
+  user-select: none;
+  color: var(--color-text-secondary-light);
+}
+
+html[data-theme='dark'] .breadcrumb-separator {
+    color: var(--color-text-secondary-dark);
+}
+
+.breadcrumb-icon {
+  width: 1rem; /* 16px */
+  height: 1rem;
+  margin-right: var(--space-xxs); /* Space between icon and text if needed */
+}
+
+/* Hide the home text visually but keep for screen readers */
+.breadcrumb-item:first-child .breadcrumb-link span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+} 

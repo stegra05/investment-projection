@@ -199,12 +199,14 @@ export default function ProjectionChart({ portfolioId, futureChanges = [] }) {
                 tickFormatter={formatDateTick}
                 fontSize="0.75rem"
                 dy={5}
+                minTickGap={40}
               />
               <YAxis
                 stroke={textColorSecondary}
                 tickFormatter={formatCurrency}
                 fontSize="0.75rem"
                 dx={-5}
+                minTickGap={20}
               />
               <Tooltip
                 content={<CustomTooltip data={data} />}
@@ -234,6 +236,7 @@ export default function ProjectionChart({ portfolioId, futureChanges = [] }) {
                   />
                 </ReferenceLine>
               ))}
+              {/* TODO: Add additional <Line> components here for other data series (e.g., contributions) if data is available */}
             </LineChart>
           </ResponsiveContainer>
         ) : (

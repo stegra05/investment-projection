@@ -141,4 +141,128 @@ html[data-theme='dark'] .destructive:disabled {
 .button svg {
     width: 1.25em; /* Adjust as needed, relative to font size */
     height: 1.25em;
+}
+
+.buttonBase {
+  display: inline-flex; /* Use inline-flex for alignment */
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-s) var(--space-m); /* Base padding */
+  border-radius: 6px; /* Consistent border radius */
+  font-size: 1rem;
+  font-weight: 500; /* Medium weight */
+  line-height: 1.2;
+  border: 1px solid transparent; /* Start with transparent border */
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none; /* Remove underline */
+  white-space: nowrap; /* Prevent wrapping */
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, color 0.2s ease-in-out;
+  user-select: none; /* Prevent text selection */
+}
+
+.buttonBase:focus {
+  outline: none; /* Remove default outline */
+  box-shadow: 0 0 0 3px rgba(5, 63, 150, 0.3); /* Custom focus ring - using primary base */
+}
+
+/* Icon styling */
+.icon {
+  width: 1.125rem; /* ~18px, adjust as needed */
+  height: 1.125rem;
+  margin-right: var(--space-xs); /* Space between icon and text */
+  flex-shrink: 0; /* Prevent icon shrinking */
+}
+
+/* Style for icon-only buttons */
+.icon.buttonBase {
+    padding: var(--space-xs); /* Smaller padding for icon buttons */
+    line-height: 1; /* Adjust line height */
+}
+.icon .icon {
+    margin-right: 0; /* No margin needed if only icon */
+}
+.icon .text {
+    display: none; /* Hide text visually for icon-only */
+}
+
+/* --- Variants --- */
+
+/* Primary (Solid) */
+.primary {
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary-light);
+  border-color: var(--color-primary);
+}
+
+.primary:hover:not(:disabled) {
+  background-color: #04337a; /* Slightly darker primary */
+  border-color: #04337a;
+}
+
+/* Secondary (Outline) */
+.secondary {
+  background-color: transparent;
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.secondary:hover:not(:disabled) {
+  background-color: rgba(5, 63, 150, 0.1); /* Subtle primary background */
+}
+
+html[data-theme='dark'] .secondary {
+  color: var(--color-secondary); /* Teal in dark mode for secondary? Adjust if needed */
+  border-color: var(--color-secondary);
+}
+
+html[data-theme='dark'] .secondary:hover:not(:disabled) {
+  background-color: rgba(76, 176, 178, 0.15); /* Subtle teal background */
+}
+
+/* Destructive (Solid) */
+.destructive {
+  background-color: var(--color-error-light);
+  color: var(--color-ui-background-light); /* White text on error bg */
+  border-color: var(--color-error-light);
+}
+
+.destructive:hover:not(:disabled) {
+  background-color: #b72d09; /* Darker error */
+  border-color: #b72d09;
+}
+
+html[data-theme='dark'] .destructive {
+  background-color: var(--color-error-dark);
+  color: var(--color-text-primary-dark);
+  border-color: var(--color-error-dark);
+}
+
+html[data-theme='dark'] .destructive:hover:not(:disabled) {
+  background-color: #ef5e5e; /* Lighter/brighter error hover for dark */
+  border-color: #ef5e5e;
+}
+
+
+/* Disabled State */
+.buttonBase:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--color-border-light); /* Neutral background */
+  color: var(--color-text-secondary-light);
+  border-color: var(--color-border-light);
+}
+
+html[data-theme='dark'] .buttonBase:disabled {
+  background-color: var(--color-border-dark);
+  color: var(--color-text-secondary-dark);
+  border-color: var(--color-border-dark);
+}
+
+/* Adjust disabled state specifically for secondary/outline */
+.secondary:disabled {
+    background-color: transparent;
+}
+html[data-theme='dark'] .secondary:disabled {
+    background-color: transparent;
 } 

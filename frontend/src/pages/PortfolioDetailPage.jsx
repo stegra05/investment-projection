@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { useParams, useNavigate } from 'react-router-dom';
+import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
 import styles from './PortfolioDetailPage.module.css';
 
 // Import custom hooks
@@ -16,6 +17,7 @@ import Modal from '../components/Modal';
 import AssetForm from '../components/AssetForm';
 import ChangeForm from '../components/ChangeForm';
 import DeleteConfirmation from '../components/DeleteConfirmation';
+import Button from '../components/Button';
 
 // Define modal types
 const MODAL_TYPES = {
@@ -25,16 +27,24 @@ const MODAL_TYPES = {
   ADD_CHANGE: 'ADD_CHANGE',
   EDIT_CHANGE: 'EDIT_CHANGE',
   DELETE_CHANGE: 'DELETE_CHANGE',
+  DELETE_PORTFOLIO: 'DELETE_PORTFOLIO',
 };
 
 // Main detail page component
 export default function PortfolioDetailPage() {
   const { id: portfolioId } = useParams();
+  const navigate = useNavigate();
 
   // --- State Management ---
 
   // Use the new hook for portfolio data, loading, error, and refetching
-  const { portfolio, loading, error: pageError, refetchPortfolio } = usePortfolioData(portfolioId);
+  const {
+    portfolio,
+    loading,
+    error: pageError,
+    refetchPortfolio,
+    deletePortfolio: deletePortfolioHook
+  } = usePortfolioData(portfolioId);
 
   // State for modal management { type: MODAL_TYPES | null, data: any }
   const [modalState, setModalState] = useState({ type: null, data: null });
@@ -43,7 +53,6 @@ export default function PortfolioDetailPage() {
   const [actionError, setActionError] = useState(null);
 
   // Use existing hooks for managing assets and changes
-  // Note: The click handlers in these hooks might become less relevant if forms are always in modals
   const {
     handleSaveAsset: saveAssetHook,
     handleDeleteAsset: deleteAssetHook,
@@ -65,10 +74,10 @@ export default function PortfolioDetailPage() {
 
   const closeModal = useCallback(() => {
     setModalState({ type: null, data: null });
-    setActionError(null); // Clear action errors when closing modal
-    setAssetErrorHook(null); // Clear hook errors
-    setChangeErrorHook(null); // Clear hook errors
-  }, [setAssetErrorHook, setChangeErrorHook]); // Dependencies for clearing errors
+    setActionError(null);
+    setAssetErrorHook(null);
+    setChangeErrorHook(null);
+  }, [setAssetErrorHook, setChangeErrorHook]);
 
 
   // --- Action Handlers with Refetching ---
@@ -78,16 +87,12 @@ export default function PortfolioDetailPage() {
     setActionError(null);
     setAssetErrorHook(null);
     try {
-      // The AssetForm component now handles distinguishing between create/update
-      // It calls the appropriate service function (createAsset/updateAsset)
-      // We just need to ensure refetching and closing the modal on success
-      await saveAssetHook(assetData); // Assume saveAssetHook handles create/update logic based on assetData
+      await saveAssetHook(assetData);
       await refetchPortfolio();
-      closeModal(); // Close modal on success
+      closeModal();
+      toast.success('Asset saved successfully!');
     } catch (err) {
-      // AssetForm likely handles its own error display, but we might catch broader errors here
       setActionError(assetHookError || 'Failed to save asset.');
-      // Keep modal open to show error within the form
     }
   };
 
@@ -99,15 +104,14 @@ export default function PortfolioDetailPage() {
     setActionError(null);
     setAssetErrorHook(null);
     try {
-      await deleteAssetHook(assetToDelete); // Call the hook's delete function
+      await deleteAssetHook(assetToDelete);
       await refetchPortfolio();
-      closeModal(); // Close modal on success
-    } catch (err) {
-      setActionError(assetHookError || 'Failed to delete asset.');
-      // Keep modal open or potentially close and show error on page?
-      // For now, keep modal open to show error within confirmation (if needed) or close? Let's close.
       closeModal();
-      setActionError(assetHookError || 'Failed to delete asset.'); // Show error on page after closing
+      toast.success('Asset deleted successfully!');
+    } catch (err) {
+      closeModal();
+      setActionError(assetHookError || 'Failed to delete asset.');
+      toast.error(assetHookError || 'Failed to delete asset.');
     }
   };
 
@@ -117,13 +121,12 @@ export default function PortfolioDetailPage() {
     setActionError(null);
     setChangeErrorHook(null);
     try {
-      // ChangeForm handles create/update distinction
-      await saveChangeHook(changeData); // Assume hook handles create/update
+      await saveChangeHook(changeData);
       await refetchPortfolio();
-      closeModal(); // Close modal on success
+      closeModal();
+      toast.success('Planned change saved successfully!');
     } catch (err) {
       setActionError(changeHookError || 'Failed to save change.');
-      // Keep modal open
     }
   };
 
@@ -138,10 +141,26 @@ export default function PortfolioDetailPage() {
       await deleteChangeHook(changeToDelete);
       await refetchPortfolio();
       closeModal();
+      toast.success('Planned change deleted successfully!');
     } catch (err) {
-      // Close modal and show error on page
       closeModal();
       setActionError(changeHookError || 'Failed to delete change.');
+      toast.error(changeHookError || 'Failed to delete change.');
+    }
+  };
+
+  // Called from DeleteConfirmation for portfolio
+  const handleDeletePortfolioConfirmed = async () => {
+    setActionError(null);
+    try {
+      await deletePortfolioHook();
+      closeModal();
+      toast.success(`Portfolio "${portfolio?.name || 'this portfolio'}" deleted successfully!`);
+      navigate('/portfolios');
+    } catch (err) {
+      closeModal();
+      setActionError('Failed to delete portfolio.');
+      toast.error('Failed to delete portfolio.');
     }
   };
 
@@ -172,6 +191,10 @@ export default function PortfolioDetailPage() {
     setModalState({ type: MODAL_TYPES.DELETE_CHANGE, data: change });
   };
 
+  // Open portfolio delete confirmation modal
+  const openDeletePortfolioModal = () => {
+    setModalState({ type: MODAL_TYPES.DELETE_PORTFOLIO, data: portfolio });
+  };
 
   // --- Render Logic ---
 
@@ -180,41 +203,80 @@ export default function PortfolioDetailPage() {
   }
 
   if (pageError && !portfolio) {
-    return <p className={styles.errorText}>{pageError}</p>;
+    return (
+      <div className={styles.errorContainer}>
+        <p className={styles.errorText}>Error loading portfolio details.</p>
+        <p className={styles.errorDetails}>{pageError.toString()}</p>
+        <Button onClick={() => navigate('/portfolios')} variant="secondary">
+          Back to Portfolios
+        </Button>
+      </div>
+    );
   }
 
   if (!portfolio) {
-    return <p className={styles.errorText}>Portfolio data is unavailable.</p>;
+    return (
+       <div className={styles.errorContainer}>
+        <p className={styles.errorText}>Portfolio not found.</p>
+        <Button onClick={() => navigate('/portfolios')} variant="secondary">
+          Back to Portfolios
+        </Button>
+      </div>
+    );
   }
 
-  const currentError = actionError;
+  const currentActionError = actionError || assetHookError || changeHookError;
+  const isProcessing = isAssetProcessing || isChangeProcessing;
 
   return (
     <main className={styles.main}>
-      <h1 className={styles.pageTitle}>{portfolio.name}</h1>
-      {portfolio.description && (
-        <p className={styles.portfolioDescription}>{portfolio.description}</p>
-      )}
+      <header className={styles.pageHeader}>
+        <div>
+            <h1 className={styles.pageTitle}>{portfolio.name}</h1>
+            {portfolio.description && (
+                <p className={styles.portfolioDescription}>{portfolio.description}</p>
+            )}
+        </div>
+        <div className={styles.headerActions}>
+            <Button
+                variant="secondary"
+                onClick={() => navigate(`/portfolios/${portfolioId}/edit`)}
+                icon={<PencilIcon />}
+                disabled={isProcessing} 
+            >
+                Edit Portfolio
+            </Button>
+             <Button
+                variant="destructive"
+                onClick={openDeletePortfolioModal}
+                icon={<TrashIcon />}
+                disabled={isProcessing}
+            >
+                Delete Portfolio
+            </Button>
+        </div>
+      </header>
 
-      {currentError && <p className={`${styles.errorText} ${styles.actionError}`}>{currentError}</p>}
+      {currentActionError && <p className={`${styles.errorText} ${styles.actionError}`}>{currentActionError}</p>}
 
       {/* Assets Section */}
       <section className={styles.section}>
         <header className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Assets</h2>
-          <button
+          <Button
+            variant="primary"
             onClick={openAddAssetModal}
-            className={styles.addButton}
-            disabled={isAssetProcessing || isChangeProcessing}
+            icon={<PlusIcon />}
+            disabled={isProcessing}
           >
-            <PlusIcon className={styles.addButtonIcon} /> Add Asset
-          </button>
+            Add Asset
+          </Button>
         </header>
         <AssetList
           assets={portfolio.assets || []}
           onEdit={openEditAssetModal}
           onDelete={openDeleteAssetModal}
-          disabled={isAssetProcessing || isChangeProcessing}
+          disabled={isProcessing}
         />
       </section>
 
@@ -222,19 +284,20 @@ export default function PortfolioDetailPage() {
       <section className={styles.section}>
         <header className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Planned Changes</h2>
-          <button
+          <Button
+            variant="primary"
             onClick={openAddChangeModal}
-            className={styles.addButton}
-            disabled={isAssetProcessing || isChangeProcessing}
+            icon={<PlusIcon />}
+            disabled={isProcessing}
           >
-            <PlusIcon className={styles.addButtonIcon} /> Add Change
-          </button>
+            Add Change
+          </Button>
         </header>
         <ChangeList
           changes={portfolio.planned_changes || []}
           onEdit={openEditChangeModal}
           onDelete={openDeleteChangeModal}
-          disabled={isAssetProcessing || isChangeProcessing}
+          disabled={isProcessing}
         />
       </section>
 
@@ -259,6 +322,7 @@ export default function PortfolioDetailPage() {
            handleDeleteAssetConfirmed,
            handleSaveChangeAndRefetch,
            handleDeleteChangeConfirmed,
+           handleDeletePortfolioConfirmed,
            isAssetProcessing,
            isChangeProcessing
          )}
@@ -272,10 +336,11 @@ const getModalTitle = (modalType) => {
   switch (modalType) {
     case MODAL_TYPES.ADD_ASSET: return 'Add New Asset';
     case MODAL_TYPES.EDIT_ASSET: return 'Edit Asset';
-    case MODAL_TYPES.DELETE_ASSET: return 'Confirm Deletion';
+    case MODAL_TYPES.DELETE_ASSET: return 'Confirm Delete Asset';
     case MODAL_TYPES.ADD_CHANGE: return 'Add Planned Change';
     case MODAL_TYPES.EDIT_CHANGE: return 'Edit Planned Change';
-    case MODAL_TYPES.DELETE_CHANGE: return 'Confirm Deletion';
+    case MODAL_TYPES.DELETE_CHANGE: return 'Confirm Delete Change';
+    case MODAL_TYPES.DELETE_PORTFOLIO: return 'Confirm Delete Portfolio';
     default: return '';
   }
 };
@@ -289,67 +354,29 @@ const renderModalContent = (
   onDeleteAssetConfirm,
   onSaveChange,
   onDeleteChangeConfirm,
+  onDeletePortfolioConfirm,
   isAssetProcessing,
   isChangeProcessing
 ) => {
   const { type, data } = modalState;
+  const isProcessing = isAssetProcessing || isChangeProcessing;
 
   switch (type) {
     case MODAL_TYPES.ADD_ASSET:
-      return (
-        <AssetForm
-          portfolioId={portfolioId}
-          onSaved={onSaveAsset}
-          onCancel={closeModal}
-        />
-      );
+      return <AssetForm portfolioId={portfolioId} onSubmit={onSaveAsset} onCancel={closeModal} isProcessing={isProcessing} />;
     case MODAL_TYPES.EDIT_ASSET:
-      return (
-        <AssetForm
-          portfolioId={portfolioId}
-          existingAsset={data}
-          onSaved={onSaveAsset}
-          onCancel={closeModal}
-        />
-      );
+      return <AssetForm portfolioId={portfolioId} initialData={data} onSubmit={onSaveAsset} onCancel={closeModal} isProcessing={isProcessing} />;
     case MODAL_TYPES.DELETE_ASSET:
-      return (
-        <DeleteConfirmation
-          itemType="asset"
-          itemName={data?.name_or_ticker || data?.name}
-          onConfirm={onDeleteAssetConfirm}
-          onCancel={closeModal}
-          isProcessing={isAssetProcessing}
-        />
-      );
-     case MODAL_TYPES.ADD_CHANGE:
-      return (
-        <ChangeForm
-          portfolioId={portfolioId}
-          onSaved={onSaveChange}
-          onCancel={closeModal}
-        />
-      );
+      return <DeleteConfirmation itemType="asset" itemName={data?.name} onConfirm={onDeleteAssetConfirm} onCancel={closeModal} isProcessing={isProcessing} />;
+    case MODAL_TYPES.ADD_CHANGE:
+      return <ChangeForm portfolioId={portfolioId} onSubmit={onSaveChange} onCancel={closeModal} isProcessing={isProcessing} />;
     case MODAL_TYPES.EDIT_CHANGE:
-      return (
-        <ChangeForm
-          portfolioId={portfolioId}
-          existingChange={data}
-          onSaved={onSaveChange}
-          onCancel={closeModal}
-        />
-      );
+      return <ChangeForm portfolioId={portfolioId} initialData={data} onSubmit={onSaveChange} onCancel={closeModal} isProcessing={isProcessing} />;
     case MODAL_TYPES.DELETE_CHANGE:
-       return (
-         <DeleteConfirmation
-           itemType="planned change"
-           itemName={data?.description}
-           onConfirm={onDeleteChangeConfirm}
-           onCancel={closeModal}
-           isProcessing={isChangeProcessing}
-         />
-       );
+      return <DeleteConfirmation itemType="planned change" itemName={data?.description} onConfirm={onDeleteChangeConfirm} onCancel={closeModal} isProcessing={isProcessing} />;
+    case MODAL_TYPES.DELETE_PORTFOLIO:
+      return <DeleteConfirmation itemType="portfolio" itemName={data?.name} onConfirm={onDeletePortfolioConfirm} onCancel={closeModal} isProcessing={isProcessing} />;
     default:
       return null;
   }
-}; 
+};

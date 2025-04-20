@@ -10,6 +10,7 @@ import PortfolioDetailPage from './pages/PortfolioDetailPage';
 import PortfolioForm from './components/PortfolioForm';
 import ProtectedRoute from './components/ProtectedRoute';
 import NavigationBar from './components/NavigationBar';
+import Breadcrumbs from './components/Breadcrumbs';
 import { ThemeProvider } from './contexts/ThemeContext';
 import './App.css';
 
@@ -25,6 +26,7 @@ function AppContent() {
     <div className="app-container">
       {showNavbar && <NavigationBar />}
       <main className="main-app-content">
+        <Breadcrumbs />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegistrationPage />} />

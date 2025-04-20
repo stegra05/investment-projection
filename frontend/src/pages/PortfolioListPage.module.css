@@ -1,0 +1,137 @@
+/* Styles for PortfolioListPage.module.css */
+
+.listContainer {
+  max-width: 900px; /* Or adjust as needed */
+  margin: var(--space-l) auto; /* Center the list */
+  padding: var(--space-l);
+}
+
+.listHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-l);
+  padding-bottom: var(--space-m);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+html[data-theme='dark'] .listHeader {
+  border-bottom-color: var(--color-border-dark);
+}
+
+.listTitle {
+  font-size: 2rem; /* H1 */
+  font-weight: 700;
+  color: var(--color-text-primary-light);
+  margin: 0; /* Remove default margin */
+}
+
+html[data-theme='dark'] .listTitle {
+  color: var(--color-text-primary-dark);
+}
+
+.loadingText,
+.emptyMessage,
+.errorMessage {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--color-text-secondary-light);
+  font-size: 1.1rem;
+}
+
+html[data-theme='dark'] .loadingText,
+html[data-theme='dark'] .emptyMessage,
+html[data-theme='dark'] .errorMessage {
+  color: var(--color-text-secondary-dark);
+}
+
+.errorMessage {
+  color: var(--color-error-light);
+  background-color: rgba(222, 53, 11, 0.1); /* Use RGB or direct variable if available */
+  border: 1px solid var(--color-error-light);
+  border-radius: 6px;
+  padding: var(--space-m);
+  margin-bottom: var(--space-l);
+}
+
+html[data-theme='dark'] .errorMessage {
+  color: var(--color-error-dark);
+  background-color: rgba(248, 113, 113, 0.1);
+  border-color: var(--color-error-dark);
+}
+
+.portfolioList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-m);
+}
+
+.portfolioItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-m);
+  background-color: var(--color-ui-background-light);
+  border: 1px solid var(--color-border-light);
+  border-radius: 6px;
+  transition: box-shadow 0.2s ease;
+}
+
+html[data-theme='dark'] .portfolioItem {
+  background-color: var(--color-ui-background-dark);
+  border-color: var(--color-border-dark);
+}
+
+.portfolioItem:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+html[data-theme='dark'] .portfolioItem:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.portfolioLink {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--color-text-primary-light);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+html[data-theme='dark'] .portfolioLink {
+  color: var(--color-text-primary-dark);
+}
+
+.portfolioLink:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+html[data-theme='dark'] .portfolioLink:hover {
+  color: var(--color-secondary);
+}
+
+.actionButtons {
+  display: flex;
+  gap: var(--space-s);
+}
+
+/* Specific adjustments for action buttons if needed (e.g., smaller padding/size) */
+.actionButton {
+  /* Example: reduce padding if using standard secondary/destructive feels too large */
+  /* padding: var(--space-xs); */ 
+}
+
+/* Hides text visually but keeps it for screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+} 
