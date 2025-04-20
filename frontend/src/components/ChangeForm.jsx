@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 // import axios from 'axios'; // Use apiClient instead
-import apiClient from '../services/apiClient'; // Import the shared apiClient
+import changeService from '../services/changeService'; // <-- Add this
 import { PlusIcon } from '@heroicons/react/24/outline';
 import styles from './ChangeForm.module.css'; // Import CSS Module
+import { useFormState } from '../hooks/useFormState'; // <-- Add this
 
 // const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'; // Handled by apiClient
 
@@ -30,12 +31,11 @@ const changeTypeOptions = [
  * @returns {JSX.Element} The ChangeForm component.
  */
 export default function ChangeForm({ portfolioId, existingChange = null, onSaved, onCancel }) {
-  const isEditing = Boolean(existingChange);
+  const { isEditing, error, setError } = useFormState(existingChange); // <-- Use hook
   const [changeType, setChangeType] = useState('');
   const [changeDate, setChangeDate] = useState('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
-  const [error, setError] = useState('');
 
   useEffect(() => {
     if (isEditing && existingChange) {
@@ -51,12 +51,12 @@ export default function ChangeForm({ portfolioId, existingChange = null, onSaved
         setAmount('');
         setDescription('');
     }
-    setError(''); // Clear error when form initializes or existingChange changes
-  }, [existingChange, isEditing]);
+    setError(''); // Clear error when form initializes or existingChange changes (using hook)
+  }, [existingChange, isEditing, setError]); // <-- Add setError dependency
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError(''); // Clear previous errors (using hook)
 
     // Validate required fields
     if (!changeType || !changeDate || amount === '') { // Ensure amount is not an empty string
@@ -79,16 +79,16 @@ export default function ChangeForm({ portfolioId, existingChange = null, onSaved
       };
 
       if (isEditing && existingChange) {
-        await apiClient.put(`/portfolios/${portfolioId}/changes/${existingChange.change_id}`, payload);
+        await changeService.updateChange(portfolioId, existingChange.change_id, payload); // <-- Use service
         // await axios.put(`${API_URL}/portfolios/${portfolioId}/changes/${existingChange.change_id}`, payload, config);
       } else {
-        await apiClient.post(`/portfolios/${portfolioId}/changes`, payload);
+        await changeService.createChange(portfolioId, payload); // <-- Use service
         // await axios.post(`${API_URL}/portfolios/${portfolioId}/changes`, payload, config);
       }
       onSaved(); // Signal success
     } catch (err) {
       console.error('Change save failed:', err);
-      setError(err.response?.data?.message || 'Failed to save change. Please check the details.');
+      setError(err.response?.data?.message || 'Failed to save change. Please check the details.'); // Using hook
     }
   };
 

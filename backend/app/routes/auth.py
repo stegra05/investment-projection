@@ -3,12 +3,15 @@ from app import db
 from app.models.user import User
 from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt_identity, jwt_required
 from sqlalchemy import or_
+# Import the limiter instance from the app factory
+from app import limiter
 
 # Define the blueprint: 'auth', prefix: /api/v1/auth
 # Following API spec (prefix /api/v1/)
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/v1/auth')
 
 @auth_bp.route('/register', methods=['POST'])
+@limiter.limit("10/minute") # Apply rate limit
 def register():
     data = request.get_json()
     username = data.get('username')
@@ -29,6 +32,7 @@ def register():
     return jsonify({"message": "User registered successfully"}), 201
 
 @auth_bp.route('/login', methods=['POST'])
+@limiter.limit("10/minute") # Apply rate limit
 def login():
     data = request.get_json()
     # Accept either email or username as identifier

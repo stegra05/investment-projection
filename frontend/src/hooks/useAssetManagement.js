@@ -4,25 +4,21 @@ import assetService from '../services/assetService';
 /**
  * Custom hook to manage asset-related state and actions (add, edit, delete) for a specific portfolio.
  *
- * This hook centralizes the logic for handling the AssetForm visibility, the asset being edited,
- * processing states, errors, and provides callback handlers for triggering these actions.
+ * Centralizes logic for AssetForm visibility, editing state, processing, errors, and provides async handlers.
  *
- * @param {string|number} portfolioId - The ID of the portfolio these assets belong to.
- * @param {Function} onMutationSuccess - Callback function to execute after a successful
- *                                       create, update, or delete operation (e.g., to refetch portfolio data).
+ * @param {string|number} portfolioId - The ID of the portfolio.
  * @returns {object} An object containing state variables and handler functions:
  *   - `showAssetForm` (boolean): Whether the AssetForm should be displayed.
- *   - `assetToEdit` (object|null): The asset object currently being edited, or null if adding a new asset.
- *   - `isProcessing` (boolean): True if an asynchronous operation (like delete) is in progress.
- *   - `error` (string|null): An error message string if an operation failed, otherwise null.
+ *   - `assetToEdit` (object|null): The asset object currently being edited.
+ *   - `isProcessing` (boolean): True if an async operation is in progress.
+ *   - `error` (string|null): An error message string.
  *   - `handleAddAssetClick` (Function): Opens the form to add a new asset.
  *   - `handleEditAssetClick` (Function): Opens the form to edit a specific asset.
  *   - `handleCancelAssetForm` (Function): Closes the asset form.
- *   - `handleSaveAsset` (Function): Placeholder callback intended to be called by AssetForm upon successful save.
- *                                    It resets the form state and triggers `onMutationSuccess`.
- *   - `handleDeleteAsset` (Function): Initiates the deletion process for a specific asset, including confirmation.
+ *   - `handleSaveAsset` (Async Function): Saves (creates/updates) an asset. Takes assetData. Returns Promise.
+ *   - `handleDeleteAsset` (Async Function): Deletes an asset. Takes asset. Returns Promise.
  */
-export function useAssetManagement(portfolioId, onMutationSuccess) {
+export function useAssetManagement(portfolioId) {
   const [showAssetForm, setShowAssetForm] = useState(false);
   const [assetToEdit, setAssetToEdit] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false); // To disable buttons during API calls
@@ -50,29 +46,36 @@ export function useAssetManagement(portfolioId, onMutationSuccess) {
   }, []);
 
   // Handle saving (create or update)
-  // This function will be passed to the AssetForm component's onSaved prop
-  const handleSaveAsset = useCallback(async () => {
-      // The actual saving logic is inside AssetForm, which calls this on success.
-      // We just need to handle the state update and callback here.
-      setIsProcessing(true); // Optional: Could be set in AssetForm too
+  // Now takes assetData and performs the API call.
+  const handleSaveAsset = useCallback(async (assetData) => {
+      setIsProcessing(true);
       setError(null);
       try {
-          // AssetForm handles the actual API call (create/update)
-          // Once AssetForm calls its `onSaved` prop (which points to this), we know it succeeded.
+          if (assetToEdit) {
+              // Update existing asset
+              await assetService.updateAsset(portfolioId, assetToEdit.asset_id, assetData);
+          } else {
+              // Create new asset
+              await assetService.createAsset(portfolioId, assetData);
+          }
+          // On success:
           setShowAssetForm(false);
           setAssetToEdit(null);
-          if (onMutationSuccess) {
-            await onMutationSuccess(); // Re-fetch portfolio data
-          }
-      } catch (err) { // This catch block might be redundant if AssetForm handles its own errors
-          console.error("Error signal from save handler (should be caught in form ideally):", err);
-          setError('An unexpected error occurred during save.'); // Generic error
+          // The calling component will handle refetching after this promise resolves.
+          // No need for onMutationSuccess callback here.
+      } catch (err) {
+          console.error("Save asset failed:", err);
+          const errorMsg = err.response?.data?.message || `Failed to ${assetToEdit ? 'update' : 'create'} asset.`;
+          setError(errorMsg);
+          // Re-throw the error so the calling component knows the operation failed
+          throw err;
       } finally {
           setIsProcessing(false);
       }
-  }, [onMutationSuccess]);
+  }, [portfolioId, assetToEdit]); // Added dependencies
 
   // Handle deleting an asset
+  // Now takes asset and performs the API call, returns promise.
   const handleDeleteAsset = useCallback(async (asset) => {
     // Use window.confirm for simplicity, consider a modal component later
     if (window.confirm(`Are you sure you want to delete the asset "${asset.name_or_ticker}"?`)) {
@@ -80,18 +83,23 @@ export function useAssetManagement(portfolioId, onMutationSuccess) {
       setError(null);
       try {
         await assetService.deleteAsset(portfolioId, asset.asset_id);
-        if (onMutationSuccess) {
-          await onMutationSuccess(); // Re-fetch portfolio data
-        }
+        // The calling component will handle refetching after this promise resolves.
+        // No need for onMutationSuccess callback here.
       } catch (err) {
         console.error('Delete asset failed:', err);
-        setError(err.response?.data?.message || 'Failed to delete asset.');
-        // Potentially show error to user via toast/notification
+        const errorMsg = err.response?.data?.message || 'Failed to delete asset.';
+        setError(errorMsg);
+        // Re-throw the error so the calling component knows the operation failed
+        throw err;
       } finally {
         setIsProcessing(false);
       }
+    } else {
+      // If user cancelled confirmation, throw an error or resolve? Resolve seems less disruptive.
+      // Or simply do nothing and let the promise resolve void.
+      return Promise.resolve(); // Indicate cancellation didn't cause an error
     }
-  }, [portfolioId, onMutationSuccess]);
+  }, [portfolioId]); // Added dependency
 
   return {
     showAssetForm,
@@ -101,8 +109,8 @@ export function useAssetManagement(portfolioId, onMutationSuccess) {
     handleAddAssetClick,
     handleEditAssetClick,
     handleCancelAssetForm,
-    handleSaveAsset, // This is the callback for AssetForm's success
-    handleDeleteAsset,
-    // No need to return setError usually, handle errors internally or via specific feedback
+    handleSaveAsset, // Now performs save and returns promise
+    handleDeleteAsset, // Now performs delete and returns promise
+    setError, // Expose setError for potential use in form component if needed
   };
 } 

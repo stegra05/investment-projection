@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import assetService from '../services/assetService';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import styles from './AssetForm.module.css'; // Import CSS Module
+import { useFormState } from '../hooks/useFormState'; // <-- Add this
 
 // Predefined asset types (could be fetched or managed elsewhere)
 const assetTypeOptions = [
@@ -30,15 +31,12 @@ const assetTypeOptions = [
  * @returns {JSX.Element} The AssetForm component.
  */
 export default function AssetForm({ portfolioId, existingAsset = null, onSaved, onCancel }) {
-  const isEditing = Boolean(existingAsset);
+  const { isEditing, error, setError } = useFormState(existingAsset); // <-- Use hook
   const [assetType, setAssetType] = useState('');
   const [customAssetType, setCustomAssetType] = useState('');
   const [ticker, setTicker] = useState('');
-  // Use strings for input values, parse on submit
   const [allocationPercentage, setAllocationPercentage] = useState('0');
   const [expectedReturn, setExpectedReturn] = useState('0');
-  // Removed loading state, wasn't really used here
-  const [error, setError] = useState('');
 
   useEffect(() => {
     if (isEditing && existingAsset) {
@@ -61,13 +59,13 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaved, 
         setAllocationPercentage('0');
         setExpectedReturn('0');
     }
-    setError(''); // Clear error on init or change
-  }, [existingAsset, isEditing]);
+    setError(''); // Clear error on init or change (using setError from hook)
+  }, [existingAsset, isEditing, setError]); // <-- Add setError dependency
 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError(''); // Clear previous errors (using setError from hook)
     try {
       const finalAssetType = assetType === 'Other' ? customAssetType : assetType;
       // Basic validation
@@ -103,11 +101,9 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaved, 
       onSaved(); // Call the callback to signal success
     } catch (err) {
       console.error('Asset save failed:', err);
-      setError(err.response?.data?.message || 'Failed to save asset. Please check the details.');
+      setError(err.response?.data?.message || 'Failed to save asset. Please check the details.'); // Using setError from hook
     }
   };
-
-  // No loading check needed here
 
   return (
     <form onSubmit={handleSubmit} className={styles.formContainer}>

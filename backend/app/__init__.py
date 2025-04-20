@@ -3,6 +3,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+# Import Flask-Limiter
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 # Import the config dictionary along with the base Config class
 from config import Config, config
 
@@ -11,6 +14,11 @@ db = SQLAlchemy()
 migrate = Migrate()
 cors = CORS()
 jwt = JWTManager()
+# Initialize Limiter
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"] # Default limits for all routes
+)
 
 def create_app(config_name='default'): # Changed argument name for clarity
     """Application factory pattern"""
@@ -26,6 +34,8 @@ def create_app(config_name='default'): # Changed argument name for clarity
     migrate.init_app(app, db)
     cors.init_app(app, resources={r"/api/*": {"origins": "*"}}) # Basic CORS setup
     jwt.init_app(app)
+    # Initialize Limiter with app context
+    limiter.init_app(app)
 
     # Register blueprints here
     from app.routes.main import bp as main_bp

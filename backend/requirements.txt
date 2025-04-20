@@ -9,3 +9,4 @@ Flask-JWT-Extended>=4.0
 python-dateutil 
 pytest>=7.0
 pydantic 
+Flask-Limiter 
