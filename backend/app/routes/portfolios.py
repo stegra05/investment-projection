@@ -94,7 +94,8 @@ def create_portfolio(validated_data): # Receive validated_data from decorator
         **validated_data.dict() # Use validated data directly
     )
     db.session.add(new_portfolio)
-    # db.session.commit() # Commit is handled by decorator
+    db.session.commit() # Explicitly commit *before* refreshing
+    # db.session.commit() # Commit is handled by decorator - (comment kept for context)
     db.session.refresh(new_portfolio) # Refresh to get DB defaults like ID
 
     # Serialize output using Pydantic schema
@@ -123,7 +124,7 @@ def update_portfolio(portfolio_id, portfolio, validated_data): # Receive portfol
          setattr(portfolio, key, value)
 
     # db.session.commit() # Commit is handled by decorator
-    db.session.refresh(portfolio)
+    # db.session.refresh(portfolio) # Remove this line - refresh happens after commit in decorator if needed
      # Serialize output using Pydantic schema
     # Return tuple (response, status_code) for the decorator
     return jsonify(PortfolioSchema.from_orm(portfolio).model_dump(mode='json', by_alias=True)), 200

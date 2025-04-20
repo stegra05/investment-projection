@@ -35,7 +35,8 @@ def test_portfolio_missing_user(db):
     portfolio = Portfolio(user_id=999, name="Orphan Portfolio") # Assume user 999 doesn't exist
     db.session.add(portfolio)
     with pytest.raises(IntegrityError):
-        db.session.commit()
+        db.session.commit() # The commit must happen inside the context manager
+    db.session.rollback() # Rollback after the expected error
 
 def test_portfolio_missing_name(db, test_user):
     """

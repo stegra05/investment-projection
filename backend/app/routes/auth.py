@@ -24,7 +24,8 @@ def is_password_complex(password):
         return False, "Password must contain at least one lowercase letter."
     if not re.search(r"[0-9]", password):
         return False, "Password must contain at least one digit."
-    if not re.search(r"[!@#$%^&*()_+=\-\\[\\]{};\':\\|,.<>/?~\\`]", password):
+    # Use a simpler, more common regex for special characters
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
         return False, "Password must contain at least one special character."
     # TODO: Implement breached password check (e.g., using Have I Been Pwned API)
     return True, ""

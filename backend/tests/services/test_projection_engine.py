@@ -4,6 +4,7 @@ from decimal import Decimal
 from dateutil.relativedelta import relativedelta
 from app.services.projection_engine import calculate_projection
 from app.models import Portfolio, Asset, PlannedFutureChange # Need models to create test data
+from app.enums import AssetType, ChangeType # <-- Import ChangeType
 
 # Tolerance for comparing Decimal values
 DECIMAL_TOLERANCE = Decimal('0.01')
@@ -14,8 +15,8 @@ def setup_portfolio_no_changes(db, test_user):
     portfolio = Portfolio(user_id=test_user.id, name="Simple Growth Portfolio")
     asset = Asset(
         portfolio=portfolio,
-        name="Growth Stock",
-        asset_type="Stock",
+        name_or_ticker="Growth Stock",
+        asset_type=AssetType.STOCK, # <-- Use Enum member
         allocation_value=Decimal("10000.00"),
         manual_expected_return=Decimal("5.0") # 5% annual return
     )
@@ -29,8 +30,8 @@ def setup_portfolio_with_contributions(db, test_user):
     portfolio = Portfolio(user_id=test_user.id, name="Contribution Portfolio")
     asset = Asset(
         portfolio=portfolio,
-        name="Index Fund",
-        asset_type="Stock",
+        name_or_ticker="Index Fund",
+        asset_type=AssetType.STOCK, # <-- Use Enum member
         allocation_value=Decimal("10000.00"),
         manual_expected_return=Decimal("6.0") # 6% annual return
     )
@@ -42,7 +43,7 @@ def setup_portfolio_with_contributions(db, test_user):
         change = PlannedFutureChange(
             portfolio=portfolio,
             change_date=change_date,
-            change_type="Contribution",
+            change_type=ChangeType.CONTRIBUTION, # <-- Use Enum member
             amount=Decimal("200.00")
         )
         changes.append(change)
@@ -57,8 +58,8 @@ def setup_portfolio_with_withdrawals(db, test_user):
     portfolio = Portfolio(user_id=test_user.id, name="Withdrawal Portfolio")
     asset = Asset(
         portfolio=portfolio,
-        name="Bond Fund",
-        asset_type="Bond",
+        name_or_ticker="Bond Fund",
+        asset_type=AssetType.BOND, # <-- Use Enum member
         allocation_value=Decimal("20000.00"),
         manual_expected_return=Decimal("4.0") # 4% annual return
     )
@@ -70,7 +71,7 @@ def setup_portfolio_with_withdrawals(db, test_user):
         change = PlannedFutureChange(
             portfolio=portfolio,
             change_date=change_date,
-            change_type="Withdrawal",
+            change_type=ChangeType.WITHDRAWAL, # <-- Use Enum member
             amount=Decimal("150.00")
         )
         changes.append(change)
@@ -86,22 +87,22 @@ def setup_portfolio_mixed_assets(db, test_user):
     # Note: % allocation requires initial_total_value passed to calculate_projection
     asset1 = Asset(
         portfolio=portfolio,
-        name="Aggressive Stock",
-        asset_type="Stock",
+        name_or_ticker="Aggressive Stock",
+        asset_type=AssetType.STOCK, # <-- Use Enum member
         allocation_percentage=Decimal("60.0"), # 60%
         manual_expected_return=Decimal("8.0")  # 8% annual
     )
     asset2 = Asset(
         portfolio=portfolio,
-        name="Stable Bond",
-        asset_type="Bond",
+        name_or_ticker="Stable Bond",
+        asset_type=AssetType.BOND, # <-- Use Enum member
         allocation_percentage=Decimal("40.0"), # 40%
         manual_expected_return=Decimal("3.0")  # 3% annual
     )
     change = PlannedFutureChange(
         portfolio=portfolio,
         change_date=datetime.date.today().replace(day=5) + relativedelta(months=2),
-        change_type="Contribution",
+        change_type=ChangeType.CONTRIBUTION, # <-- Use Enum member
         amount=Decimal("1000.00")
     )
     db.session.add_all([portfolio, asset1, asset2, change])
@@ -204,11 +205,11 @@ def test_projection_mixed_assets_percentage(db, app, setup_portfolio_mixed_asset
 def test_projection_zero_initial_value_with_contributions(db, app, test_user):
     """Test projection starting from zero with only contributions."""
     portfolio = Portfolio(user_id=test_user.id, name="Zero Start Portfolio")
-    asset = Asset(portfolio=portfolio, name="Savings", asset_type="Cash", allocation_value=Decimal("0.0"), manual_expected_return=Decimal("1.0"))
+    asset = Asset(portfolio=portfolio, name_or_ticker="Savings", asset_type=AssetType.CASH, allocation_value=Decimal("0.0"), manual_expected_return=Decimal("1.0")) # <-- Use Enum member
     changes = []
     start_contrib_date = datetime.date.today().replace(day=15)
     for i in range(6):
-        change = PlannedFutureChange(portfolio=portfolio, change_date=start_contrib_date+relativedelta(months=i), change_type="Contribution", amount=Decimal("100.00"))
+        change = PlannedFutureChange(portfolio=portfolio, change_date=start_contrib_date+relativedelta(months=i), change_type=ChangeType.CONTRIBUTION, amount=Decimal("100.00")) # <-- Use Enum member
         changes.append(change)
     db.session.add_all([portfolio, asset] + changes)
     db.session.commit()

@@ -104,7 +104,7 @@ def test_login_incorrect_password(client, test_user):
     data = response.get_json()
     assert "Invalid email or password" in data['message']
 
-def test_login_nonexistent_user(client):
+def test_login_nonexistent_user(client, db):
     """Test login with a user that does not exist."""
     response = client.post('/api/v1/auth/login', json={
         'username': 'nosuchuser',

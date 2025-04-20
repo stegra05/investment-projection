@@ -8,6 +8,9 @@ from app.models import Portfolio, Asset, PlannedFutureChange
 from app import db
 from sqlalchemy.orm import joinedload
 
+# Import the Enums!
+from app.enums import ChangeType
+
 # Placeholder for models until actual import path is confirmed
 # class Portfolio:
 #     id = 1
@@ -121,9 +124,9 @@ def _calculate_net_monthly_change(
 
     for change in month_changes:
         change_amount = Decimal(change.amount) # Ensure Decimal
-        if change.change_type == 'Contribution':
+        if change.change_type == ChangeType.CONTRIBUTION:
             net_change_month += change_amount
-        elif change.change_type == 'Withdrawal':
+        elif change.change_type == ChangeType.WITHDRAWAL:
             net_change_month -= change_amount
     return net_change_month
 
@@ -154,11 +157,20 @@ def _distribute_cash_flow(
     else:
         # Handle zero/negative pre-cashflow value scenario
         current_total_value_month = total_value_pre_cashflow + net_change_month
-        value_i_final = value_i_pre_cashflow.copy() # Keep pre-cashflow values
-        if net_change_month != Decimal('0.0'):
-            # Log that the change was applied directly to the total
-            print(f"Warning: Portfolio value before cash flow at {current_date.strftime('%Y-%m')} was {total_value_pre_cashflow:.2f}. "
-                  f"Applied net change {net_change_month:.2f} directly to total.")
+        value_i_final = value_i_pre_cashflow.copy() # Start with empty/zero pre-cashflow values
+        if net_change_month > Decimal('0.0') and len(value_i_final) > 0:
+            # If starting from zero and adding cash, put it in the assets
+            # Simple distribution: add all to the first asset found
+            # A more complex strategy might be needed for multiple assets starting at zero
+            first_asset_id = next(iter(value_i_final))
+            value_i_final[first_asset_id] = net_change_month
+            # Ensure total reflects the sum of (now non-zero) asset values
+            current_total_value_month = sum(value_i_final.values())
+
+        elif net_change_month != Decimal('0.0'):
+             # Log that the change was applied directly to the total (e.g., if withdrawing from zero)
+             print(f"Warning: Portfolio value before cash flow at {current_date.strftime('%Y-%m')} was {total_value_pre_cashflow:.2f}. "
+                   f"Applied net change {net_change_month:.2f} directly to total.")
 
     return value_i_final, current_total_value_month
 

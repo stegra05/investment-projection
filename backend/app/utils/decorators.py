@@ -19,21 +19,38 @@ def handle_api_errors(schema=None):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
             if request.method in ['POST', 'PUT', 'PATCH']:
-                json_data = request.get_json()
-                if not json_data:
-                    abort(400, description="Request body cannot be empty.")
-                kwargs['json_data'] = json_data # Pass data to decorated function
+                # Ensure content type is application/json, otherwise Flask handles it (usually 415)
+                if not request.is_json:
+                     abort(415, description="Unsupported Media Type: Request must be application/json.")
+
+                json_data = request.get_json() # Now safe to call get_json
+                if json_data is None: # Check for null body or empty parse
+                    abort(400, description="Request body cannot be empty or null.")
 
                 # Validate input using Pydantic schema if provided
                 if schema:
                     try:
-                        validated_data = schema.parse_obj(json_data)
-                        kwargs['validated_data'] = validated_data # Pass validated data
+                        validated_data = schema.model_validate(json_data) # Use model_validate for Pydantic v2+
+                        # Only pass validated_data if schema is used
+                        kwargs['validated_data'] = validated_data
                     except ValidationError as e:
-                        abort(400, description=e.errors())
+                        # Convert Pydantic errors to a more readable format if needed
+                        error_details = e.errors()
+                        # Return JSON directly instead of aborting
+                        # abort(400, description=error_details)
+                        return jsonify(validation_error=error_details), 400
+                    except Exception as e: # Catch potential unexpected errors during validation
+                         db.session.rollback()
+                         import traceback
+                         traceback.print_exc()
+                         abort(500, description=f"Error during data validation: {e}")
+                else:
+                    # Pass raw json_data if no schema is specified
+                    kwargs['json_data'] = json_data
 
             try:
                 # Execute the actual route logic
+                # Route function signature determines if it receives validated_data or json_data
                 result, status_code = f(*args, **kwargs)
                 db.session.commit()
                 return result, status_code

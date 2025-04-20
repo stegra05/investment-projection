@@ -1,12 +1,25 @@
 import pytest
-from app import create_app, db as _db
+from app import create_app, db as _db, limiter
 from app.models import User, Portfolio, Asset, PlannedFutureChange  # Assuming User, Portfolio, Asset, and PlannedFutureChange models exist for auth testing
+from app.enums import AssetType, ChangeType # <-- Add this import
 import os
 from decimal import Decimal
 import datetime
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
+import sqlite3 # <-- Import sqlite3
 
 # Determine the base directory of the backend project
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Ensure foreign key constraints are enforced for SQLite
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    # Check if the connection is an instance of the SQLite3 connection type
+    if isinstance(dbapi_connection, sqlite3.Connection):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON;")
+        cursor.close()
 
 @pytest.fixture(scope='session')
 def app():
@@ -24,10 +37,23 @@ def app():
     # if os.path.exists(test_db_path):
     #     os.unlink(test_db_path) # Ensure clean state
 
-    app = create_app(config_name_override=config_name, testing=True, db_uri_override=test_db_uri)
+    # Correctly call create_app with the configuration name
+    app = create_app(config_name=config_name)
+
+    # Update config for testing AFTER app creation
+    app.config.update(
+        TESTING=True,
+        SQLALCHEMY_DATABASE_URI=test_db_uri,
+        JWT_SECRET_KEY='test-secret-key', # Use a fixed secret key for testing
+        WTF_CSRF_ENABLED=False, # Disable CSRF for easier testing of forms/API calls
+        RATELIMIT_ENABLED=False, # Disable rate limiting for tests
+        JWT_COOKIE_CSRF_PROTECT=False # Disable CSRF protection for JWT cookies in tests
+    )
 
     # Establish an application context before running tests
     with app.app_context():
+        # Explicitly disable the limiter *after* app context
+        limiter.enabled = False
         yield app # Use yield for session scope
 
     # Cleanup (if using file-based SQLite)
@@ -80,8 +106,8 @@ def test_asset(db, test_portfolio):
     """Fixture to create a simple test asset within test_portfolio."""
     asset = Asset(
         portfolio_id=test_portfolio.portfolio_id,
-        name="Test Stock Asset",
-        asset_type="Stock",
+        name_or_ticker="Test Stock Asset",
+        asset_type=AssetType.STOCK, # <-- Use Enum member
         allocation_value=Decimal("10000.00"),
         manual_expected_return=Decimal("7.0") # 7% annual return
     )
@@ -95,7 +121,7 @@ def test_planned_change(db, test_portfolio):
     change = PlannedFutureChange(
         portfolio_id=test_portfolio.portfolio_id,
         change_date=datetime.date.today() + datetime.timedelta(days=45), # ~1.5 months from now
-        change_type="Contribution",
+        change_type=ChangeType.CONTRIBUTION, # <-- Use Enum member
         amount=Decimal("500.00")
     )
     db.session.add(change)
@@ -106,8 +132,8 @@ def test_planned_change(db, test_portfolio):
 def logged_in_client(client, test_user):
     """Provides a test client that is logged in as test_user."""
     # Use the client to log in the test_user
-    # This assumes your login route is '/api/auth/login' and accepts JSON
-    res = client.post('/api/auth/login', json={
+    # This assumes your login route is '/api/v1/auth/login' and accepts JSON
+    res = client.post('/api/v1/auth/login', json={
         'username': 'testuser',
         'password': 'password'
     })
