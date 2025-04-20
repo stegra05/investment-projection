@@ -71,17 +71,17 @@ This WBS breaks down the high-level tasks from the project README [cite: 98] int
     - 9.5. Integrate UI components with backend Portfolio/Asset/Change APIs [cite: 128] [DONE]
 
 ## 10. Frontend Projection Visualization Display (T10) [cite: 125]
-    - 10.1. Select and install a charting library (e.g., Chart.js, Recharts)
-    - 10.2. Create UI component to trigger projection calculation via API call
-    - 10.3. Create UI component to display the projection graph using the chosen library [cite: 45, 21]
-    - 10.4. Handle loading and error states for the visualization
+    - 10.1. Select and install a charting library (e.g., Chart.js, Recharts) [DONE]
+    - 10.2. Create UI component to trigger projection calculation via API call [DONE]
+    - 10.3. Create UI component to display the projection graph using the chosen library [cite: 45, 21] [DONE]
+    - 10.4. Handle loading and error states for the visualization [DONE]
 
 ## 11. Integrate FE/BE API Calls (T11) [cite: 128]
-    - 11.1. Set up mechanism for frontend to make API calls (e.g., `axios`, `fetch`)
-    - 11.2. Configure CORS on Flask backend to allow requests from React frontend
-    - 11.3. Ensure authentication tokens/sessions are sent with relevant requests
-    - 11.4. Implement error handling for API calls on the frontend
-    - 11.5. Connect all frontend components (Auth, Portfolio, Projection) to their respective backend API endpoints
+    - 11.1. Set up mechanism for frontend to make API calls (e.g., `axios`, `fetch`) [DONE]
+    - 11.2. Configure CORS on Flask backend to allow requests from React frontend [DONE]
+    - 11.3. Ensure authentication tokens/sessions are sent with relevant requests [DONE]
+    - 11.4. Implement error handling for API calls on the frontend [DONE]
+    - 11.5. Connect all frontend components (Auth, Portfolio, Projection) to their respective backend API endpoints  
 
 ## 12. Basic Testing Setup (T12) [cite: 131]
     - 12.1. Configure Jest for React frontend testing [cite: 162]

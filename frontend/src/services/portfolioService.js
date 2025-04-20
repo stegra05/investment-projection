@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
+const API_URL = process.env.VITE_API_URL || '/api/v1';
 
 // Create an axios instance for portfolio API calls
 const apiClient = axios.create({
