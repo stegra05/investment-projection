@@ -1,0 +1,62 @@
+.dashboard-page {
+  /* Page level styles if needed */
+}
+
+/* Page Title - Using typography rule */
+.page-title {
+  font-size: 2rem; /* H1 size */
+  font-weight: 700; /* H1 weight */
+  margin-bottom: var(--space-l); /* Space below title */
+  color: var(--color-text-primary-light); /* Base text color */
+  transition: color 0.2s ease;
+}
+
+/* Grid for dashboard cards */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid */
+  gap: var(--space-l); /* Spacing between cards */
+}
+
+/* Base Card Styling */
+.dashboard-card {
+  background-color: var(--color-ui-background-light);
+  border: 1px solid var(--color-border-light);
+  border-radius: 8px; /* Consistent corner radius */
+  padding: var(--space-m);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Card Title - Using typography rule */
+.card-title {
+  font-size: 1.25rem; /* H3 size */
+  font-weight: 600; /* H3 weight */
+  color: var(--color-text-primary-light);
+  margin-bottom: var(--space-s);
+  transition: color 0.2s ease;
+}
+
+/* Card Content - Using typography rule */
+.card-content {
+  font-size: 1rem; /* Body text size */
+  color: var(--color-text-secondary-light);
+  line-height: 1.6;
+  transition: color 0.2s ease;
+}
+
+/* --- Dark Mode Overrides --- */
+html[data-theme='dark'] .page-title,
+html[data-theme='dark'] .card-title {
+  color: var(--color-text-primary-dark);
+}
+
+html[data-theme='dark'] .card-content {
+  color: var(--color-text-secondary-dark);
+}
+
+html[data-theme='dark'] .dashboard-card {
+  background-color: var(--color-ui-background-dark);
+  border: 1px solid var(--color-border-dark);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Slightly adjusted shadow for dark */
+} 

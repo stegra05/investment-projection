@@ -1,19 +1,12 @@
+/* === Base Variables (Apply to both themes unless overridden) === */
 :root {
-  /* Design System Variables - Dark Mode */
+  /* Colors */
   --color-primary: #053f96;
+  --color-primary-rgb: 5, 63, 150; /* Added RGB */
   --color-secondary: #4CB0B2;
   --color-accent-green: #36B37E;
-  --color-text-primary: #E1E8F2;
-  --color-text-secondary: #A1ADBE;
-  --color-border: #3E4C5F;
-  --color-ui-background: #171F2A;
-  --color-app-background-start: #0E131B;
-  --color-app-background-end: #1A2B42;
-  --color-text-on-primary: #FFFFFF;
-  --color-success: #4ADE80;
-  --color-error: #F87171;
-  --color-warning: #FBBF24;
-  --color-info: #60A5FA;
+  --color-text-on-primary-light: #FFFFFF;
+  --color-text-on-primary-dark: #FFFFFF;
 
   /* Spacing Scale */
   --space-xxs: 0.25rem;
@@ -26,88 +19,152 @@
 
   /* Typography Base */
   --font-family-base: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-size-base: 1rem;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-base: 1.6;
+  --line-height-heading: 1.3;
 
-  /* Updated Global Styles */
+  /* Typography Scale */
+  --font-size-h1: 2rem;
+  --font-size-h2: 1.5rem;
+  --font-size-h3: 1.25rem;
+  --font-size-body: 1rem; /* Base */
+  --font-size-secondary: 0.875rem;
+  --font-size-small: 0.75rem;
+
+  /* Border Radius */
+  --border-radius-s: 4px;
+  --border-radius-m: 8px;
+  --border-radius-l: 16px;
+
+  /* Other Base UI */
+  --transition-duration: 0.2s;
+}
+
+/* === Light Mode Variables === */
+html:not([data-theme='dark']) {
+  --color-text-primary: #1E2A3B;
+  --color-text-secondary: #6B778C;
+  --color-text-disabled: #A5ADBA;
+  --color-text-link: var(--color-primary);
+  --color-text-on-primary: var(--color-text-on-primary-light);
+  --color-text-error: #BF2600; /* Darker red for text */
+  --color-text-success: #006644; /* Darker green */
+  --color-border: #DFE1E6;
+  --color-ui-background: #FFFFFF;
+  --color-app-background: #F4F5F7; /* App background solid */
+  --color-success: #36B37E;
+  --color-error: #DE350B;
+  --color-warning: #FFAB00;
+  --color-info: #0065FF;
+  --color-text-on-primary: var(--color-text-on-primary-light);
+}
+
+/* === Dark Mode Variables === */
+html[data-theme='dark'] {
+  --color-text-primary: #E1E8F2;
+  --color-text-secondary: #A1ADBE;
+  --color-text-disabled: #5A697E;
+  --color-text-link: #60A5FA; /* Lighter blue for links */
+  --color-text-on-primary: var(--color-text-on-primary-dark);
+  --color-text-error: #FFA0A0; /* Lighter red */
+  --color-text-success: #6EE7B7; /* Lighter green */
+  --color-border: #3E4C5F;
+  --color-ui-background: #171F2A; /* Cards/Inputs */
+  --color-app-background-start: #0E131B; /* Gradient Start */
+  --color-app-background-end: #1A2B42; /* Gradient End */
+  --color-app-background: transparent; /* Use gradient on body */
+  --color-ui-background-hover: #202A3A; /* Subtle hover */
+  --color-ui-background-disabled: #111823;
+  --color-success: #4ADE80;
+  --color-error: #F87171;
+  --color-warning: #FBBF24;
+  --color-info: #60A5FA;
+  --color-text-on-primary: var(--color-text-on-primary-dark);
+}
+
+/* === Global Base Styles === */
+html {
   font-family: var(--font-family-base);
-  font-size: var(--font-size-base);
-  line-height: 1.6;
-  font-weight: 400;
-  color-scheme: light dark;
-  color: var(--color-text-primary);
-  background-color: var(--color-ui-background);
-  background-image: linear-gradient(to bottom right, var(--color-app-background-start), var(--color-app-background-end));
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-base);
+  font-weight: var(--font-weight-regular);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  color: var(--color-text-primary);
+  background-color: var(--color-app-background, var(--color-ui-background)); /* Fallback if gradient not used */
+  transition: color 0.2s ease, background-color 0.2s ease; /* Basic transitions */
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+/* Apply dark mode gradient to body or a wrapper if needed */
+html[data-theme='dark'] body {
+  background-image: linear-gradient(to bottom right, var(--color-app-background-start), var(--color-app-background-end));
+  background-attachment: fixed; /* Keep gradient fixed */
 }
 
 body {
   margin: 0;
   display: flex;
-  place-items: center;
+  flex-direction: column; /* Allow Navbar + Content structure */
   min-width: 320px;
   min-height: 100vh;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+#root {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; /* Make root take full height */
 }
 
+/* Reset default browser styles for common elements */
+h1, h2, h3, h4, h5, h6, p, ul, ol, li {
+  margin: 0;
+  padding: 0;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+/* Basic link styling */
+a {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-link);
+  text-decoration: none;
+  transition: color var(--transition-duration) ease;
+}
+a:hover {
+  /* Slightly lighten/darken primary or use secondary */
+  filter: brightness(1.2);
+}
+
+/* Basic button reset (more specific styles in components/rules) */
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  font-size: inherit;
+  font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    /* Light Mode Color Overrides */
-    --color-text-primary: #1E2A3B;
-    --color-text-secondary: #6B778C;
-    --color-border: #DFE1E6;
-    --color-ui-background: #FFFFFF;
-    --color-app-background-start: initial;
-    --color-app-background-end: initial;
-    --color-text-on-primary: #FFFFFF;
-    --color-success: #36B37E;
-    --color-error: #DE350B;
-    --color-warning: #FFAB00;
-    --color-info: #0065FF;
+/* Additions for Typography Scale */
+h1 { font-size: var(--font-size-h1); font-weight: var(--font-weight-bold); line-height: var(--line-height-heading); }
+h2 { font-size: var(--font-size-h2); font-weight: var(--font-weight-semibold); line-height: var(--line-height-heading); }
+h3 { font-size: var(--font-size-h3); font-weight: var(--font-weight-medium); line-height: var(--line-height-heading); }
+/* Add other heading levels if needed */
 
-    /* Updated Light Mode Styles */
-    color: var(--color-text-primary);
-    background-color: var(--color-ui-background);
-    background-image: none;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-} 
+/* Utility class for tabular numbers */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- REMOVE Old Media Query --- */
+/* @media (prefers-color-scheme: light) { ... } */ 

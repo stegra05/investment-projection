@@ -1,0 +1,61 @@
+/* Input Styles */
+.input {
+  display: block;
+  width: 100%;
+  padding: var(--space-xs) var(--space-s);
+  font-family: inherit;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-base);
+  color: var(--color-text-primary);
+  background-color: var(--color-ui-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-m);
+  box-shadow: none; /* Reset default */
+  transition: border-color var(--transition-duration) ease,
+              background-color var(--transition-duration) ease,
+              box-shadow var(--transition-duration) ease;
+}
+
+/* Remove spinners for number inputs */
+.input[type="number"]::-webkit-outer-spin-button,
+.input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+.input:hover {
+  border-color: color-mix(in srgb, var(--color-border) 70%, black);
+}
+
+html[data-theme='dark'] .input:hover {
+    border-color: color-mix(in srgb, var(--color-border) 70%, white);
+}
+
+.input:focus,
+.input:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+.input:disabled {
+  cursor: not-allowed;
+  background-color: var(--color-ui-background-disabled, color-mix(in srgb, var(--color-ui-background) 90%, var(--color-text-disabled)));
+  color: var(--color-text-disabled);
+  border-color: color-mix(in srgb, var(--color-border) 80%, transparent);
+  opacity: 0.7;
+}
+
+/* Error state styling */
+.input.error {
+  border-color: var(--color-error);
+}
+
+.input.error:focus,
+.input.error:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-error) 30%, transparent);
+} 

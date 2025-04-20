@@ -3,6 +3,10 @@ import assetService from '../services/assetService';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import styles from './AssetForm.module.css'; // Import CSS Module
 import { useFormState } from '../hooks/useFormState'; // <-- Add this
+// Import new components
+import Button from './Button';
+import Input from './Input';
+import Select from './Select';
 
 // Predefined asset types (could be fetched or managed elsewhere)
 const assetTypeOptions = [
@@ -115,28 +119,27 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaved, 
       {/* Asset Type Select */}
       <div className={styles.formGroup}>
         <label htmlFor="assetType" className={styles.label}>Asset Type*</label>
-        <select
+        <Select
           id="assetType"
           value={assetType}
           onChange={(e) => setAssetType(e.target.value)}
           required
-          className={styles.selectField} // Use select specific class
+          placeholder="-- Select Asset Type --"
         >
-          <option value="" disabled>-- Select Asset Type --</option>
           {assetTypeOptions.map(option => (
               <option key={option.value} value={option.value}>{option.label}</option>
           ))}
-        </select>
+        </Select>
 
         {/* Custom Asset Type Input (Conditional) */}
         {assetType === 'Other' && (
-          <input
+          <Input
             type="text"
             placeholder="Enter custom asset type name (e.g., Cryptocurrency)"
             value={customAssetType}
             onChange={(e) => setCustomAssetType(e.target.value)}
             required={assetType === 'Other'}
-            className={`${styles.inputField} ${styles.customTypeInput}`}
+            className={styles.customTypeInput}
           />
         )}
       </div>
@@ -144,14 +147,13 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaved, 
       {/* Name/Ticker Input */}
       <div className={styles.formGroup}>
         <label htmlFor="ticker" className={styles.label}>Name/Ticker*</label>
-        <input
+        <Input
           id="ticker"
           type="text"
           placeholder="e.g., AAPL, VTI, My Rental Property"
           value={ticker}
           onChange={(e) => setTicker(e.target.value)}
           required
-          className={styles.inputField}
         />
       </div>
 
@@ -191,17 +193,17 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaved, 
       {/* Action Buttons */}
       <div className={styles.actionsContainer}>
          {onCancel && (
-          <button type="button" onClick={onCancel} className={`${styles.button} ${styles.buttonSecondary}`}>
+          <Button type="button" variant="secondary" onClick={onCancel}>
             Cancel
-          </button>
+          </Button>
         )}
-        <button
+        <Button
           type="submit"
-          className={`${styles.button} ${styles.buttonPrimary}`}
+          variant="primary"
+          iconLeft={<PlusIcon style={{ width: '1em', height: '1em' }} />}
         >
-          <PlusIcon className={styles.buttonIcon} />
           {isEditing ? 'Update Asset' : 'Add Asset'}
-        </button>
+        </Button>
       </div>
     </form>
   );

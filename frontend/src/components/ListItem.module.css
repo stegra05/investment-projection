@@ -1,0 +1,60 @@
+/* ListItem Styles */
+.listItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-s) var(--space-m);
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-ui-background);
+  transition: background-color var(--transition-duration) ease,
+              border-color var(--transition-duration) ease;
+  width: 100%; /* Ensure it takes full width in a list */
+  box-sizing: border-box;
+  text-align: left; /* Reset button text alignment if needed */
+}
+
+/* Remove border from the last item in a list (requires parent styling) */
+/* Example: .listContainer > :last-child .listItem { border-bottom: none; } */
+
+.content {
+  flex-grow: 1;
+  /* Add gap if there's a secondary action */
+  margin-right: var(--space-s);
+}
+
+.secondaryAction {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* Interactive styles */
+.listItem.interactive {
+  cursor: pointer;
+}
+
+.listItem.interactive:hover {
+  background-color: var(--color-ui-background-hover, color-mix(in srgb, var(--color-ui-background) 95%, black));
+}
+
+.listItem.interactive:focus-visible {
+  outline: 2px solid var(--color-info);
+  outline-offset: -2px; /* Inset outline */
+  z-index: 1; /* Ensure outline is visible */
+  position: relative; /* Needed for z-index */
+}
+
+/* Dark mode adjustments */
+html[data-theme='dark'] .listItem.interactive:hover {
+  background-color: var(--color-ui-background-hover);
+}
+
+/* Reset button styles if rendered as button */
+.listItem[type="button"] {
+  border: none; /* Handled by item style */
+  padding: 0; /* Handled by item style */
+  font: inherit; /* Inherit font styles */
+  color: inherit; /* Inherit text color */
+  background: none; /* Handled by item style */
+} 

@@ -1,0 +1,74 @@
+/* Select Styles */
+.selectWrapper {
+  position: relative;
+  display: inline-block; /* Or block, depending on usage */
+  width: 100%; /* Default to full width */
+}
+
+.select {
+  display: block;
+  width: 100%;
+  padding: var(--space-xs) var(--space-s);
+  padding-right: var(--space-xl); /* Space for the arrow */
+  font-family: inherit;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-base);
+  color: var(--color-text-primary);
+  background-color: var(--color-ui-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-m);
+  appearance: none; /* Remove default arrow */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  transition: border-color var(--transition-duration) ease,
+              background-color var(--transition-duration) ease,
+              box-shadow var(--transition-duration) ease;
+}
+
+.select:hover {
+  border-color: color-mix(in srgb, var(--color-border) 70%, black);
+}
+
+html[data-theme='dark'] .select:hover {
+    border-color: color-mix(in srgb, var(--color-border) 70%, white);
+}
+
+.select:focus, /* Standard focus */
+.select:focus-visible /* Keyboard focus */
+{
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+.select:disabled {
+  cursor: not-allowed;
+  background-color: var(--color-ui-background-disabled, color-mix(in srgb, var(--color-ui-background) 90%, var(--color-text-disabled)));
+  color: var(--color-text-disabled);
+  border-color: color-mix(in srgb, var(--color-border) 80%, transparent);
+  opacity: 0.7;
+}
+
+/* Custom Arrow */
+.arrow {
+  position: absolute;
+  right: var(--space-s);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1em;
+  height: 1em;
+  pointer-events: none; /* Allow clicks to pass through to select */
+  color: var(--color-text-secondary);
+  transition: color var(--transition-duration) ease;
+}
+
+.select:hover + .arrow {
+  color: var(--color-text-primary);
+}
+
+.select:disabled + .arrow {
+  color: var(--color-text-disabled);
+  opacity: 0.7;
+} 

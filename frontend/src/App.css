@@ -79,4 +79,22 @@ form input {
   border: 1px solid #555;
   color: inherit;
   border-radius: 4px;
+}
+
+/* App.css - Global styles or overrides */
+
+/* Main container for the whole app below providers */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Ensure it takes full viewport height */
+}
+
+/* Main content area below the navbar */
+.main-app-content {
+  flex-grow: 1; /* Allows content to fill remaining vertical space */
+  padding: var(--space-l); /* Add padding around the content area */
+  max-width: 1400px; /* Consistent max-width */
+  width: 100%;
+  margin: 0 auto; /* Center content horizontally */
 } 

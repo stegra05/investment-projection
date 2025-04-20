@@ -1,0 +1,152 @@
+/* NavigationBar Component Styles */
+
+.navbar {
+  background-color: var(--color-ui-background);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 var(--space-l); /* Horizontal padding */
+  height: 64px; /* Fixed height */
+  display: flex;
+  align-items: center;
+  position: sticky; /* Keep navbar visible */
+  top: 0;
+  z-index: 100; /* Ensure it's above content */
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.navbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1400px; /* Optional: Max width for content within navbar */
+  margin: 0 auto;
+}
+
+/* Brand/Logo */
+.navbar-brand a {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+/* Main Navigation Links */
+.navbar-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-m);
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-s);
+  border-radius: 6px;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.nav-link:hover {
+  color: var(--color-text-primary);
+  background-color: rgba(var(--color-primary-rgb), 0.05);
+}
+
+.nav-link.active {
+  color: var(--color-primary);
+  background-color: rgba(var(--color-primary-rgb), 0.1);
+}
+
+.nav-icon {
+  width: 1.25rem; /* 20px */
+  height: 1.25rem;
+}
+
+/* Actions Section (Theme Toggle, User Menu/Auth Links) */
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-m);
+}
+
+/* Theme Toggle Button */
+.theme-toggle-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  padding: var(--space-xs);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.theme-toggle-button:hover {
+  color: var(--color-text-primary);
+  background-color: rgba(var(--color-primary-rgb), 0.05);
+}
+
+.theme-icon {
+  width: 1.5rem; /* 24px */
+  height: 1.5rem;
+}
+
+/* User Menu (Authenticated) */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+}
+
+.user-greeting {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.user-icon {
+  width: 1.25rem; /* 20px */
+  height: 1.25rem;
+}
+
+.logout-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  padding: var(--space-xs);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.logout-button:hover:not(:disabled) {
+  color: var(--color-error);
+  background-color: rgba(222, 53, 11, 0.1); /* Use error color with low opacity */
+}
+
+.logout-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.logout-icon {
+  width: 1.25rem; /* 20px */
+  height: 1.25rem;
+}
+
+/* Auth Links (Not Authenticated) */
+.auth-links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+} 

@@ -133,6 +133,8 @@ export const refreshAccessToken = async (refreshToken) => {
   }
 };
 
+// Remove the bundled default export object
+/*
 const authService = {
   register,
   login,
@@ -144,4 +146,5 @@ const authService = {
   isLoggedIn,
 };
 
-export default authService; 
+export default authService;
+*/ 

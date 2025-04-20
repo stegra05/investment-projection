@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import authService from '../services/authService'; // Import the service (includes refreshAccessToken)
-import { refreshAccessToken } from '../services/authService';
+// Import specific named functions needed
+import { login as apiLogin, logout as apiLogout, refreshAccessToken } from '../services/authService'; 
 
 const AuthContext = createContext(null);
 
@@ -49,10 +49,11 @@ export const AuthProvider = ({ children }) => {
     }
   }, [refreshToken]);
 
+  // Rename the imported function to avoid conflict with the context's login function
   const login = async (credentials) => {
     setLoading(true);
     try {
-      const data = await authService.login(credentials);
+      const data = await apiLogin(credentials); // Use renamed imported function
       setToken(data.token);
       // Save refresh token for sliding-window refresh
       setRefreshToken(data.refreshToken);
@@ -67,10 +68,11 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Rename the imported function to avoid conflict
   const logout = async () => {
     setLoading(true);
     try {
-      await authService.logout(); // Call service (might do nothing if only client-side)
+      await apiLogout(); // Use renamed imported function
       setToken(null);
       // Clear refresh token on logout
       setRefreshToken(null);
@@ -90,21 +92,28 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Only set up if we have a refresh token
     if (!refreshToken) return;
-    // Refresh every 10 minutes
+
+    // Initial check immediately if needed (optional)
+
+    // Refresh every 10 minutes (adjust as needed)
     const intervalMs = 10 * 60 * 1000;
+
     const intervalId = setInterval(async () => {
       try {
+        // Use the directly imported function
         const newAccess = await refreshAccessToken(refreshToken);
         setToken(newAccess);
         console.debug('Refreshed access token');
       } catch (err) {
         console.error('Access token refresh failed, logging out:', err);
         // If refresh fails (e.g. expired), log the user out
-        await logout();
+        await logout(); // Assuming logout is defined within this component
       }
     }, intervalMs);
+
+    // Clear interval on component unmount or when refreshToken changes
     return () => clearInterval(intervalId);
-  }, [refreshToken]);
+  }, [refreshToken]); // Dependency array includes refreshToken
 
   const value = {
     token,
@@ -112,8 +121,8 @@ export const AuthProvider = ({ children }) => {
     user,
     isAuthenticated: !!token,
     loading,
-    login,
-    logout,
+    login, // Provide the context's login function
+    logout, // Provide the context's logout function
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
