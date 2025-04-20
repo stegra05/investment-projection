@@ -7,6 +7,7 @@ import { useFormState } from '../hooks/useFormState'; // <-- Add this
 import Button from './Button';
 import Input from './Input';
 import Select from './Select';
+import { FormCommon } from './FormCommon'; // Reuse common form styles
 
 // Predefined asset types (could be fetched or managed elsewhere)
 const assetTypeOptions = [
@@ -125,7 +126,7 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaved, 
   };
 
   return (
-    <form onSubmit={handleSubmit} className={styles.formContainer}>
+    <FormCommon>
       <h3 className={styles.formTitle}>
         {isEditing ? 'Edit Asset' : 'Add New Asset'}
       </h3>
@@ -240,6 +241,6 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaved, 
           {isEditing ? 'Update Asset' : 'Add Asset'}
         </Button>
       </div>
-    </form>
+    </FormCommon>
   );
 } 
