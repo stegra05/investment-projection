@@ -51,7 +51,7 @@ class PlannedChangeSchema(PlannedChangeBase):
 # --- Asset Schemas ---
 class AssetBase(OrmBaseModel):
     asset_type: AssetType = Field(..., example=AssetType.STOCK)
-    name_or_ticker: Optional[str] = Field(None, example="AAPL")
+    name_or_ticker: Optional[str] = Field(None, alias='name', example="AAPL")
     allocation_percentage: Optional[condecimal(max_digits=5, decimal_places=2)] = Field(None, ge=0, le=100, example="60.50")
     allocation_value: Optional[condecimal(max_digits=15, decimal_places=2)] = Field(None, ge=0, example="10000.00")
     manual_expected_return: Optional[condecimal(max_digits=5, decimal_places=2)] = Field(None, example="7.5")
@@ -67,7 +67,7 @@ class AssetCreateSchema(AssetBase):
 
 class AssetUpdateSchema(AssetBase):
     asset_type: Optional[AssetType] = Field(None, example=AssetType.STOCK)
-    name_or_ticker: Optional[str] = Field(None, example="AAPL")
+    name_or_ticker: Optional[str] = Field(None, alias='name', example="AAPL")
     allocation_percentage: Optional[condecimal(max_digits=5, decimal_places=2)] = Field(None, ge=0, le=100, example="60.50")
     allocation_value: Optional[condecimal(max_digits=15, decimal_places=2)] = Field(None, ge=0, example="10000.00")
     manual_expected_return: Optional[condecimal(max_digits=5, decimal_places=2)] = Field(None, example="7.5")
@@ -76,7 +76,7 @@ class AssetUpdateSchema(AssetBase):
     # (setting one field to None when the other is updated)
 
 class AssetSchema(AssetBase):
-    asset_id: int
+    asset_id: int = Field(..., alias='id')
     portfolio_id: int
 
 # --- Portfolio Schemas ---
@@ -95,6 +95,8 @@ class PortfolioUpdateSchema(PortfolioBase):
 class PortfolioSchema(PortfolioBase):
     portfolio_id: int
     user_id: int
+    # Add calculated total value field
+    total_value: Optional[Decimal] = Field(None, alias='totalValue')
     # Include nested details when serializing
     assets: Optional[List[AssetSchema]] = []
     planned_changes: Optional[List[PlannedChangeSchema]] = [] # Removed alias='changes'

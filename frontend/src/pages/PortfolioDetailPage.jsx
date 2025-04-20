@@ -18,6 +18,7 @@ import AssetForm from '../components/AssetForm';
 import ChangeForm from '../components/ChangeForm';
 import DeleteConfirmation from '../components/DeleteConfirmation';
 import Button from '../components/Button';
+import PortfolioSummary from '../components/PortfolioSummary';
 
 // Define modal types
 const MODAL_TYPES = {
@@ -242,7 +243,7 @@ export default function PortfolioDetailPage() {
                 variant="secondary"
                 onClick={() => navigate(`/portfolios/${portfolioId}/edit`)}
                 icon={<PencilIcon />}
-                disabled={isProcessing} 
+                disabled={isProcessing}
             >
                 Edit Portfolio
             </Button>
@@ -256,6 +257,12 @@ export default function PortfolioDetailPage() {
             </Button>
         </div>
       </header>
+
+      {/* --- Portfolio Summary --- */}
+      <PortfolioSummary
+        assets={portfolio.assets || []}
+        totalValue={portfolio.totalValue}
+      />
 
       {currentActionError && <p className={`${styles.errorText} ${styles.actionError}`}>{currentActionError}</p>}
 

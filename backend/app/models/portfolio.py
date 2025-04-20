@@ -1,6 +1,7 @@
 from app import db
 from sqlalchemy.sql import func
 from datetime import datetime
+from decimal import Decimal
 
 class Portfolio(db.Model):
     __tablename__ = 'portfolios'
@@ -16,6 +17,20 @@ class Portfolio(db.Model):
     user = db.relationship('User', back_populates='portfolios')
     assets = db.relationship('Asset', back_populates='portfolio', cascade='all, delete-orphan')
     planned_changes = db.relationship('PlannedFutureChange', back_populates='portfolio', cascade='all, delete-orphan')
+
+    @property
+    def total_value(self) -> Decimal:
+        """Calculate the total value of the portfolio based on its assets' allocation values."""
+        total = Decimal('0.00')
+        if not self.assets:
+            return total
+        for asset in self.assets:
+            if asset.allocation_value is not None:
+                try:
+                    total += Decimal(asset.allocation_value)
+                except Exception:
+                    pass
+        return total
 
     def to_dict(self, include_details=False):
         """Serialize the Portfolio object to a dictionary.

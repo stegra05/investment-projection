@@ -9,7 +9,7 @@ from app import db
 from sqlalchemy.orm import joinedload
 
 # Import the Enums!
-from app.enums import ChangeType
+from app.enums import ChangeType, AssetType
 
 # Placeholder for models until actual import path is confirmed
 # class Portfolio:
@@ -30,6 +30,20 @@ from app.enums import ChangeType
 #     change_date = datetime.date.today()
 #     change_type = 'Contribution' # or 'Withdrawal', 'Reallocation'
 #     amount = Decimal('0.00')
+
+# --- Default Annual Return Assumptions (Placeholder) ---
+# Expressed as Decimal percentages (e.g., 7.0 for 7%)
+DEFAULT_ANNUAL_RETURNS = {
+    'STOCK': Decimal('8.0'),
+    'BOND': Decimal('4.0'),
+    'MUTUAL_FUND': Decimal('7.5'),
+    'ETF': Decimal('7.8'),
+    'REAL_ESTATE': Decimal('5.0'),
+    'CASH': Decimal('1.5'),
+    'CRYPTOCURRENCY': Decimal('15.0'), # High potential, high risk
+    'OPTIONS': Decimal('0.0'),       # Require manual input for meaningful projection
+    'OTHER': Decimal('0.0'),         # Require manual input
+}
 
 # --- Helper Functions ---
 
@@ -62,38 +76,92 @@ def _initialize_projection(assets: list[Asset], initial_total_value: Decimal | N
     monthly_asset_returns = {}
     calculated_initial_total = Decimal('0.0')
 
+    # First pass: Calculate initial values and total
+    temp_asset_values = {} # Temporary dict to store initial values before potentially adjusting based on percentage
     for asset in assets:
         initial_value = Decimal('0.0')
-        # Ensure database values are treated as Decimals
         if asset.allocation_value is not None:
             initial_value = Decimal(asset.allocation_value)
-        elif asset.allocation_percentage is not None and initial_total_value is not None:
-            initial_value = (Decimal(asset.allocation_percentage) / Decimal('100')) * initial_total_value
+            temp_asset_values[asset.asset_id] = initial_value
+            calculated_initial_total += initial_value
+        # Percentage calculation needs the total, handle in second pass
+
+    # Handle percentage-based allocations if initial_total_value is provided OR if only percentages were given
+    final_initial_total = initial_total_value if initial_total_value is not None else calculated_initial_total
+
+    if final_initial_total == Decimal('0.0') and any(a.allocation_percentage is not None for a in assets):
+         print("Warning: Cannot calculate percentage allocations because initial total value is zero and no fixed value allocations exist.")
+         # Proceed, but percentage assets will remain at 0 initial value
+
+    # Second pass: Finalize initial values and calculate monthly returns
+    actual_calculated_total = Decimal('0.0') # Recalculate based on final assignments
+    for asset in assets:
+        initial_value = temp_asset_values.get(asset.asset_id, Decimal('0.0')) # Get value if set previously
+
+        if asset.allocation_percentage is not None and asset.allocation_value is None and final_initial_total > Decimal('0.0'):
+            # Calculate value from percentage only if value wasn't explicitly set
+            initial_value = (Decimal(asset.allocation_percentage) / Decimal('100')) * final_initial_total
+        elif asset.allocation_percentage is not None and asset.allocation_value is not None:
+             # If both are set, value takes precedence (already handled), maybe log a warning?
+             print(f"Warning: Asset {asset.asset_id} has both allocation_value and allocation_percentage. Using allocation_value.")
+
 
         current_asset_values[asset.asset_id] = initial_value
-        calculated_initial_total += initial_value
+        actual_calculated_total += initial_value
 
-        # Calculate Monthly Asset Returns (R_step_i)
-        monthly_return = Decimal('0.0')
+        # --- Calculate Monthly Asset Returns (R_step_i) ---
+        r_annual = Decimal('0.0') # Default annual return
         if asset.manual_expected_return is not None:
             try:
                 r_annual = Decimal(asset.manual_expected_return) / Decimal('100')
+            except (InvalidOperation, TypeError):
+                print(f"Warning: Invalid manual_expected_return for asset {asset.asset_id}. Using default.")
+                # Fall through to use default based on type
+                asset_type_str = asset.asset_type.name if isinstance(asset.asset_type, AssetType) else str(asset.asset_type)
+                r_annual = DEFAULT_ANNUAL_RETURNS.get(asset_type_str, Decimal('0.0')) / Decimal('100')
+        else:
+            # Use default based on asset type
+            # Ensure asset.asset_type is the Enum member name (string) for dict lookup
+            asset_type_str = asset.asset_type.name if isinstance(asset.asset_type, AssetType) else str(asset.asset_type)
+            r_annual = DEFAULT_ANNUAL_RETURNS.get(asset_type_str, Decimal('0.0')) / Decimal('100')
+            if asset_type_str in ['OPTIONS', 'OTHER'] and r_annual == Decimal('0.0'):
+                 print(f"Info: Asset {asset.asset_id} type '{asset_type_str}' has no manual return. Projection assumes 0% growth. Provide 'manual_expected_return' for custom projection.")
+
+
+        # Calculate monthly return from annual return
+        monthly_return = Decimal('0.0')
+        if r_annual > Decimal('-1.0'): # Avoid issues with (1 + r_annual) being negative
+             try:
                 # (1 + R_annual_i)^(1/12) - 1
                 monthly_return = (Decimal('1.0') + r_annual) ** (Decimal('1.0') / Decimal('12.0')) - Decimal('1.0')
-            except (InvalidOperation, TypeError):
-                monthly_return = Decimal('0.0')
+             except InvalidOperation:
+                 print(f"Warning: Could not calculate monthly return for asset {asset.asset_id} from annual return {r_annual*100}%. Defaulting monthly return to 0.")
+                 monthly_return = Decimal('0.0')
+        else:
+             # Handle extremely negative annual returns (e.g., -100% or less) - monthly equivalent is -100%
+             monthly_return = Decimal('-1.0')
+
+
         monthly_asset_returns[asset.asset_id] = monthly_return
 
-    # Optional Validation
-    tolerance = Decimal('0.01')
-    if initial_total_value is not None and abs(calculated_initial_total - initial_total_value) > tolerance:
-        print(f"Warning: Initial calculated asset values sum ({calculated_initial_total:.2f}) "
-              f"differs from provided initial_total_value ({initial_total_value:.2f}). Proceeding.")
-        # Use the provided initial_total_value if available, otherwise the calculated sum.
-        start_total_value = initial_total_value
+
+    # Optional Validation: Compare final actual calculated total with provided initial_total_value
+    tolerance = Decimal('0.01') * max(Decimal('1.0'), final_initial_total) # Relative tolerance or absolute 0.01 if total is small/zero
+    if initial_total_value is not None and abs(actual_calculated_total - initial_total_value) > tolerance:
+        print(f"Warning: Final calculated initial asset values sum ({actual_calculated_total:.2f}) "
+              f"differs significantly from provided initial_total_value ({initial_total_value:.2f}). Check allocations. Using calculated total for projection start.")
+        start_total_value = actual_calculated_total # Use the sum of calculated values as the starting point
+    elif initial_total_value is not None:
+         start_total_value = initial_total_value # Use provided value if it matches calculated total closely
     else:
-        # Use calculated total if no initial_total_value provided or if they match closely.
-        start_total_value = initial_total_value if initial_total_value is not None else calculated_initial_total
+        # Use calculated total if no initial_total_value provided.
+        start_total_value = actual_calculated_total
+
+
+    # Debugging: Print initial state
+    # print(f"Initialized projection. Start Total: {start_total_value:.2f}")
+    # for asset_id, val in current_asset_values.items():
+    #     print(f"  Asset {asset_id}: Value={val:.2f}, MonthlyReturn={monthly_asset_returns[asset_id]:.5f}")
 
 
     return current_asset_values, monthly_asset_returns, start_total_value

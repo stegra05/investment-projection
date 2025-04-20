@@ -36,18 +36,18 @@ function AssetListItem({ asset, onEdit, onDelete }) {
   return (
     <li className={styles.listItem}>
       <div className={styles.assetDetails}>
-        <strong className={styles.assetName}>{asset.name_or_ticker}</strong>
+        <strong className={styles.assetName}>{asset.name}</strong>
         <span className={styles.assetType}>({asset.asset_type})</span>
         <span className={styles.allocation}>Allocation: {formatPercent(asset.allocation_percentage)}</span>
         <span className={styles.expectedReturn}>Expected Return: {formatReturn(asset.manual_expected_return)}</span>
         {/* Consider adding calculated return display here too? */}
       </div>
       <div className={styles.actions}>
-        <button onClick={() => onEdit(asset)} className={styles.actionButton} aria-label={`Edit ${asset.name_or_ticker}`}>
+        <button onClick={() => onEdit(asset)} className={styles.actionButton} aria-label={`Edit ${asset.name}`}>
           {/* Apply icon styles via className */}
           <PencilIcon className={`${styles.icon} ${styles.iconEdit}`} />
         </button>
-        <button onClick={() => onDelete(asset)} className={styles.actionButton} aria-label={`Delete ${asset.name_or_ticker}`}>
+        <button onClick={() => onDelete(asset)} className={styles.actionButton} aria-label={`Delete ${asset.name}`}>
            {/* Apply icon styles via className */}
           <TrashIcon className={`${styles.icon} ${styles.iconDelete}`} />
         </button>
@@ -76,7 +76,7 @@ export default function AssetList({ assets, onEdit, onDelete }) {
   return (
     <ul className={styles.list}>
       {assets.map((asset) => (
-        <AssetListItem key={asset.asset_id} asset={asset} onEdit={onEdit} onDelete={onDelete} />
+        <AssetListItem key={asset.id} asset={asset} onEdit={onEdit} onDelete={onDelete} />
       ))}
     </ul>
   );

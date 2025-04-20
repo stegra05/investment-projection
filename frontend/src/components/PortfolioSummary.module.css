@@ -1,0 +1,87 @@
+.summaryContainer {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two equal columns */
+    gap: var(--space-l);
+    background-color: var(--color-ui-background);
+    padding: var(--space-l);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: var(--space-l);
+}
+
+.totalValueSection,
+.chartSection {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Apply heading styles from typography rules */
+.totalValueLabel,
+.chartLabel {
+    font-size: 1.25rem; /* H3 size */
+    font-weight: 600; /* Semi-bold */
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-s);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--space-xs);
+}
+
+.totalValueAmount {
+    font-size: 2rem; /* H1 size */
+    font-weight: 700; /* Bold */
+    color: var(--color-text-primary);
+    margin: 0;
+    /* Apply tabular figures for consistent number alignment */
+    font-feature-settings: 'tnum';
+    font-variant-numeric: tabular-nums;
+}
+
+.chartSection {
+    align-items: center; /* Center chart horizontally */
+}
+
+.noDataText {
+    color: var(--color-text-secondary);
+    font-style: italic;
+    text-align: center;
+    height: 250px; /* Match chart height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Custom Tooltip Styles */
+.customTooltip {
+    background-color: var(--color-ui-background); /* Handled inline for now */
+    border: 1px solid var(--color-border); /* Handled inline for now */
+    border-radius: 6px;
+    padding: var(--space-s);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-size: 0.875rem;
+}
+
+.tooltipLabel {
+    color: var(--color-text-secondary); /* Handled inline for now */
+    margin-bottom: var(--space-xxs);
+    font-weight: 500;
+}
+
+.tooltipValue {
+    color: var(--color-text-primary); /* Handled inline for now */
+    margin: 0;
+    font-weight: 600;
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .summaryContainer {
+        grid-template-columns: 1fr; /* Stack columns on smaller screens */
+        gap: var(--space-m);
+        padding: var(--space-m);
+    }
+
+    .totalValueAmount {
+        font-size: 1.75rem; /* Slightly smaller on mobile */
+    }
+} 

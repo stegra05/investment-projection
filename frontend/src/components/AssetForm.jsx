@@ -18,6 +18,8 @@ const assetTypeOptions = [
     { value: 'Mutual Fund', label: 'Mutual Fund' },
     { value: 'Real Estate', label: 'Real Estate' },
     { value: 'Cash', label: 'Cash/Equivalent' },
+    { value: 'Cryptocurrency', label: 'Cryptocurrency' },
+    { value: 'Options', label: 'Options' },
     { value: 'Other', label: 'Other (Custom)' },
 ];
 
@@ -251,90 +253,86 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaved, 
            {fieldErrors.ticker && <p className={styles.fieldErrorMessage}>{fieldErrors.ticker}</p>}
         </div>
 
-        {/* Allocation Range Slider & Number Input */}
+        {/* Allocation Percentage Slider/Input */}
         <div className={styles.formGroup}>
-          <label htmlFor="allocationRange" className={styles.label}>Target Allocation (%)</label>
-          <div className={styles.rangeGroup}>
-              <input
-                id="allocationRange"
-                type="range"
-                min="0" max="100" step="1"
-                value={parseNumericValue(allocationPercentage)} // Use parsed value for slider
-                onChange={handleValueChange(setAllocationPercentage, 'allocationPercentage')}
-                className={styles.rangeInput}
-                aria-invalid={!!fieldErrors.allocationPercentage} // Accessibility
-              />
-              {/* Number input synced with the slider */}
-              <Input
-                id="allocationNumber"
-                type="number"
-                min="0" max="100" step="1"
-                value={allocationPercentage} // Bind directly to string state
-                onChange={handleValueChange(setAllocationPercentage, 'allocationPercentage')}
-                onBlur={() => handleBlur('allocationPercentage', allocationPercentage)} // Validate on blur
-                className={styles.rangeValueInput}
-                error={!!fieldErrors.allocationPercentage} // Pass error state
-                aria-label="Target Allocation Percentage Number Input"
-                aria-invalid={!!fieldErrors.allocationPercentage} // Accessibility
-                aria-describedby="allocation-error" // Accessibility
-              />
-              <span className={styles.rangeUnit}>%</span>
-          </div>
-           {fieldErrors.allocationPercentage && <p id="allocation-error" className={styles.fieldErrorMessage}>{fieldErrors.allocationPercentage}</p>}
+            <label htmlFor="allocationPercentage" className={styles.label}>Allocation %*</label>
+            <div className={styles.rangeContainer}>
+                <input
+                    type="range"
+                    id="allocationPercentageSlider"
+                    name="allocationPercentage"
+                    min="0"
+                    max="100"
+                    step="0.1" // Allow finer control
+                    value={allocationPercentage}
+                    onChange={handleValueChange(setAllocationPercentage, 'allocationPercentage')}
+                    className={styles.rangeSlider}
+                />
+                <Input
+                    type="number"
+                    id="allocationPercentage"
+                    name="allocationPercentage"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={allocationPercentage}
+                    onChange={handleValueChange(setAllocationPercentage, 'allocationPercentage')}
+                    onBlur={() => handleBlur('allocationPercentage', allocationPercentage)} // Validate on blur
+                    required
+                    className={styles.rangeValueInput}
+                    error={!!fieldErrors.allocationPercentage} // Indicate error on Input
+                />
+            </div>
+             {fieldErrors.allocationPercentage && <p className={styles.fieldErrorMessage}>{fieldErrors.allocationPercentage}</p>}
         </div>
 
-        {/* Expected Return Range Slider & Number Input with Tooltip */}
+        {/* Expected Return Slider/Input */}
         <div className={styles.formGroup}>
-          <div className={styles.labelWithTooltip}>
-            <label htmlFor="expectedReturnRange" className={styles.label}>Manual Expected Return (%)</label>
-             <Tooltip text="Optional. Enter your own expected annual return. Leave at 0 to let the system estimate (if applicable for the asset type).">
-                <InformationCircleIcon className={styles.tooltipIcon} />
-             </Tooltip>
-          </div>
-           <div className={styles.rangeGroup}>
-              <input
-                id="expectedReturnRange"
-                type="range"
-                min="-10" max="25" step="0.1" // Adjusted range
-                value={parseNumericValue(expectedReturn)} // Use parsed value for slider
-                onChange={handleValueChange(setExpectedReturn, 'expectedReturn')}
-                className={styles.rangeInput}
-                aria-invalid={!!fieldErrors.expectedReturn} // Accessibility
-              />
-              {/* Number input synced with the slider */}
-               <Input
-                 id="expectedReturnNumber"
-                 type="number"
-                 min="-10" max="25" step="0.1"
-                 value={expectedReturn} // Bind directly to string state
-                 onChange={handleValueChange(setExpectedReturn, 'expectedReturn')}
-                 onBlur={() => handleBlur('expectedReturn', expectedReturn)} // Validate on blur
-                 className={styles.rangeValueInput}
-                 error={!!fieldErrors.expectedReturn} // Pass error state
-                 aria-label="Manual Expected Return Percentage Number Input"
-                 aria-invalid={!!fieldErrors.expectedReturn} // Accessibility
-                 aria-describedby="return-error" // Accessibility
-               />
-               <span className={styles.rangeUnit}>%</span>
-          </div>
-          {fieldErrors.expectedReturn && <p id="return-error" className={styles.fieldErrorMessage}>{fieldErrors.expectedReturn}</p>}
-          <small className={styles.inputHint}>Used only if provided.</small> { /* Adjusted hint */ }
+            <div className={styles.labelWithTooltip}>
+                <label htmlFor="expectedReturn" className={styles.label}>Expected Return %</label>
+                <Tooltip text="Enter the expected *annual* return. If left blank, a default assumption may be used based on asset type.">
+                    <InformationCircleIcon className={styles.tooltipIcon} />
+                </Tooltip>
+            </div>
+            <div className={styles.rangeContainer}>
+                <input
+                    type="range"
+                    id="expectedReturnSlider"
+                    name="expectedReturn"
+                    min="-50" // Example range, adjust if needed
+                    max="100"
+                    step="0.1"
+                    value={expectedReturn}
+                    onChange={handleValueChange(setExpectedReturn, 'expectedReturn')}
+                    className={styles.rangeSlider}
+                />
+                <Input
+                    type="number"
+                    id="expectedReturn"
+                    name="expectedReturn"
+                    min="-50"
+                    max="100"
+                    step="0.1"
+                    value={expectedReturn}
+                    onChange={handleValueChange(setExpectedReturn, 'expectedReturn')}
+                    onBlur={() => handleBlur('expectedReturn', expectedReturn)} // Validate on blur
+                    className={styles.rangeValueInput}
+                    error={!!fieldErrors.expectedReturn} // Indicate error on Input
+                />
+            </div>
+             {fieldErrors.expectedReturn && <p className={styles.fieldErrorMessage}>{fieldErrors.expectedReturn}</p>}
         </div>
 
         {/* Action Buttons */}
-        <div className={styles.actionsContainer}>
-           {onCancel && (
-            <Button type="button" variant="secondary" onClick={onCancel}>
-              Cancel
+        <div className={styles.buttonGroup}>
+            <Button type="submit" variant="primary">
+                {isEditing ? 'Save Changes' : 'Add Asset'}
             </Button>
-          )}
-          <Button
-            type="submit"
-            variant="primary"
-            iconLeft={<PlusIcon style={{ width: '1em', height: '1em' }} />}
-          >
-            {isEditing ? 'Update Asset' : 'Add Asset'}
-          </Button>
+            {onCancel && (
+                <Button type="button" variant="secondary" onClick={onCancel}>
+                    Cancel
+                </Button>
+            )}
         </div>
       </form>
     </FormCommon>
