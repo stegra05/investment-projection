@@ -31,11 +31,6 @@ const validateField = (name, value) => {
   if (value === '') return error; // Don't validate empty string immediately
 
   switch (name) {
-    case 'allocationPercentage':
-      if (isNaN(numValue) || numValue < 0 || numValue > 100) {
-        error = 'Allocation must be between 0% and 100%.';
-      }
-      break;
     case 'expectedReturn':
       // Example range, adjust if needed
       if (isNaN(numValue) || numValue < -50 || numValue > 100) { // Example wider range for validation
@@ -52,7 +47,7 @@ const validateField = (name, value) => {
 /**
  * A form component for creating or editing an asset within a portfolio.
  *
- * Handles input fields for asset type (including custom), name/ticker, allocation,
+ * Handles input fields for asset type (including custom), name/ticker,
  * and expected return. Manages loading and error states. Calls appropriate
  * service functions (createAsset, updateAsset) on submit.
  *
@@ -69,7 +64,6 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaveAss
   const [assetType, setAssetType] = useState('');
   const [customAssetType, setCustomAssetType] = useState('');
   const [ticker, setTicker] = useState('');
-  const [allocationPercentage, setAllocationPercentage] = useState('0');
   const [expectedReturn, setExpectedReturn] = useState('0');
   const [fieldErrors, setFieldErrors] = useState({}); // State for individual field errors
 
@@ -84,14 +78,12 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaveAss
             setCustomAssetType(existingAsset.asset_type || ''); // Set custom type if not predefined or explicitly 'Other'
         }
         setTicker(existingAsset.name_or_ticker || '');
-        setAllocationPercentage(String(existingAsset.allocation_percentage ?? 0));
         setExpectedReturn(String(existingAsset.manual_expected_return ?? 0));
     } else {
         // Reset form for adding new asset
         setAssetType('');
         setCustomAssetType('');
         setTicker('');
-        setAllocationPercentage('0');
         setExpectedReturn('0');
     }
     setSubmissionError(''); // Clear submission error on init or change
@@ -150,11 +142,6 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaveAss
     }
 
      // Validate numeric fields before parsing
-     const allocError = validateField('allocationPercentage', allocationPercentage);
-     if (allocError) {
-         currentFieldErrors.allocationPercentage = allocError;
-         hasValidationErrors = true;
-     }
      const returnError = validateField('expectedReturn', expectedReturn);
      if (returnError) {
          currentFieldErrors.expectedReturn = returnError;
@@ -172,14 +159,12 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaveAss
 
     try {
       // Use helper to parse values, assuming they are now valid due to pre-submission checks
-      const parsedAllocation = parseNumericValue(allocationPercentage);
       const parsedReturn = parseNumericValue(expectedReturn);
 
       // Payload construction remains the same
       const payload = {
         asset_type: finalAssetType,
         name_or_ticker: ticker,
-        allocation_percentage: parsedAllocation,
         manual_expected_return: parsedReturn,
       };
 
@@ -253,74 +238,37 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaveAss
            {fieldErrors.ticker && <p className={styles.fieldErrorMessage}>{fieldErrors.ticker}</p>}
         </div>
 
-        {/* Allocation Percentage Slider/Input */}
+        {/* Expected Return Input */}
         <div className={styles.formGroup}>
-            <label htmlFor="allocationPercentage" className={styles.label}>Allocation %*</label>
-            <div className={styles.rangeContainer}>
-                <input
-                    type="range"
-                    id="allocationPercentageSlider"
-                    name="allocationPercentage"
-                    min="0"
-                    max="100"
-                    step="0.1" // Allow finer control
-                    value={allocationPercentage}
-                    onChange={handleValueChange(setAllocationPercentage, 'allocationPercentage')}
-                    className={styles.rangeSlider}
-                />
-                <Input
-                    type="number"
-                    id="allocationPercentage"
-                    name="allocationPercentage"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    value={allocationPercentage}
-                    onChange={handleValueChange(setAllocationPercentage, 'allocationPercentage')}
-                    onBlur={() => handleBlur('allocationPercentage', allocationPercentage)} // Validate on blur
-                    required
-                    className={styles.rangeValueInput}
-                    error={!!fieldErrors.allocationPercentage} // Indicate error on Input
-                />
-            </div>
-             {fieldErrors.allocationPercentage && <p className={styles.fieldErrorMessage}>{fieldErrors.allocationPercentage}</p>}
-        </div>
-
-        {/* Expected Return Slider/Input */}
-        <div className={styles.formGroup}>
-            <div className={styles.labelWithTooltip}>
-                <label htmlFor="expectedReturn" className={styles.label}>Expected Return %</label>
-                <Tooltip text="Enter the expected *annual* return. If left blank, a default assumption may be used based on asset type.">
-                    <InformationCircleIcon className={styles.tooltipIcon} />
-                </Tooltip>
-            </div>
-            <div className={styles.rangeContainer}>
-                <input
-                    type="range"
-                    id="expectedReturnSlider"
-                    name="expectedReturn"
-                    min="-50" // Example range, adjust if needed
-                    max="100"
-                    step="0.1"
-                    value={expectedReturn}
-                    onChange={handleValueChange(setExpectedReturn, 'expectedReturn')}
-                    className={styles.rangeSlider}
-                />
-                <Input
-                    type="number"
-                    id="expectedReturn"
-                    name="expectedReturn"
-                    min="-50"
-                    max="100"
-                    step="0.1"
-                    value={expectedReturn}
-                    onChange={handleValueChange(setExpectedReturn, 'expectedReturn')}
-                    onBlur={() => handleBlur('expectedReturn', expectedReturn)} // Validate on blur
-                    className={styles.rangeValueInput}
-                    error={!!fieldErrors.expectedReturn} // Indicate error on Input
-                />
-            </div>
-             {fieldErrors.expectedReturn && <p className={styles.fieldErrorMessage}>{fieldErrors.expectedReturn}</p>}
+          <label htmlFor="expectedReturn" className={styles.label}>
+            Expected Annual Return (%)</label>
+          <Tooltip text="Enter your estimated average annual return for this asset, used for projections.">
+            <InformationCircleIcon className={styles.infoIcon} />
+          </Tooltip>
+          <div className={styles.sliderInputContainer}>
+            <Input
+              id="expectedReturn"
+              type="number"
+              value={expectedReturn}
+              onChange={handleValueChange(setExpectedReturn, 'expectedReturn')}
+              onBlur={() => handleBlur('expectedReturn', expectedReturn)} // Validate on blur
+              step="0.1"
+              min="-50" // Example range, adjust if needed
+              max="100" // Example range, adjust if needed
+              className={styles.numberInput} // Add class for potential specific styling
+              error={!!fieldErrors.expectedReturn} // Indicate error on Input
+            />
+            <input
+              type="range"
+              value={expectedReturn} // Ensure range reflects the number input
+              onChange={handleValueChange(setExpectedReturn, 'expectedReturn')} // Update on change
+              min="-50" // Mirror number input range
+              max="100" // Mirror number input range
+              step="0.1"
+              className={styles.sliderInput} // Add class for potential specific styling
+            />
+          </div>
+          {fieldErrors.expectedReturn && <p className={styles.fieldErrorMessage}>{fieldErrors.expectedReturn}</p>}
         </div>
 
         {/* Action Buttons */}

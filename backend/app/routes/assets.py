@@ -4,6 +4,7 @@ from app.models import Portfolio, Asset # Keep Portfolio for type hinting if nee
 from app.routes.portfolios import verify_portfolio_ownership # Import decorator
 from app.utils.decorators import handle_api_errors # Import error handler
 from app.schemas.portfolio_schemas import AssetSchema, AssetCreateSchema, AssetUpdateSchema
+from decimal import Decimal # Import Decimal
 
 # Define the blueprint: 'assets', mounting handled in app/__init__.py
 # No url_prefix here, it will be defined during registration
@@ -34,17 +35,26 @@ def get_asset_or_404(portfolio: Portfolio, asset_id: int):
 @verify_portfolio_ownership
 @handle_api_errors(schema=AssetCreateSchema)
 def add_asset(portfolio_id, portfolio, validated_data): # portfolio injected by verify_..., validated_data by handle_...
-    """Adds a new asset to a specific portfolio."""
-    print(">>> ADDING ASSET <<<") # Debug print
+    """Adds a new asset to a specific portfolio.
+
+    If neither allocation_percentage nor allocation_value is provided,
+    allocation_percentage defaults to 0.
+    """
+    # Convert Pydantic model to dict
+    asset_data = validated_data.model_dump()
+
+    # Default allocation_percentage to 0 if neither is provided
+    if asset_data.get('allocation_percentage') is None and asset_data.get('allocation_value') is None:
+        asset_data['allocation_percentage'] = Decimal('0.00')
+
     new_asset = Asset(
         portfolio_id=portfolio.portfolio_id, # Use ID from the verified portfolio object
-        **validated_data.dict()
+        **asset_data
     )
     db.session.add(new_asset)
     # Commit handled by decorator
-    # db.session.refresh(new_asset) # Removed - refresh happens before commit, causing error
     db.session.flush() # Flush session to get the new asset_id before commit
-    # Serialize output
+    # Serialize output using the base AssetSchema
     return jsonify(AssetSchema.from_orm(new_asset).model_dump(mode='json')), 201
 
 @assets_bp.route('/<int:asset_id>', methods=['PUT', 'PATCH']) # Route is relative to '/portfolios/<pid>/assets'

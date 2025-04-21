@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styles from './Button.module.css';
+import { ArrowPathIcon } from '@heroicons/react/24/outline'; // For loading spinner
 
 /**
  * A reusable button component adhering to the design system.
@@ -13,6 +14,7 @@ import styles from './Button.module.css';
  * @param {node} [props.icon] - Optional icon element to display before the children.
  * @param {string} [props.className] - Additional CSS classes.
  * @param {boolean} [props.disabled] - Whether the button is disabled.
+ * @param {boolean} [props.loading] - Whether to show a loading state.
  * @param {object} [props.rest] - Other native button props.
  */
 function Button({
@@ -23,23 +25,32 @@ function Button({
   icon,
   className = '',
   disabled = false,
+  loading = false, // Add loading prop
   ...rest
 }) {
   const buttonClasses = [
     styles.buttonBase,
     styles[variant], // e.g., styles.primary, styles.secondary
+    loading ? styles.loading : '', // Add loading class if loading
     className,
   ].filter(Boolean).join(' ');
+
+  // Remove loading from rest props to avoid passing it to DOM
+  const { loading: _loading, ...buttonProps } = rest;
 
   return (
     <button
       type={type}
       onClick={onClick}
       className={buttonClasses}
-      disabled={disabled}
-      {...rest}
+      disabled={disabled || loading} // Disable if loading
+      {...buttonProps} // Pass remaining props
     >
-      {icon && React.cloneElement(icon, { className: styles.icon, 'aria-hidden': true })}
+      {loading ? (
+        <ArrowPathIcon className={`${styles.icon} ${styles.spinner}`} aria-hidden="true" />
+      ) : (
+        icon && React.cloneElement(icon, { className: styles.icon, 'aria-hidden': true })
+      )}
       {children && <span className={styles.text}>{children}</span>}
     </button>
   );
@@ -53,6 +64,7 @@ Button.propTypes = {
   icon: PropTypes.element,
   className: PropTypes.string,
   disabled: PropTypes.bool,
+  loading: PropTypes.bool, // Add prop type for loading
 };
 
 export default Button; 

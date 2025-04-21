@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { runProjection } from '../services/projectionService';
 import {
   LineChart,
@@ -104,19 +104,44 @@ const CustomTooltip = ({ active, payload, label, data }) => {
  *
  * @param {object} props - The component props.
  * @param {string|number} props.portfolioId - The ID of the portfolio for which to run the projection.
+ * @param {number} [props.initialProjectionValue=0] - The initial total value passed from the parent page.
  * @param {Array<object>} [props.futureChanges=[]] - Array of planned future change objects (e.g., { date: 'YYYY-MM-DD', type: 'contribution', ... }).
  * @returns {JSX.Element} The ProjectionChart component.
  */
-export default function ProjectionChart({ portfolioId, futureChanges = [] }) {
+export default function ProjectionChart({ portfolioId, initialProjectionValue = 0, futureChanges = [] }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
   // Input state for projection parameters
   const defaultStart = new Date().toISOString().slice(0, 10);
   const defaultEnd = new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().slice(0, 10);
   const [startDate, setStartDate] = useState(defaultStart);
   const [endDate, setEndDate] = useState(defaultEnd);
+
+  // State for the initial value input in *this* component
   const [initialValue, setInitialValue] = useState('');
+  // Track if the user has manually changed the initial value input
+  const [isInitialValueManuallySet, setIsInitialValueManuallySet] = useState(false);
+
+  // Effect to set initial value from prop, but only if user hasn't edited it
+  useEffect(() => {
+    // Check if prop is valid and user hasn't touched the input
+    const propValue = parseFloat(initialProjectionValue);
+    if (!isInitialValueManuallySet && !isNaN(propValue) && propValue > 0) {
+      setInitialValue(propValue.toFixed(2)); // Set state with formatting
+    }
+    // If prop becomes 0 or invalid after being set, and user hasn't edited, clear it
+    else if (!isInitialValueManuallySet && (isNaN(propValue) || propValue <= 0)) {
+        setInitialValue('');
+    }
+  }, [initialProjectionValue, isInitialValueManuallySet]);
+
+  // Handle manual changes to the initial value input
+  const handleInitialValueChange = (e) => {
+    setInitialValue(e.target.value);
+    setIsInitialValueManuallySet(true); // Mark as manually set
+  };
 
   const handleRunProjection = async () => {
     setError('');
@@ -285,7 +310,7 @@ export default function ProjectionChart({ portfolioId, futureChanges = [] }) {
               step="0.01"
               placeholder="e.g., 10000"
               value={initialValue}
-              onChange={(e) => setInitialValue(e.target.value)}
+              onChange={handleInitialValueChange}
             />
           </div>
         </div>

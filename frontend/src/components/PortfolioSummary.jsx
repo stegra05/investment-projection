@@ -30,9 +30,9 @@ const CHART_COLORS = [
 const CustomPieTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload; // Access the payload data directly
-    const value = data.value;
+    const value = data.value; // This is now the numeric allocation_value
     const name = data.name;
-    const percentage = data.percentage; // Assuming percentage is calculated and added
+    const percentage = data.percentage; // This is the calculated percentage
 
     // Use theme variables for styling
     const uiBackgroundColor = 'var(--color-ui-background)';
@@ -47,7 +47,8 @@ const CustomPieTooltip = ({ active, payload }) => {
       }}>
         <p className={styles.tooltipLabel} style={{ color: textColorSecondary }}>{name}</p>
         <p className={styles.tooltipValue} style={{ color: textColorPrimary }}>
-            {formatCurrency(value)} ({percentage ? percentage.toFixed(1) : '0.0'}%)
+            {/* Display formatted value and the calculated percentage */}
+            {formatCurrency(value)} ({percentage !== undefined ? percentage.toFixed(1) : 'N/A'}%)
         </p>
       </div>
     );
@@ -58,39 +59,61 @@ const CustomPieTooltip = ({ active, payload }) => {
 
 const PortfolioSummary = ({ assets = [], totalValue }) => {
   // Log the received assets prop for debugging
-  console.log('Assets received in PortfolioSummary:', assets);
-  console.log('Total Value received in PortfolioSummary:', totalValue);
+  // console.log('[PortfolioSummary] Received assets:', JSON.stringify(assets, null, 2));
+  // console.log('[PortfolioSummary] Received totalValue:', totalValue);
 
-  // 1. Calculate Total Value - REMOVED - Now passed as prop
-  // const totalValueDisplay = 0; // Placeholder - needs actual total value later
+  // 1. Use the passed totalValue prop (from manual input), ensuring it's a number
+  const numericTotalValue = typeof totalValue === 'string' ? parseFloat(totalValue) : totalValue;
+  const safeTotalValue = isNaN(numericTotalValue) || numericTotalValue < 0 ? 0 : numericTotalValue; // Ensure positive number
+  // console.log('[PortfolioSummary] Safe Total Value for calculation:', safeTotalValue);
 
-  // 2. Prepare Data for Allocation Chart (using allocation_percentage)
+  // 2. Prepare Data for Allocation Chart (using totalValue and allocation_percentage)
   const allocationData = assets
-    .map(asset => ({
-        ...asset,
-        // Parse allocation_percentage to number for chart value
-        // Default to 0 if null, undefined, or not a valid number string
-        numericPercentage: asset.allocation_percentage ? parseFloat(asset.allocation_percentage) : 0
-    }))
-    // Filter out assets with zero or invalid percentage
-    .filter(asset => asset.numericPercentage && !isNaN(asset.numericPercentage) && asset.numericPercentage > 0)
-    .map(asset => ({
-      name: asset.name || 'Unnamed Asset',
-      // Use the numeric percentage as the value for the pie slice size
-      value: asset.numericPercentage,
-      // Optional: Keep original percentage string for tooltip formatting if needed
-      percentageString: asset.allocation_percentage 
+    .map(asset => {
+      // Get percentage
+      const percentageString = asset.allocation_percentage;
+      const numericPercentage = percentageString ? parseFloat(percentageString) : 0;
+      const validPercentage = isNaN(numericPercentage) || numericPercentage < 0 ? 0 : numericPercentage;
+
+      // Calculate the asset's value based on the total value and its percentage
+      const calculatedValue = safeTotalValue * (validPercentage / 100);
+
+      // console.log(`[PortfolioSummary] Asset: ${asset.name}, Percentage: ${validPercentage}%, Calculated Value: ${calculatedValue}`);
+
+      return {
+        name: asset.name || 'Unnamed Asset',
+        value: calculatedValue, // Use the calculated value for slice size
+        percentage: validPercentage, // Store the original valid percentage
+      };
+    })
+    // Filter out assets with zero or invalid calculated value
+    .filter(asset => asset.value > 0);
+
+  // console.log('[PortfolioSummary] allocationData after initial map & filter:', JSON.stringify(allocationData, null, 2));
+
+  // Recalculate total value based *only* on assets included in the chart
+  // This ensures percentages in the tooltip make sense if some assets are filtered out
+  const chartTotalValue = allocationData.reduce((sum, asset) => sum + asset.value, 0);
+  // console.log('[PortfolioSummary] chartTotalValue (sum of filtered assets):', chartTotalValue);
+
+  // Adjust percentages based on the chart's total value (for tooltip accuracy)
+  const finalAllocationData = allocationData.map(asset => ({
+    ...asset,
+    percentage: chartTotalValue > 0 ? (asset.value / chartTotalValue) * 100 : 0,
   }));
 
+  // console.log('[PortfolioSummary] finalAllocationData for chart:', JSON.stringify(finalAllocationData, null, 2));
+
   // Handle case with no valid allocation data
-  const hasData = allocationData.length > 0;
+  const hasData = finalAllocationData.length > 0;
+  // console.log('[PortfolioSummary] hasData:', hasData);
 
   return (
     <section className={styles.summaryContainer}>
       <div className={styles.totalValueSection}>
         <h3 className={styles.totalValueLabel}>Total Portfolio Value</h3>
-        {/* Use the totalValue prop */}
-        <p className={styles.totalValueAmount}>{formatCurrency(totalValue)}</p>
+        {/* Use the safeTotalValue */}
+        <p className={styles.totalValueAmount}>{formatCurrency(safeTotalValue)}</p>
       </div>
       <div className={styles.chartSection}>
         <h3 className={styles.chartLabel}>Asset Allocation</h3>
@@ -98,7 +121,7 @@ const PortfolioSummary = ({ assets = [], totalValue }) => {
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
-                data={allocationData}
+                data={finalAllocationData} // Use the final data with adjusted percentages
                 cx="50%"
                 cy="50%"
                 labelLine={false}
@@ -106,10 +129,10 @@ const PortfolioSummary = ({ assets = [], totalValue }) => {
                 outerRadius={80}
                 innerRadius={40} // Makes it a Donut chart
                 fill="#8884d8"
-                dataKey="value"
+                dataKey="value" // Slices are sized by the actual numeric value
                 nameKey="name" // Used by Tooltip
               >
-                {allocationData.map((entry, index) => (
+                {finalAllocationData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                 ))}
               </Pie>
@@ -127,7 +150,7 @@ const PortfolioSummary = ({ assets = [], totalValue }) => {
 
 PortfolioSummary.propTypes = {
   // Expect totalValue, could be string (from JSON Decimal) or number
-  totalValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  totalValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired, // Make totalValue required
   assets: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     name: PropTypes.string.isRequired,

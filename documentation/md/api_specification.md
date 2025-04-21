@@ -176,23 +176,99 @@ This document outlines the key API endpoints for the Investment Planning Project
 
 ## Asset Endpoints (Nested under Portfolios)
 
-*(Similar CRUD endpoints would be defined for assets within a portfolio, e.g.):*
+**1. Add Asset to Portfolio**
+* **Method:** `POST`
+* **Path:** `/portfolios/{portfolio_id}/assets`
+* **Description:** Adds a new asset to a specific portfolio. Requires Authentication and authorization.
+* **Request Body:**
+    ```json
+    {
+      "asset_type": "Stock", // e.g., Stock, Bond, ETF, etc.
+      "name_or_ticker": "AAPL",
+      // "allocation_percentage": 60.5, // Optional: Defaults to 0 if neither % nor value is provided
+      // "allocation_value": 10000.00, // Optional: Use percentage OR value, not both.
+      "manual_expected_return": 7.5 // Optional: Expected annual return percentage
+    }
+    ```
+* **Success Response:** `201 Created` (Returns the newly created asset object)
+    ```json
+    {
+        "asset_id": 101,
+        "portfolio_id": 1,
+        "asset_type": "Stock",
+        "name_or_ticker": "AAPL",
+        "allocation_percentage": "0.00", // Example default
+        "allocation_value": null,
+        "manual_expected_return": "7.50",
+        "created_at": "..."
+    }
+    ```
+* **Error Responses:** `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found` (Portfolio)
 
-* `POST /portfolios/{portfolio_id}/assets` (Add asset)
-* `PUT /portfolios/{portfolio_id}/assets/{asset_id}` (Update asset)
-* `DELETE /portfolios/{portfolio_id}/assets/{asset_id}` (Remove asset)
+**2. Update Asset**
+* **Method:** `PUT` or `PATCH`
+* **Path:** `/portfolios/{portfolio_id}/assets/{asset_id}`
+* **Description:** Updates an existing asset. Requires Authentication and authorization.
+* **Request Body:** (Include fields to update)
+    ```json
+    {
+      "name_or_ticker": "Apple Inc.",
+      "manual_expected_return": 8.0
+      // Note: Updating allocation here might be less common with the new workflow
+      // "allocation_percentage": 55.0
+    }
+    ```
+* **Success Response:** `200 OK` (Returns the updated asset object)
+* **Error Responses:** `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found` (Portfolio or Asset)
 
----
+**3. Delete Asset**
+* **Method:** `DELETE`
+* **Path:** `/portfolios/{portfolio_id}/assets/{asset_id}`
+* **Description:** Removes an asset from a portfolio. Requires Authentication and authorization.
+* **Success Response:** `200 OK` or `204 No Content`
+* **Error Responses:** `401 Unauthorized`, `403 Forbidden`, `404 Not Found` (Portfolio or Asset)
+
+--- 
+
+## Allocation Endpoints (Nested under Portfolios)
+
+**1. Update Portfolio Allocations**
+* **Method:** `PUT`
+* **Path:** `/portfolios/{portfolio_id}/allocations`
+* **Description:** Updates the allocation percentages for **all** assets within a specific portfolio simultaneously. The sum of percentages must equal 100. Requires Authentication and authorization.
+* **Request Body:**
+    ```json
+    {
+      "allocations": [
+        { "asset_id": 101, "allocation_percentage": 45.50 },
+        { "asset_id": 102, "allocation_percentage": 30.00 },
+        { "asset_id": 105, "allocation_percentage": 24.50 }
+      ]
+    }
+    ```
+* **Success Response:** `200 OK`
+    ```json
+    {
+        "message": "Allocations updated successfully"
+        // Optionally return the updated portfolio or assets
+    }
+    ```
+* **Error Responses:**
+    * `400 Bad Request`: Invalid input (e.g., percentages don't sum to 100, missing/invalid asset IDs, payload doesn't include all portfolio assets).
+    * `401 Unauthorized`
+    * `403 Forbidden` (Not owner)
+    * `404 Not Found` (Portfolio)
+    * `500 Internal Server Error`
+
+--- 
 
 ## Planned Future Change Endpoints (Nested under Portfolios)
-
-*(Similar CRUD endpoints would be defined for planned changes within a portfolio, e.g.):*
 
 * `POST /portfolios/{portfolio_id}/changes` (Add planned change)
 * `PUT /portfolios/{portfolio_id}/changes/{change_id}` (Update planned change)
 * `DELETE /portfolios/{portfolio_id}/changes/{change_id}` (Delete planned change)
 
----
+--- 
 
 ## Projection Endpoint
 

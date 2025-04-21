@@ -57,13 +57,11 @@ class AssetBase(OrmBaseModel):
     manual_expected_return: Optional[condecimal(max_digits=5, decimal_places=2)] = Field(None, example="7.5")
 
 class AssetCreateSchema(AssetBase):
-    @validator('allocation_value')
-    def check_allocation_exclusivity(cls, v, values):
-        if v is not None and values.get('allocation_percentage') is not None:
-            raise ValueError("Provide either allocation_percentage or allocation_value, not both.")
-        if v is None and values.get('allocation_percentage') is None:
-            raise ValueError("Either allocation_percentage or allocation_value must be provided.")
-        return v
+    pass # Fields inherited from AssetBase
+    # Validator removed: check_allocation_exclusivity
+    # Logic is now: if neither allocation_percentage nor allocation_value is provided,
+    # the route will default allocation_percentage to 0.
+    # If one is provided, the model validator ensures the other is None.
 
 class AssetUpdateSchema(AssetBase):
     asset_type: Optional[AssetType] = Field(None, example=AssetType.STOCK)
@@ -78,6 +76,28 @@ class AssetUpdateSchema(AssetBase):
 class AssetSchema(AssetBase):
     asset_id: int = Field(..., alias='id')
     portfolio_id: int
+
+# --- NEW: Schemas for Bulk Allocation Update ---
+class AssetAllocationSchema(OrmBaseModel):
+    asset_id: int = Field(..., example=101)
+    # Ensure allocation is non-negative, max handled by DB/model
+    allocation_percentage: condecimal(max_digits=5, decimal_places=2, ge=0, le=100) = Field(..., example="45.50")
+
+class BulkAllocationUpdateSchema(OrmBaseModel):
+    allocations: List[AssetAllocationSchema]
+
+    @validator('allocations')
+    def check_total_allocation(cls, v):
+        if not v: # Handle empty list case
+            # Depending on requirements, could raise error or allow (if portfolio has no assets)
+            # For now, let's assume an empty list might be valid if the portfolio has 0 assets, route will handle
+            return v
+
+        total = sum(item.allocation_percentage for item in v)
+        # Allow for minor floating point inaccuracies
+        if not (Decimal('99.99') <= total <= Decimal('100.01')):
+            raise ValueError(f"Total allocation percentage must sum to 100%. Current sum: {total:.2f}%")
+        return v
 
 # --- Portfolio Schemas ---
 class PortfolioBase(OrmBaseModel):

@@ -1,13 +1,15 @@
-from flask import Blueprint, request, jsonify, abort
+from flask import Blueprint, request, jsonify, abort, current_app
 from app import db
-from app.models import Portfolio
+from app.models import Portfolio, Asset
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import functools
 from app.utils.decorators import handle_api_errors # Keep it for create/update
+from decimal import Decimal # Add Decimal import
 
 # Import Pydantic Schemas
 from app.schemas.portfolio_schemas import (
-    PortfolioSchema, PortfolioCreateSchema, PortfolioUpdateSchema
+    PortfolioSchema, PortfolioCreateSchema, PortfolioUpdateSchema,
+    BulkAllocationUpdateSchema # Import the new schema
 )
 
 # Define the blueprint: 'portfolios', prefix: /api/v1/portfolios
@@ -32,8 +34,9 @@ def verify_portfolio_ownership(f):
 
         portfolio = Portfolio.query.options(
             # Eager load details needed for PortfolioSchema serialization
+            # Update: Eager loading might not be strictly necessary here if we only modify assets
             db.joinedload(Portfolio.assets),
-            db.joinedload(Portfolio.planned_changes)
+            # db.joinedload(Portfolio.planned_changes) # Not needed for allocation update
         ).get(portfolio_id)
 
         if portfolio is None:
@@ -58,7 +61,6 @@ def debug_hello():
 
 @portfolios_bp.route('/headers', methods=['GET'])
 def debug_headers():
-    from flask import current_app
     headers = {k: v for k, v in request.headers.items()}
     current_app.logger.debug(f"Incoming headers: {headers}")
     return jsonify(headers), 200
@@ -146,6 +148,73 @@ def delete_portfolio(portfolio_id, portfolio):
     except Exception as e:
         db.session.rollback()
         abort(500, description=f"Error deleting portfolio: {e}")
+
+# --- NEW: Allocation Update Route ---
+
+@portfolios_bp.route('/<int:portfolio_id>/allocations', methods=['PUT'])
+@verify_portfolio_ownership
+@handle_api_errors(schema=BulkAllocationUpdateSchema)
+def update_allocations(portfolio_id, portfolio, validated_data):
+    """Updates allocation percentages for all assets in a portfolio."""
+    # --- Logging Incoming Data --- 
+    current_app.logger.info(f"Update allocations request for portfolio {portfolio_id}")
+    current_app.logger.debug(f"Incoming validated data: {validated_data}")
+    allocation_data = validated_data.allocations
+    # Log the extracted list for clarity
+    current_app.logger.debug(f"Parsed allocation list: {allocation_data}")
+
+    # --- Additional Validation --- 
+    portfolio_asset_ids = {asset.asset_id for asset in portfolio.assets}
+    payload_asset_ids = {item.asset_id for item in allocation_data}
+
+    # Log IDs for comparison
+    current_app.logger.debug(f"Portfolio Asset IDs: {portfolio_asset_ids}")
+    current_app.logger.debug(f"Payload Asset IDs: {payload_asset_ids}")
+
+    # 1. Check if the number of assets in payload matches the portfolio
+    if len(portfolio_asset_ids) != len(payload_asset_ids):
+        error_msg = "Payload must include allocation for all assets currently in the portfolio."
+        current_app.logger.warning(f"Validation Error: {error_msg} (Payload: {len(payload_asset_ids)}, Portfolio: {len(portfolio_asset_ids)}) ")
+        abort(400, description=error_msg)
+
+    # 2. Check if all asset IDs in the payload belong to the portfolio (Set comparison)
+    if payload_asset_ids != portfolio_asset_ids:
+        missing_from_payload = portfolio_asset_ids - payload_asset_ids
+        extra_in_payload = payload_asset_ids - portfolio_asset_ids
+        error_msg = "Asset IDs in payload do not exactly match assets in portfolio."
+        current_app.logger.warning(f"Validation Error: {error_msg} Missing: {missing_from_payload}, Extra: {extra_in_payload}")
+        abort(400, description=f"{error_msg} Missing: {list(missing_from_payload)}, Extra: {list(extra_in_payload)}")
+
+    # 3. Double check sum (already done by schema, but belt and braces)
+    total_percentage = sum(item.allocation_percentage for item in allocation_data)
+    current_app.logger.debug(f"Calculated total percentage: {total_percentage}")
+    if not (Decimal('99.99') <= total_percentage <= Decimal('100.01')):
+         # This case should ideally be caught by the schema validator
+         error_msg = f"Internal check failed: Total allocation must be 100%. Received: {total_percentage:.2f}%"
+         current_app.logger.error(error_msg) # Log as error if schema missed it
+         abort(400, description=error_msg)
+
+    # --- Database Update ---
+    try:
+        assets_to_update = {asset.asset_id: asset for asset in portfolio.assets}
+        current_app.logger.info(f"Updating {len(assets_to_update)} assets...")
+        for item in allocation_data:
+            asset = assets_to_update.get(item.asset_id)
+            if asset:
+                 asset.allocation_percentage = item.allocation_percentage
+                 asset.allocation_value = None
+                 current_app.logger.debug(f"  Asset {asset.asset_id}: Set allocation % to {item.allocation_percentage}")
+            else:
+                 # This should be caught above, but log defensively
+                 current_app.logger.error(f"Consistency Error: Asset ID {item.asset_id} from validated payload not found in portfolio assets during update!")
+                 raise Exception(f"Asset ID {item.asset_id} not found during update phase.")
+        # Commit is handled by the handle_api_errors decorator
+        current_app.logger.info("Allocations updated in session, awaiting commit.")
+        return jsonify({"message": "Allocations updated successfully"}), 200
+    except Exception as e:
+        # Rollback handled by decorator
+        current_app.logger.error(f"Error during allocation database update: {e}", exc_info=True)
+        abort(500, description=f"An internal error occurred while updating allocations: {e}")
 
 
 # --- Asset Routes (Task 5.4) ---

@@ -78,12 +78,31 @@ export const deletePortfolio = async (portfolioId) => {
   }
 };
 
+/**
+ * Updates the allocation percentages for multiple assets within a portfolio.
+ * @param {string|number} portfolioId - The ID of the portfolio.
+ * @param {Array<object>} allocationPayload - An array of objects, each containing { asset_id, allocation_percentage }.
+ * @returns {Promise<object>} Response from the server (e.g., updated portfolio or success message).
+ */
+export const updateAllocations = async (portfolioId, allocationPayload) => {
+  try {
+    // Assumes a PUT endpoint exists at /portfolios/{portfolioId}/allocations
+    // The backend needs to implement this endpoint to handle the payload
+    const response = await apiClient.put(`/portfolios/${portfolioId}/allocations`, allocationPayload);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating allocations for portfolio ${portfolioId}:`, error.response ? error.response.data : error.message);
+    throw error;
+  }
+};
+
 const portfolioService = {
   getPortfolios,
   getPortfolioById,
   createPortfolio,
   updatePortfolio,
   deletePortfolio,
+  updateAllocations,
 };
 
 export default portfolioService; 

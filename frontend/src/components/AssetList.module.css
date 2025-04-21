@@ -10,9 +10,10 @@
     align-items: center;
     padding: var(--space-m);
     border: 1px solid var(--color-border); /* Use theme-aware var */
-    border-radius: 4px; /* Consider --border-radius-medium if defined */
+    border-radius: 6px; /* Consistent radius */
     margin-bottom: var(--space-s);
     background: var(--color-ui-background); /* Use theme-aware var */
+    gap: var(--space-m); /* Add gap between info and actions */
 }
 
 /* Add hover effect for list items */
@@ -21,11 +22,20 @@
   /* Or define a specific hover background color variable */
 }
 
+/* NEW: Container for details + allocation slider */
+.assetInfo {
+    flex-grow: 1; /* Take up available space */
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: var(--space-l); /* Add gap between details and slider */
+}
 
 .assetDetails {
     display: flex;
     flex-direction: column;
     gap: var(--space-xxs);
+    flex-shrink: 0; /* Prevent details from shrinking too much */
 }
 
 .assetName {
@@ -39,11 +49,8 @@
     color: var(--color-text-secondary); /* Use theme-aware var */
 }
 
-.allocation {
-    font-size: 0.875rem;
-    color: var(--color-text-secondary); /* Use theme-aware var */
-    font-variant-numeric: tabular-nums;
-}
+/* Allocation display removed from here, now in allocationControl */
+/* .allocation { ... } */
 
 .expectedReturn {
     font-size: 0.875rem;
@@ -51,46 +58,137 @@
     font-variant-numeric: tabular-nums;
 }
 
+/* NEW: Styles for Allocation Slider Area */
+.allocationControl {
+    display: flex;
+    align-items: center;
+    gap: var(--space-s); /* Add space between label, slider, and input */
+    /* Optional: Add some margin if needed */
+    /* margin-left: var(--space-m); */
+}
+
+.allocationLabel {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    font-variant-numeric: tabular-nums; /* Keep numbers aligned */
+    white-space: nowrap; /* Prevent label text wrapping */
+    min-width: 120px; /* Ensure label area has consistent width */
+    text-align: right;
+    margin-right: var(--space-xs);
+}
+
+.allocationSlider {
+    flex-grow: 1; /* Allow slider to take up most space */
+    max-width: 300px; /* Optional: Prevent slider from becoming too wide */
+    min-width: 100px; /* Add min-width to prevent collapsing */
+    cursor: pointer;
+    height: 8px; /* Adjust height */
+    background: var(--color-border-dark); /* Assuming dark mode var exists and contrasts */
+    border-radius: 4px;
+    appearance: none; /* Override default look */
+    width: 100%;
+    outline: none;
+}
+
+/* Slider Thumb (Chrome/Safari/Edge) */
+.allocationSlider::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--color-primary); /* Thumb color */
+    border-radius: 50%; /* Make it round */
+    cursor: pointer;
+}
+
+/* Slider Thumb (Firefox) */
+.allocationSlider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none; /* Reset default border */
+}
+
+/* Styling for disabled state */
+.allocationSlider:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+.allocationSlider:disabled::-webkit-slider-thumb {
+    background: var(--color-text-secondary);
+}
+.allocationSlider:disabled::-moz-range-thumb {
+    background: var(--color-text-secondary);
+}
+
+.allocationInput {
+    width: 80px; /* Fixed width for the number input */
+    padding: var(--space-xs) var(--space-s); /* Match input padding */
+    border: 1px solid var(--color-border-light);
+    border-radius: 6px; /* Match input border-radius */
+    background-color: var(--color-ui-background-light); /* Match input background */
+    color: var(--color-text-primary-light);
+    font-size: 0.9rem; /* Slightly smaller font maybe */
+    text-align: right;
+}
+
+.allocationInput:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2); /* Needs --color-primary-rgb defined */
+}
+
+.allocationInput::-webkit-outer-spin-button,
+.allocationInput::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0; /* Remove spinner buttons for cleaner look */
+}
+
+.allocationInput[type=number] {
+    -moz-appearance: textfield; /* Firefox - remove spinner */
+}
+
 .actions {
     display: flex;
+    align-items: center;
     gap: var(--space-s);
 }
 
 .actionButton {
-    background: transparent;
+    background: none;
     border: none;
+    padding: var(--space-xs);
     cursor: pointer;
-    padding: var(--space-xxs); /* Small padding for click area */
-    border-radius: 4px; /* Add radius for consistency */
-    transition: background-color 0.15s ease-in-out; /* Add hover transition */
+    color: var(--color-text-secondary-light);
+    transition: color 0.2s ease-in-out;
 }
 
-.actionButton:hover {
-    background-color: rgba(0, 0, 0, 0.05); /* Subtle hover */
-    /* Adjust for dark mode if needed */
+.actionButton:disabled {
+    color: var(--color-border-light); /* More muted */
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.actionButton:hover:not(:disabled) {
+    color: var(--color-primary);
 }
 
 .icon {
-    width: 1rem;
-    height: 1rem;
-    display: block; /* Prevent potential inline spacing issues */
+    width: 1.25rem; /* 20px */
+    height: 1.25rem;
 }
 
-/* Specific icon colors */
-.iconEdit {
-    color: var(--color-text-secondary); /* Use theme-aware secondary */
+.iconEdit:hover {
+    /* Specific hover color if needed */
 }
 
-.iconDelete {
-    color: var(--color-error); /* Use theme-aware error */
+.iconDelete:hover {
+    color: var(--color-error-light); /* Make delete hover red */
 }
 
 .noItemsText {
-    padding: var(--space-m);
     text-align: center;
-    color: var(--color-text-secondary); /* Use theme-aware var */
-    border: 1px dashed var(--color-border); /* Use theme-aware var */
-    border-radius: 4px;
-    margin-top: var(--space-m);
-    background-color: rgba(var(--color-border-rgb), 0.1); /* Subtle background, assuming --color-border-rgb exists */
+    padding: var(--space-l);
+    color: var(--color-text-secondary-light);
 } 
