@@ -182,27 +182,33 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSubmit,
             onChange={(e) => setAssetType(e.target.value)}
             required
             placeholder="-- Select Asset Type --"
-            error={fieldErrors.assetType || undefined} // Pass error message string or undefined
+            aria-invalid={!!fieldErrors.assetType}
+            aria-describedby={fieldErrors.assetType ? "assetType-error" : undefined}
+            error={!!fieldErrors.assetType} // Keep for styling if needed
           >
             {assetTypeOptions.map(option => (
                 <option key={option.value} value={option.value}>{option.label}</option>
             ))}
           </Select>
-          {fieldErrors.assetType && <p className={styles.fieldErrorMessage}>{fieldErrors.assetType}</p>}
+          {fieldErrors.assetType && <p id="assetType-error" className={styles.fieldErrorMessage} role="alert">{fieldErrors.assetType}</p>}
 
           {/* Custom Asset Type Input (Conditional) */}
           {assetType === 'Other' && (
             <>
+             {/* Ideally, this would have its own label, but given context, linking the error is priority */}
              <Input
+               id="customAssetType" // Add id for potential label association if added later
                type="text"
                placeholder="Enter custom asset type name (e.g., Cryptocurrency)"
                value={customAssetType}
                onChange={(e) => setCustomAssetType(e.target.value)}
                required={assetType === 'Other'}
                className={styles.customTypeInput}
-               error={fieldErrors.customAssetType || undefined} // Pass error message string or undefined
+               aria-invalid={!!fieldErrors.customAssetType}
+               aria-describedby={fieldErrors.customAssetType ? "customAssetType-error" : undefined}
+               error={!!fieldErrors.customAssetType} // Keep for styling if needed
              />
-             {fieldErrors.customAssetType && <p className={styles.fieldErrorMessage}>{fieldErrors.customAssetType}</p>}
+             {fieldErrors.customAssetType && <p id="customAssetType-error" className={styles.fieldErrorMessage} role="alert">{fieldErrors.customAssetType}</p>}
             </>
           )}
         </div>
@@ -217,9 +223,11 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSubmit,
             value={ticker}
             onChange={(e) => setTicker(e.target.value)}
             required
-            error={fieldErrors.ticker || undefined} // Pass error message string or undefined
+            aria-invalid={!!fieldErrors.ticker}
+            aria-describedby={fieldErrors.ticker ? "ticker-error" : undefined}
+            error={!!fieldErrors.ticker} // Keep for styling if needed
           />
-           {fieldErrors.ticker && <p className={styles.fieldErrorMessage}>{fieldErrors.ticker}</p>}
+           {fieldErrors.ticker && <p id="ticker-error" className={styles.fieldErrorMessage} role="alert">{fieldErrors.ticker}</p>}
         </div>
 
         {/* Expected Return Input */}
@@ -240,7 +248,9 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSubmit,
               min="-50" // Example range, adjust if needed
               max="100" // Example range, adjust if needed
               className={styles.numberInput} // Add class for potential specific styling
-              error={fieldErrors.expectedReturn || undefined} // Pass error message string or undefined
+              aria-invalid={!!fieldErrors.expectedReturn}
+              aria-describedby={fieldErrors.expectedReturn ? "expectedReturn-error" : undefined}
+              error={!!fieldErrors.expectedReturn} // Keep for styling if needed
             />
             <input
               type="range"
@@ -252,7 +262,7 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSubmit,
               className={styles.sliderInput} // Add class for potential specific styling
             />
           </div>
-          {fieldErrors.expectedReturn && <p className={styles.fieldErrorMessage}>{fieldErrors.expectedReturn}</p>}
+          {fieldErrors.expectedReturn && <p id="expectedReturn-error" className={styles.fieldErrorMessage} role="alert">{fieldErrors.expectedReturn}</p>}
         </div>
 
         {/* Action Buttons */}

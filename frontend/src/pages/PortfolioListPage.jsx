@@ -50,7 +50,6 @@ function PortfolioListPage() {
       <header className={styles.listHeader}>
         <h1 className={styles.listTitle}>Your Portfolios</h1>
         <Button
-          variant="primary"
           onClick={() => navigate('/portfolios/new')}
           icon={<PlusIcon />}
         >
@@ -71,20 +70,23 @@ function PortfolioListPage() {
               </Link>
               <div className={styles.actionButtons}>
                 <Button
-                  variant="secondary"
+                  variant="outlined"
                   onClick={() => navigate(`/portfolios/${p.portfolio_id}/edit`)}
                   icon={<PencilIcon />}
                   title={`Edit portfolio ${p.name}`}
                   className={styles.actionButton}
+                  iconOnly={true}
                 >
                   <span className="sr-only">Edit {p.name}</span>
                 </Button>
                 <Button
-                  variant="destructive"
+                  variant="text"
+                  color="error"
                   onClick={() => handleDelete(p.portfolio_id, p.name)}
                   icon={<TrashIcon />}
                   title={`Delete portfolio ${p.name}`}
                   className={styles.actionButton}
+                  iconOnly={true}
                 >
                   <span className="sr-only">Delete {p.name}</span>
                 </Button>

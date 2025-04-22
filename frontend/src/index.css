@@ -41,6 +41,146 @@
 
   /* Other Base UI */
   --transition-duration: 0.2s;
+  --transition-easing: ease; /* M3 standard easing: cubic-bezier(0.4, 0.0, 0.2, 1) */
+
+  /* === M3 Shape Scale === */
+  --m3-shape-corner-none: 0px;
+  --m3-shape-corner-extra-small: var(--border-radius-s); /* 4px */
+  --m3-shape-corner-small: var(--border-radius-m); /* 8px */
+  --m3-shape-corner-medium: 12px; /* M3 Default */
+  --m3-shape-corner-large: var(--border-radius-l); /* 16px */
+  --m3-shape-corner-extra-large: 28px; /* M3 Default */
+  --m3-shape-corner-full: 999px; /* Effectively full */
+
+  /* === M3 Type Scale === */
+  /* Base */
+  --m3-font-family-brand: var(--font-family-base);
+  --m3-font-family-plain: var(--font-family-base);
+
+  /* Display */
+  --m3-type-display-large-font: var(--m3-font-family-brand);
+  --m3-type-display-large-weight: var(--font-weight-regular);
+  --m3-type-display-large-size: 3.5625rem; /* 57px */
+  --m3-type-display-large-line-height: 4rem; /* 64px */
+  --m3-type-display-large-letter-spacing: -0.015625em; /* -0.25px */
+
+  --m3-type-display-medium-font: var(--m3-font-family-brand);
+  --m3-type-display-medium-weight: var(--font-weight-regular);
+  --m3-type-display-medium-size: 2.8125rem; /* 45px */
+  --m3-type-display-medium-line-height: 3.25rem; /* 52px */
+  --m3-type-display-medium-letter-spacing: 0em;
+
+  --m3-type-display-small-font: var(--m3-font-family-brand);
+  --m3-type-display-small-weight: var(--font-weight-regular);
+  --m3-type-display-small-size: 2.25rem; /* 36px */
+  --m3-type-display-small-line-height: 2.75rem; /* 44px */
+  --m3-type-display-small-letter-spacing: 0em;
+
+  /* Headline (Mapping h1/h2 roughly) */
+  --m3-type-headline-large-font: var(--m3-font-family-brand);
+  --m3-type-headline-large-weight: var(--font-weight-regular);
+  --m3-type-headline-large-size: 2rem; /* 32px - Mapped from h1 */
+  --m3-type-headline-large-line-height: 2.5rem; /* 40px */
+  --m3-type-headline-large-letter-spacing: 0em;
+
+  --m3-type-headline-medium-font: var(--m3-font-family-brand);
+  --m3-type-headline-medium-weight: var(--font-weight-regular);
+  --m3-type-headline-medium-size: 1.75rem; /* 28px */
+  --m3-type-headline-medium-line-height: 2.25rem; /* 36px */
+  --m3-type-headline-medium-letter-spacing: 0em;
+
+  --m3-type-headline-small-font: var(--m3-font-family-brand);
+  --m3-type-headline-small-weight: var(--font-weight-regular);
+  --m3-type-headline-small-size: 1.5rem; /* 24px - Mapped from h2 */
+  --m3-type-headline-small-line-height: 2rem; /* 32px */
+  --m3-type-headline-small-letter-spacing: 0em;
+
+  /* Title (Mapping h3 roughly) */
+  --m3-type-title-large-font: var(--m3-font-family-brand);
+  --m3-type-title-large-weight: var(--font-weight-regular); /* M3 uses Regular */
+  --m3-type-title-large-size: 1.375rem; /* 22px */
+  --m3-type-title-large-line-height: 1.75rem; /* 28px */
+  --m3-type-title-large-letter-spacing: 0em;
+
+  --m3-type-title-medium-font: var(--m3-font-family-plain);
+  --m3-type-title-medium-weight: var(--font-weight-medium); /* M3 uses Medium */
+  --m3-type-title-medium-size: 1rem; /* 16px */
+  --m3-type-title-medium-line-height: 1.5rem; /* 24px */
+  --m3-type-title-medium-letter-spacing: 0.009375em; /* 0.15px */
+
+  --m3-type-title-small-font: var(--m3-font-family-plain);
+  --m3-type-title-small-weight: var(--font-weight-medium); /* M3 uses Medium */
+  --m3-type-title-small-size: 0.875rem; /* 14px */
+  --m3-type-title-small-line-height: 1.25rem; /* 20px */
+  --m3-type-title-small-letter-spacing: 0.00714em; /* 0.1px */
+
+  /* Label */
+  --m3-type-label-large-font: var(--m3-font-family-plain);
+  --m3-type-label-large-weight: var(--font-weight-medium); /* M3 uses Medium */
+  --m3-type-label-large-size: 0.875rem; /* 14px */
+  --m3-type-label-large-line-height: 1.25rem; /* 20px */
+  --m3-type-label-large-letter-spacing: 0.00714em; /* 0.1px */
+
+  --m3-type-label-medium-font: var(--m3-font-family-plain);
+  --m3-type-label-medium-weight: var(--font-weight-medium); /* M3 uses Medium */
+  --m3-type-label-medium-size: 0.75rem; /* 12px */
+  --m3-type-label-medium-line-height: 1rem; /* 16px */
+  --m3-type-label-medium-letter-spacing: 0.0416em; /* 0.5px */
+
+  --m3-type-label-small-font: var(--m3-font-family-plain);
+  --m3-type-label-small-weight: var(--font-weight-medium); /* M3 uses Medium */
+  --m3-type-label-small-size: 0.6875rem; /* 11px */
+  --m3-type-label-small-line-height: 1rem; /* 16px */
+  --m3-type-label-small-letter-spacing: 0.045em; /* 0.5px */
+
+  /* Body (Mapping body/secondary/small roughly) */
+  --m3-type-body-large-font: var(--m3-font-family-plain);
+  --m3-type-body-large-weight: var(--font-weight-regular);
+  --m3-type-body-large-size: 1rem; /* 16px - Mapped from body */
+  --m3-type-body-large-line-height: 1.5rem; /* 24px */
+  --m3-type-body-large-letter-spacing: 0.03125em; /* 0.5px */
+
+  --m3-type-body-medium-font: var(--m3-font-family-plain);
+  --m3-type-body-medium-weight: var(--font-weight-regular);
+  --m3-type-body-medium-size: 0.875rem; /* 14px - Mapped from secondary */
+  --m3-type-body-medium-line-height: 1.25rem; /* 20px */
+  --m3-type-body-medium-letter-spacing: 0.0178em; /* 0.25px */
+
+  --m3-type-body-small-font: var(--m3-font-family-plain);
+  --m3-type-body-small-weight: var(--font-weight-regular);
+  --m3-type-body-small-size: 0.75rem; /* 12px - Mapped from small */
+  --m3-type-body-small-line-height: 1rem; /* 16px */
+  --m3-type-body-small-letter-spacing: 0.0333em; /* 0.4px */
+
+  /* === M3 Motion === */
+  /* Placeholder values - use M3 specs for duration/easing */
+  --m3-motion-duration-short1: 50ms;
+  --m3-motion-duration-short2: 100ms;
+  --m3-motion-duration-short3: 150ms;
+  --m3-motion-duration-short4: 200ms;
+  --m3-motion-duration-medium1: 250ms;
+  --m3-motion-duration-medium2: 300ms;
+  --m3-motion-duration-medium3: 350ms;
+  --m3-motion-duration-medium4: 400ms;
+  --m3-motion-duration-long1: 450ms;
+  --m3-motion-duration-long2: 500ms;
+  --m3-motion-duration-long3: 550ms;
+  --m3-motion-duration-long4: 600ms;
+  --m3-motion-duration-extra-long1: 700ms;
+  --m3-motion-duration-extra-long2: 800ms;
+  --m3-motion-duration-extra-long3: 900ms;
+  --m3-motion-duration-extra-long4: 1000ms;
+
+  --m3-motion-easing-linear: linear;
+  --m3-motion-easing-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --m3-motion-easing-standard-accelerate: cubic-bezier(0.3, 0.0, 0.8, 0.15);
+  --m3-motion-easing-standard-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --m3-motion-easing-emphasized: cubic-bezier(0.4, 0.0, 0.2, 1); /* Standard is often used for Emphasized */
+  --m3-motion-easing-emphasized-accelerate: cubic-bezier(0.3, 0.0, 0.8, 0.15);
+  --m3-motion-easing-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+  --m3-motion-easing-legacy: cubic-bezier(0.4, 0.0, 0.6, 1);
+  --m3-motion-easing-legacy-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
+  --m3-motion-easing-legacy-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
 }
 
 /* === Light Mode Variables === */
@@ -60,6 +200,64 @@ html:not([data-theme='dark']) {
   --color-warning: #FFAB00;
   --color-info: #0065FF;
   --color-text-on-primary: var(--color-text-on-primary-light);
+
+  /* === M3 Color Roles - Light Theme === */
+  /* Using existing vars where possible, placeholders/approximations otherwise */
+  /* Primary */
+  --m3-color-primary: var(--color-primary); /* #053f96 */
+  --m3-color-on-primary: var(--color-text-on-primary-light); /* #FFFFFF */
+  --m3-color-primary-container: #D0E4FF; /* Approximation */
+  --m3-color-on-primary-container: #001D36; /* Approximation */
+  /* Secondary */
+  --m3-color-secondary: var(--color-secondary); /* #4CB0B2 */
+  --m3-color-on-secondary: #FFFFFF; /* Assumed white */
+  --m3-color-secondary-container: #CFE6F7; /* Approximation */
+  --m3-color-on-secondary-container: #0A1E29; /* Approximation */
+  /* Tertiary (Using accent green as base) */
+  --m3-color-tertiary: var(--color-accent-green); /* #36B37E */
+  --m3-color-on-tertiary: #FFFFFF; /* Assumed white */
+  --m3-color-tertiary-container: #B8F3DA; /* Approximation */
+  --m3-color-on-tertiary-container: #002117; /* Approximation */
+  /* Error */
+  --m3-color-error: var(--color-error); /* #DE350B */
+  --m3-color-on-error: #FFFFFF; /* Assumed white */
+  --m3-color-error-container: #FFDAD6; /* Approximation */
+  --m3-color-on-error-container: #410002; /* Approximation */
+  /* Background */
+  --m3-color-background: var(--color-app-background); /* #F4F5F7 */
+  --m3-color-on-background: var(--color-text-primary); /* #1E2A3B */
+  /* Surface */
+  --m3-color-surface: var(--color-ui-background); /* #FFFFFF */
+  --m3-color-on-surface: var(--color-text-primary); /* #1E2A3B */
+  --m3-color-surface-variant: #DFE1E6; /* Approximation (old border?) */
+  --m3-color-on-surface-variant: #43474E; /* Approximation */
+  /* Surface Containers */
+  --m3-color-surface-container-lowest: #FFFFFF; /* Same as surface */
+  --m3-color-surface-container-low: #F8F9FA; /* Slightly off-white */
+  --m3-color-surface-container: #F1F3F5; /* Bit more off-white */
+  --m3-color-surface-container-high: #EBEDEF; /* Higher emphasis */
+  --m3-color-surface-container-highest: #E6E8EA; /* Highest emphasis */
+  /* Outline */
+  --m3-color-outline: var(--color-border); /* #8993A4 */
+  --m3-color-outline-variant: #C4C6CF; /* Lighter outline */
+  /* Inverse (For snackbars etc. on dark elements in light theme) */
+  --m3-color-inverse-surface: #2F3033; /* Approximation */
+  --m3-color-inverse-on-surface: #F1F0F4; /* Approximation */
+  --m3-color-inverse-primary: #A8C7FA; /* Approximation */
+  /* Other */
+  --m3-color-shadow: #000000;
+  --m3-color-surface-tint-color: var(--m3-color-primary);
+  --m3-color-scrim: #000000;
+
+  /* Links (using M3 primary for consistency) */
+  --m3-color-link: var(--m3-color-primary);
+  --m3-color-link-visited: #551A8B; /* Standard browser visited */
+
+  /* --- M3 States --- */
+  --m3-state-hover-opacity: 0.08;
+  --m3-state-focus-opacity: 0.12;
+  --m3-state-pressed-opacity: 0.12;
+  --m3-state-dragged-opacity: 0.16;
 }
 
 /* === Dark Mode Variables === */
@@ -83,6 +281,64 @@ html[data-theme='dark'] {
   --color-warning: #FBBF24;
   --color-info: #60A5FA;
   --color-text-on-primary: var(--color-text-on-primary-dark);
+
+  /* === M3 Color Roles - Dark Theme === */
+  /* Approximations based on light theme and base colors */
+  /* Primary */
+  --m3-color-primary: #A8C7FA; /* Approximation */
+  --m3-color-on-primary: #003366; /* Approximation */
+  --m3-color-primary-container: #004A94; /* Approximation */
+  --m3-color-on-primary-container: #D0E4FF; /* Approximation */
+  /* Secondary */
+  --m3-color-secondary: #ADCBE1; /* Approximation */
+  --m3-color-on-secondary: #1D333F; /* Approximation */
+  --m3-color-secondary-container: #334A57; /* Approximation */
+  --m3-color-on-secondary-container: #CFE6F7; /* Approximation */
+  /* Tertiary */
+  --m3-color-tertiary: #9BD0B5; /* Approximation */
+  --m3-color-on-tertiary: #00382A; /* Approximation */
+  --m3-color-tertiary-container: #1F4F3E; /* Approximation */
+  --m3-color-on-tertiary-container: #B8F3DA; /* Approximation */
+  /* Error */
+  --m3-color-error: var(--color-error); /* #F87171 (Existing is close) */
+  --m3-color-on-error: #601410; /* Approximation */
+  --m3-color-error-container: #8C1D18; /* Approximation */
+  --m3-color-on-error-container: #FFDAD6; /* Approximation */
+  /* Background */
+  --m3-color-background: #111318; /* Darker than surface */
+  --m3-color-on-background: var(--color-text-primary); /* #E1E8F2 */
+  /* Surface */
+  --m3-color-surface: var(--color-ui-background); /* #171F2A */
+  --m3-color-on-surface: var(--color-text-primary); /* #E1E8F2 */
+  --m3-color-surface-variant: #43474E; /* Approximation */
+  --m3-color-on-surface-variant: #C4C6CF; /* Approximation */
+  /* Surface Containers */
+  --m3-color-surface-container-lowest: #0C0E13; /* Darkest */
+  --m3-color-surface-container-low: #171F2A; /* Same as Surface */
+  --m3-color-surface-container: #1C2330; /* Slightly Lighter */
+  --m3-color-surface-container-high: #272E3B; /* Higher emphasis */
+  --m3-color-surface-container-highest: #313948; /* Highest emphasis */
+  /* Outline */
+  --m3-color-outline: var(--color-border); /* #5A697E */
+  --m3-color-outline-variant: #43474E; /* Darker outline */
+  /* Inverse (For snackbars etc. on light elements in dark theme) */
+  --m3-color-inverse-surface: #E2E2E6; /* Approximation */
+  --m3-color-inverse-on-surface: #2F3033; /* Approximation */
+  --m3-color-inverse-primary: var(--color-primary); /* #053f96 */
+  /* Other */
+  --m3-color-shadow: #000000;
+  --m3-color-surface-tint-color: var(--m3-color-primary);
+  --m3-color-scrim: #000000;
+
+  /* Links (using M3 primary for consistency) */
+  --m3-color-link: var(--m3-color-primary);
+  --m3-color-link-visited: #BEA0E5; /* Lighter purple */
+
+  /* --- M3 States --- */
+  --m3-state-hover-opacity: 0.08;
+  --m3-state-focus-opacity: 0.12;
+  --m3-state-pressed-opacity: 0.12;
+  --m3-state-dragged-opacity: 0.16;
 }
 
 /* === Global Base Styles === */
@@ -96,13 +352,14 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  color: var(--color-text-primary);
-  background-color: var(--color-app-background, var(--color-ui-background)); /* Fallback if gradient not used */
+  color: var(--m3-color-on-background, var(--color-text-primary)); /* Use M3 variable */
+  background-color: var(--m3-color-background, var(--color-app-background, var(--color-ui-background))); /* Use M3 variable, with fallbacks */
   transition: color 0.2s ease, background-color 0.2s ease; /* Basic transitions */
 }
 
 /* Apply dark mode gradient to body or a wrapper if needed */
 html[data-theme='dark'] body {
+  /* Keep gradient for now, but M3 typically uses solid background colors */
   background-image: linear-gradient(to bottom right, var(--color-app-background-start), var(--color-app-background-end));
   background-attachment: fixed; /* Keep gradient fixed */
 }
@@ -134,12 +391,12 @@ ul, ol {
 /* Basic link styling */
 a {
   font-weight: var(--font-weight-medium);
-  color: var(--color-text-link);
+  color: var(--m3-color-link, var(--color-text-link)); /* Use M3 variable */
   text-decoration: none;
   transition: color var(--transition-duration) ease;
 }
 a:hover {
-  /* Slightly lighten/darken primary or use secondary */
+  /* Consider using state layer color overlay instead of filter */
   filter: brightness(1.2);
 }
 
@@ -156,9 +413,12 @@ button {
 }
 
 /* Additions for Typography Scale */
+/* Recommend removing these and using M3 type utility classes instead */
+/*
 h1 { font-size: var(--font-size-h1); font-weight: var(--font-weight-bold); line-height: var(--line-height-heading); }
 h2 { font-size: var(--font-size-h2); font-weight: var(--font-weight-semibold); line-height: var(--line-height-heading); }
 h3 { font-size: var(--font-size-h3); font-weight: var(--font-weight-medium); line-height: var(--line-height-heading); }
+*/
 /* Add other heading levels if needed */
 
 /* Utility class for tabular numbers */

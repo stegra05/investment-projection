@@ -78,29 +78,7 @@ export default function PortfolioDetailPage() {
     return isNaN(numericValue) ? 0 : numericValue; // Default to 0 if input is not a valid number
   }, [manualTotalValue]);
 
-  // --- Use the Modal Hook ---
-  const {
-    modalProps,
-    openAddAssetModal,
-    openEditAssetModal,
-    openDeleteAssetModal,
-    openAddChangeModal,
-    openEditChangeModal,
-    openDeleteChangeModal,
-    openDeletePortfolioModal,
-  } = usePortfolioModals({
-    portfolioId,
-    portfolioData: portfolio,
-    onSaveAsset: handleSaveAssetAndRefetch,
-    onDeleteAssetConfirm: handleDeleteAssetConfirmed,
-    onSaveChange: handleSaveChangeAndRefetch,
-    onDeleteChangeConfirm: handleDeleteChangeConfirmed,
-    onDeletePortfolioConfirm: handleDeletePortfolioConfirmed,
-    isAssetProcessing,
-    isChangeProcessing,
-  });
-
-  // --- Action Handlers with Refetching ---
+  // --- Action Handlers with Refetching (Moved Before usePortfolioModals) ---
 
   // Called from AssetForm onSubmit
   const handleSaveAssetAndRefetch = useCallback(async (assetData) => {
@@ -113,6 +91,7 @@ export default function PortfolioDetailPage() {
       toast.success('Asset saved successfully!');
     } catch (err) {
       // Error should be set in the hook's state and logged there
+      console.log('[DEBUG] Inside catch block. Value of assetHookError:', assetHookError);
       const message = assetHookError || 'Failed to save asset.'; // Use error from hook if available
       toast.error(message);
       // Keep modal open on error, do not set saveSucceeded = true
@@ -241,6 +220,28 @@ export default function PortfolioDetailPage() {
       // Keep modal open on error
     }
   }, [deletePortfolioHook, portfolio?.name, navigate, pageError]);
+
+  // --- Use the Modal Hook ---
+  const {
+    modalProps,
+    openAddAssetModal,
+    openEditAssetModal,
+    openDeleteAssetModal,
+    openAddChangeModal,
+    openEditChangeModal,
+    openDeleteChangeModal,
+    openDeletePortfolioModal,
+  } = usePortfolioModals({
+    portfolioId,
+    portfolioData: portfolio,
+    onSaveAsset: handleSaveAssetAndRefetch,
+    onDeleteAssetConfirm: handleDeleteAssetConfirmed,
+    onSaveChange: handleSaveChangeAndRefetch,
+    onDeleteChangeConfirm: handleDeleteChangeConfirmed,
+    onDeletePortfolioConfirm: handleDeletePortfolioConfirmed,
+    isAssetProcessing,
+    isChangeProcessing,
+  });
 
   // --- Render Logic ---
 

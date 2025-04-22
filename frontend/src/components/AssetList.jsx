@@ -1,6 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { motion, AnimatePresence } from 'framer-motion'; // Import Framer Motion
 import styles from './AssetList.module.css'; // Import CSS Module
+
+// --- Animation Variants ---
+const listItemVariants = {
+  hidden: { opacity: 0, y: -10 },
+  visible: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: 10, transition: { duration: 0.15 } } // Optional exit animation
+};
+
+const listContainerVariants = {
+  hidden: { opacity: 0 }, // Can start hidden if desired
+  visible: {
+    opacity: 1,
+    transition: {
+      // Stagger children's animation by 50ms
+      staggerChildren: 0.05,
+      // Delay children animation slightly after container appears (optional)
+      // delayChildren: 0.1
+    }
+  }
+};
+// --- End Animation Variants ---
 
 /**
  * Represents a single asset item in the AssetList.
@@ -70,7 +92,8 @@ function AssetListItem({ asset, currentAllocation, onAllocationChange, onEdit, o
   };
 
   return (
-    <li className={styles.listItem}>
+    // This is the actual <li> rendered inside the motion.li in AssetList
+    <>
       <div className={styles.assetInfo}>
         <div className={styles.assetDetails}>
             <strong className={styles.assetName}>{asset.name_or_ticker}</strong> {/* Use name_or_ticker */}
@@ -127,7 +150,7 @@ function AssetListItem({ asset, currentAllocation, onAllocationChange, onEdit, o
           <TrashIcon className={`${styles.icon} ${styles.iconDelete}`} />
         </button>
       </div>
-    </li>
+    </>
   );
 }
 
@@ -152,26 +175,45 @@ export default function AssetList({ assets, allocations, onAllocationChange, onE
   }
 
   return (
-    <ul className={styles.list}>
-      {assets.map((asset) => {
-        // Add defensive check for key
-        if (!asset || typeof asset.id === 'undefined') {
-            console.error("Asset or id is missing in AssetList map:", asset);
-            return null; // Don't render item if key is missing
-        }
-        return (
-            <AssetListItem
-                key={asset.id}
-                asset={asset}
-                currentAllocation={allocations[asset.id] ?? 0}
-                onAllocationChange={onAllocationChange}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                disabled={disabled}
-            />
-        );
-      })}
-    </ul>
+    // Wrap the list rendering logic in AnimatePresence
+    <motion.ul
+      className={styles.list}
+      variants={listContainerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <AnimatePresence initial={false}> {/* initial=false prevents initial animation on mount */}
+        {assets.map((asset) => {
+          // Add defensive check for key
+          if (!asset || typeof asset.id === 'undefined') {
+              console.error("Asset or id is missing in AssetList map:", asset);
+              return null; // Don't render item if key is missing
+          }
+          return (
+              // Wrap the list item in motion.li and apply variants
+              <motion.li
+                  key={asset.id} // Key must be on the motion component for AnimatePresence
+                  className={styles.listItem} // Keep original styling class
+                  variants={listItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit" // Use the exit variant defined
+                  layout // Add layout prop for smoother reordering/removal animations
+              >
+                {/* Render the original AssetListItem component inside */}
+                <AssetListItem
+                    asset={asset}
+                    currentAllocation={allocations[asset.id] ?? 0}
+                    onAllocationChange={onAllocationChange}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    disabled={disabled}
+                />
+              </motion.li>
+          );
+        })}
+      </AnimatePresence>
+    </motion.ul>
   );
 }
 

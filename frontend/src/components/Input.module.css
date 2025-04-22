@@ -1,20 +1,29 @@
-/* Input Styles */
+/* Input Styles - M3 Filled */
 .input {
   display: block;
   width: 100%;
-  padding: var(--space-xs) var(--space-s);
+  /* Adjust padding for label positioning if using floating labels, M3 standard padding */
+  padding: var(--space-m) var(--space-s) var(--space-xxs); /* Top, Hoz, Bottom */
   font-family: inherit;
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-regular);
   line-height: var(--line-height-base);
-  color: var(--color-text-primary);
-  background-color: var(--color-ui-background);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-m);
-  box-shadow: none; /* Reset default */
-  transition: border-color var(--transition-duration) ease,
-              background-color var(--transition-duration) ease,
-              box-shadow var(--transition-duration) ease;
+  color: var(--color-on-surface);
+  background-color: var(--color-surface-container-highest); /* M3 Filled background */
+  border: none; /* Remove side/top borders */
+  border-bottom: 1px solid var(--color-outline); /* M3 underline */
+  border-radius: var(--shape-corner-extra-small, 4px) var(--shape-corner-extra-small, 4px) 0 0; /* Top corners rounded */
+  box-shadow: none;
+  transition: border-color var(--transition-duration-short) ease,
+              background-color var(--transition-duration-short) ease;
+  appearance: none; /* Remove default appearance */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.input::placeholder {
+  color: var(--color-on-surface-variant);
+  opacity: 1; /* Ensure placeholder color isn't washed out */
 }
 
 /* Remove spinners for number inputs */
@@ -28,34 +37,48 @@
 }
 
 .input:hover {
-  border-color: color-mix(in srgb, var(--color-border) 70%, black);
+  border-bottom-color: var(--color-on-surface); /* Darken border on hover */
+  /* M3 Hover state layer - slight background change */
+  background-color: color-mix(in srgb, var(--color-on-surface) var(--state-layer-opacity-hover, 0.08), var(--color-surface-container-highest));
 }
 
-html[data-theme='dark'] .input:hover {
-    border-color: color-mix(in srgb, var(--color-border) 70%, white);
-}
+/* No separate dark mode hover needed if using theme variables */
+/* html[data-theme='dark'] .input:hover { ... } */
 
 .input:focus,
 .input:focus-visible {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent);
+  border-bottom: 2px solid var(--color-primary); /* M3 focus indicator */
+  padding-bottom: calc(var(--space-xxs) - 1px); /* Adjust padding to account for thicker border */
+  /* Focus does not change background in M3 filled */
+  box-shadow: none; /* Remove previous box-shadow focus */
 }
 
 .input:disabled {
   cursor: not-allowed;
-  background-color: var(--color-ui-background-disabled, color-mix(in srgb, var(--color-ui-background) 90%, var(--color-text-disabled)));
-  color: var(--color-text-disabled);
-  border-color: color-mix(in srgb, var(--color-border) 80%, transparent);
-  opacity: 0.7;
+  background-color: color-mix(in srgb, var(--color-on-surface) 0.04, transparent); /* M3 disabled container */
+  color: color-mix(in srgb, var(--color-on-surface) 0.38, transparent); /* M3 disabled text */
+  border-bottom-color: color-mix(in srgb, var(--color-on-surface) 0.12, transparent); /* M3 disabled border */
+  opacity: 1; /* Use color mixing for disabled state, not opacity */
+}
+
+.input:disabled::placeholder {
+  color: color-mix(in srgb, var(--color-on-surface) 0.38, transparent);
 }
 
 /* Error state styling */
 .input.error {
-  border-color: var(--color-error);
+  border-bottom-color: var(--color-error); /* M3 error indicator */
+}
+
+.input.error:hover {
+  border-bottom-color: var(--color-error); /* Keep error color on hover */
 }
 
 .input.error:focus,
 .input.error:focus-visible {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-error) 30%, transparent);
+  border-bottom-color: var(--color-error); /* Keep error color on focus */
+  border-bottom-width: 2px; /* Maintain focus thickness */
+  padding-bottom: calc(var(--space-xxs) - 1px);
+  box-shadow: none; /* Remove previous box-shadow focus */
 } 

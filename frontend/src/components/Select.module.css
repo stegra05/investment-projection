@@ -1,4 +1,4 @@
-/* Select Styles */
+/* Select Styles - M3 Filled */
 .selectWrapper {
   position: relative;
   display: inline-block; /* Or block, depending on usage */
@@ -8,67 +8,92 @@
 .select {
   display: block;
   width: 100%;
-  padding: var(--space-xs) var(--space-s);
-  padding-right: var(--space-xl); /* Space for the arrow */
+  /* Adjust padding similar to Input, account for arrow */
+  padding: var(--space-m) var(--space-xl) var(--space-xxs) var(--space-s); /* Top, Right(arrow), Bottom, Left */
   font-family: inherit;
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-regular);
   line-height: var(--line-height-base);
-  color: var(--color-text-primary);
-  background-color: var(--color-ui-background);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-m);
+  color: var(--color-on-surface);
+  background-color: var(--color-surface-container-highest); /* M3 Filled background */
+  border: none; /* Remove side/top borders */
+  border-bottom: 1px solid var(--color-outline); /* M3 underline */
+  border-radius: var(--shape-corner-extra-small, 4px) var(--shape-corner-extra-small, 4px) 0 0; /* Top corners rounded */
   appearance: none; /* Remove default arrow */
   -webkit-appearance: none;
   -moz-appearance: none;
   cursor: pointer;
-  transition: border-color var(--transition-duration) ease,
-              background-color var(--transition-duration) ease,
-              box-shadow var(--transition-duration) ease;
+  transition: border-color var(--transition-duration-short) ease,
+              background-color var(--transition-duration-short) ease;
 }
 
 .select:hover {
-  border-color: color-mix(in srgb, var(--color-border) 70%, black);
+  border-bottom-color: var(--color-on-surface); /* Darken border on hover */
+  /* M3 Hover state layer */
+  background-color: color-mix(in srgb, var(--color-on-surface) var(--state-layer-opacity-hover, 0.08), var(--color-surface-container-highest));
 }
 
-html[data-theme='dark'] .select:hover {
-    border-color: color-mix(in srgb, var(--color-border) 70%, white);
-}
+/* No separate dark mode hover needed if using theme variables */
+/* html[data-theme='dark'] .select:hover { ... } */
 
 .select:focus, /* Standard focus */
 .select:focus-visible /* Keyboard focus */
 {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent);
+  border-bottom: 2px solid var(--color-primary); /* M3 focus indicator */
+  padding-bottom: calc(var(--space-xxs) - 1px); /* Adjust padding for thicker border */
+  box-shadow: none; /* Remove previous box-shadow focus */
 }
 
 .select:disabled {
   cursor: not-allowed;
-  background-color: var(--color-ui-background-disabled, color-mix(in srgb, var(--color-ui-background) 90%, var(--color-text-disabled)));
-  color: var(--color-text-disabled);
-  border-color: color-mix(in srgb, var(--color-border) 80%, transparent);
-  opacity: 0.7;
+  background-color: color-mix(in srgb, var(--color-on-surface) 0.04, transparent); /* M3 disabled container */
+  color: color-mix(in srgb, var(--color-on-surface) 0.38, transparent); /* M3 disabled text */
+  border-bottom-color: color-mix(in srgb, var(--color-on-surface) 0.12, transparent); /* M3 disabled border */
+  opacity: 1; /* Use color mixing */
 }
 
 /* Custom Arrow */
 .arrow {
   position: absolute;
   right: var(--space-s);
-  top: 50%;
+  /* Adjust top slightly based on new padding */
+  top: calc(var(--space-m) + (var(--line-height-base) * var(--font-size-body)) / 2); 
   transform: translateY(-50%);
-  width: 1em;
-  height: 1em;
+  width: 1.25em; /* Slightly larger arrow might be better */
+  height: 1.25em;
   pointer-events: none; /* Allow clicks to pass through to select */
-  color: var(--color-text-secondary);
+  color: var(--color-on-surface-variant); /* M3 icon/placeholder color */
   transition: color var(--transition-duration) ease;
 }
 
 .select:hover + .arrow {
-  color: var(--color-text-primary);
+  color: var(--color-on-surface);
 }
 
 .select:disabled + .arrow {
-  color: var(--color-text-disabled);
-  opacity: 0.7;
+  color: color-mix(in srgb, var(--color-on-surface) 0.38, transparent); /* M3 disabled icon color */
+  opacity: 1; /* Use color mixing */
 } 
+
+/* Placeholder Option Styling (if using the placeholder prop) */
+.select option[value=""][disabled] {
+  color: var(--color-on-surface-variant);
+}
+
+/* Error state styling (add if needed, assuming an error prop/class could be added to Select.jsx) */
+/*
+.select.error {
+  border-bottom-color: var(--color-error);
+}
+.select.error:focus,
+.select.error:focus-visible {
+  border-bottom-color: var(--color-error);
+}
+.select.error:hover + .arrow {
+  color: var(--color-on-surface);
+}
+.select.error + .arrow {
+  color: var(--color-on-surface-variant); 
+}
+*/ 

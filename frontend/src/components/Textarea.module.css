@@ -1,79 +1,75 @@
-/* Textarea Styles */
+/* Textarea Styles - M3 Outlined */
 .textarea {
   display: block;
   width: 100%;
-  padding: var(--space-s);
+  /* M3 Outlined Padding */
+  padding: var(--space-m) var(--space-s); 
   font-family: inherit;
-  font-size: 1rem;
+  font-size: var(--font-size-body); /* Use body font size */
   font-weight: var(--font-weight-regular);
-  line-height: 1.5;
-  color: var(--color-text-primary-light);
-  background-color: var(--color-ui-background-light);
-  border: 1px solid var(--color-border-light);
-  border-radius: 6px;
-  min-height: 80px;
+  line-height: var(--line-height-base); /* Use base line height */
+  color: var(--color-on-surface);
+  background-color: transparent; /* M3 Outlined background is typically transparent or surface */
+  border: 1px solid var(--color-outline); /* M3 Outlined border */
+  border-radius: var(--shape-corner-extra-small, 4px); /* M3 standard corner */
+  min-height: 80px; /* Keep min-height or adjust as needed */
   resize: vertical;
-  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  transition: border-color var(--transition-duration-short) ease, 
+              box-shadow var(--transition-duration-short) ease;
 }
 
 .textarea::placeholder {
-  color: var(--color-text-secondary-light);
-  opacity: 0.7;
+  color: var(--color-on-surface-variant);
+  opacity: 1; /* Ensure placeholder color isn't washed out */
+}
+
+.textarea:hover {
+  border-color: var(--color-on-surface); /* M3 Hover border */
 }
 
 .textarea:focus,
 .textarea:focus-visible {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
+  border: 2px solid var(--color-primary); /* M3 Focus indicator */
+  /* Adjust padding slightly to prevent layout shift due to thicker border */
+  padding: calc(var(--space-m) - 1px) calc(var(--space-s) - 1px); 
+  box-shadow: none; /* Remove previous box-shadow focus */
 }
 
 .textarea:disabled {
   cursor: not-allowed;
-  background-color: var(--color-app-background-light);
-  color: var(--color-text-secondary-light);
-  border-color: var(--color-border-light);
-  opacity: 0.7;
+  background-color: transparent; /* Keep background transparent/surface */
+  color: color-mix(in srgb, var(--color-on-surface) 0.38, transparent); /* M3 disabled text */
+  border-color: color-mix(in srgb, var(--color-on-surface) 0.12, var(--color-outline)); /* M3 disabled border */
+  opacity: 1; /* Use color mixing for disabled state */
   resize: none;
+}
+
+.textarea:disabled::placeholder {
+  color: color-mix(in srgb, var(--color-on-surface) 0.38, transparent);
 }
 
 /* Error state styling */
 .textarea.error {
-  border-color: var(--color-error-light);
+  border-color: var(--color-error); /* M3 Error border */
+}
+
+.textarea.error:hover {
+  border-color: var(--color-error); /* Keep error color */
 }
 
 .textarea.error:focus,
 .textarea.error:focus-visible {
-  box-shadow: 0 0 0 2px rgba(var(--color-error-light-rgb), 0.2);
+  border-color: var(--color-error); /* Keep error color */
+  border-width: 2px; /* Maintain focus thickness */
+  padding: calc(var(--space-m) - 1px) calc(var(--space-s) - 1px);
+  box-shadow: none; /* Remove previous box-shadow focus */
 }
 
-/* Dark Mode Styles */
+/* Dark Mode Styles - REMOVED as base styles now use theme variables */
+/*
 html[data-theme='dark'] .textarea {
-  color: var(--color-text-primary-dark);
-  background-color: var(--color-ui-background-dark);
-  border-color: var(--color-border-dark);
+  ...
 }
-
-html[data-theme='dark'] .textarea::placeholder {
-  color: var(--color-text-secondary-dark);
-}
-
-html[data-theme='dark'] .textarea:focus,
-html[data-theme='dark'] .textarea:focus-visible {
-  /* Focus styles remain similar, relying on primary color */
-}
-
-html[data-theme='dark'] .textarea.error {
-  border-color: var(--color-error-dark);
-}
-
-html[data-theme='dark'] .textarea.error:focus,
-html[data-theme='dark'] .textarea.error:focus-visible {
-  box-shadow: 0 0 0 2px rgba(var(--color-error-dark-rgb), 0.2);
-}
-
-html[data-theme='dark'] .textarea:disabled {
-  background-color: var(--color-app-background-dark);
-  color: var(--color-text-secondary-dark);
-  border-color: var(--color-border-dark);
-} 
+...
+*/ 

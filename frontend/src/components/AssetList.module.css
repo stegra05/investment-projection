@@ -1,194 +1,226 @@
+/* AssetList & AssetListItem Styles - M3 */
+
 .list {
     list-style: none;
     padding: 0;
-    margin-top: var(--space-m);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs); /* Space between items */
 }
 
 .listItem {
     display: flex;
+    align-items: center; /* Vertically center content and actions */
     justify-content: space-between;
-    align-items: center;
-    padding: var(--space-m);
-    border: 1px solid var(--color-border); /* Use theme-aware var */
-    border-radius: 6px; /* Consistent radius */
-    margin-bottom: var(--space-s);
-    background: var(--color-ui-background); /* Use theme-aware var */
-    gap: var(--space-m); /* Add gap between info and actions */
+    background-color: var(--color-surface-container-low, var(--color-surface)); /* Use appropriate surface color */
+    padding: var(--space-s) var(--space-m);
+    border: 1px solid var(--color-outline-variant);
+    border-radius: var(--shape-corner-medium, 8px);
+    transition: background-color var(--transition-duration-short) ease;
+    /* No hover state on the item itself unless it's interactive */
 }
 
-/* Add hover effect for list items */
-.listItem:hover {
-  background-color: rgba(var(--color-primary-rgb), 0.05); /* Assuming --color-primary-rgb is defined */
-  /* Or define a specific hover background color variable */
-}
-
-/* NEW: Container for details + allocation slider */
 .assetInfo {
-    flex-grow: 1; /* Take up available space */
+    flex-grow: 1;
     display: flex;
-    justify-content: flex-start;
-    align-items: flex-start;
-    gap: var(--space-l); /* Add gap between details and slider */
+    flex-direction: column; /* Stack details and controls */
+    gap: var(--space-s);
+    margin-right: var(--space-m); /* Space before action buttons */
 }
 
 .assetDetails {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-xxs);
-    flex-shrink: 0; /* Prevent details from shrinking too much */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    align-items: baseline; /* Align text nicely */
+    gap: var(--space-s);
 }
 
 .assetName {
-    font-weight: 600; /* Semi-bold */
-    font-size: 1rem;
-    color: var(--color-text-primary); /* Use theme-aware var */
-}
-
-.assetType {
-    font-size: 0.875rem;
-    color: var(--color-text-secondary); /* Use theme-aware var */
-}
-
-/* Allocation display removed from here, now in allocationControl */
-/* .allocation { ... } */
-
-.expectedReturn {
-    font-size: 0.875rem;
-    color: var(--color-text-secondary); /* Use theme-aware var */
-    font-variant-numeric: tabular-nums;
-}
-
-/* NEW: Styles for Allocation Slider Area */
-.allocationControl {
-    display: flex;
-    align-items: center;
-    gap: var(--space-s); /* Add space between label, slider, and input */
-    /* Optional: Add some margin if needed */
-    /* margin-left: var(--space-m); */
-}
-
-.allocationLabel {
-    font-size: 0.875rem;
-    color: var(--color-text-secondary);
-    font-variant-numeric: tabular-nums; /* Keep numbers aligned */
-    white-space: nowrap; /* Prevent label text wrapping */
-    min-width: 120px; /* Ensure label area has consistent width */
-    text-align: right;
+    font-size: var(--font-size-title-small);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-on-surface);
     margin-right: var(--space-xs);
 }
 
+.assetType {
+    font-size: var(--font-size-body-medium);
+    color: var(--color-on-surface-variant);
+    margin-right: var(--space-s);
+}
+
+.expectedReturn {
+    font-size: var(--font-size-body-medium);
+    color: var(--color-on-surface-variant);
+}
+
+/* Allocation Controls Styling */
+.allocationControl {
+    display: flex;
+    align-items: center;
+    gap: var(--space-s);
+    flex-wrap: wrap; /* Allow wrapping */
+}
+
+.allocationLabel {
+    font-size: var(--font-size-label-medium);
+    color: var(--color-on-surface-variant);
+    min-width: 100px; /* Prevent jumping */
+    white-space: nowrap;
+}
+
 .allocationSlider {
-    flex-grow: 1; /* Allow slider to take up most space */
-    max-width: 300px; /* Optional: Prevent slider from becoming too wide */
-    min-width: 100px; /* Add min-width to prevent collapsing */
+    flex-grow: 1; /* Take available space */
+    min-width: 150px; /* Ensure usability */
     cursor: pointer;
-    height: 8px; /* Adjust height */
-    background: var(--color-border-dark); /* Assuming dark mode var exists and contrasts */
-    border-radius: 4px;
-    appearance: none; /* Override default look */
-    width: 100%;
+    /* Basic slider styles, can be enhanced */
+    accent-color: var(--color-primary);
+    height: 6px;
+    border-radius: 3px;
+    background: var(--color-surface-container-highest);
     outline: none;
+    opacity: 0.7;
+    transition: opacity .2s;
 }
 
-/* Slider Thumb (Chrome/Safari/Edge) */
-.allocationSlider::-webkit-slider-thumb {
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    background: var(--color-primary); /* Thumb color */
-    border-radius: 50%; /* Make it round */
-    cursor: pointer;
+.allocationSlider:hover {
+    opacity: 1;
 }
 
-/* Slider Thumb (Firefox) */
-.allocationSlider::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    background: var(--color-primary);
-    border-radius: 50%;
-    cursor: pointer;
-    border: none; /* Reset default border */
-}
-
-/* Styling for disabled state */
 .allocationSlider:disabled {
     cursor: not-allowed;
-    opacity: 0.6;
-}
-.allocationSlider:disabled::-webkit-slider-thumb {
-    background: var(--color-text-secondary);
-}
-.allocationSlider:disabled::-moz-range-thumb {
-    background: var(--color-text-secondary);
+    opacity: 0.38; /* M3 disabled opacity */
 }
 
 .allocationInput {
-    width: 80px; /* Fixed width for the number input */
-    padding: var(--space-xs) var(--space-s); /* Match input padding */
-    border: 1px solid var(--color-border-light);
-    border-radius: 6px; /* Match input border-radius */
-    background-color: var(--color-ui-background-light); /* Match input background */
-    color: var(--color-text-primary-light);
-    font-size: 0.9rem; /* Slightly smaller font maybe */
+    /* Reuse styles from Input.module.css if possible, or redefine M3 'Filled'/'Outlined' here */
+    /* Assuming M3 Filled style adapted for small context: */
+    width: 80px; /* Fixed width for number input */
+    padding: var(--space-xxs) var(--space-xs); /* Smaller padding */
+    font-size: var(--font-size-body-medium);
+    color: var(--color-on-surface);
+    background-color: var(--color-surface-container-high); /* Slightly different background */
+    border: none;
+    border-bottom: 1px solid var(--color-outline);
+    border-radius: var(--shape-corner-extra-small, 4px) var(--shape-corner-extra-small, 4px) 0 0;
     text-align: right;
-}
-
-.allocationInput:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2); /* Needs --color-primary-rgb defined */
+    -moz-appearance: textfield; /* Hide spinners */
 }
 
 .allocationInput::-webkit-outer-spin-button,
 .allocationInput::-webkit-inner-spin-button {
     -webkit-appearance: none;
-    margin: 0; /* Remove spinner buttons for cleaner look */
+    margin: 0;
 }
 
-.allocationInput[type=number] {
-    -moz-appearance: textfield; /* Firefox - remove spinner */
+.allocationInput:focus,
+.allocationInput:focus-visible {
+    outline: none;
+    border-bottom: 2px solid var(--color-primary);
+    padding-bottom: calc(var(--space-xxs) - 1px);
+    background-color: var(--color-surface-container-high);
 }
 
+.allocationInput:disabled {
+    background-color: color-mix(in srgb, var(--color-on-surface) 0.04, transparent);
+    color: color-mix(in srgb, var(--color-on-surface) 0.38, transparent);
+    border-bottom-color: color-mix(in srgb, var(--color-on-surface) 0.12, transparent);
+    cursor: not-allowed;
+}
+
+/* Action Buttons Styling */
 .actions {
     display: flex;
     align-items: center;
-    gap: var(--space-s);
+    gap: var(--space-xs); /* Reduced gap for icon buttons */
 }
 
 .actionButton {
-    background: none;
+    /* M3 Icon Button Base */
+    display: inline-flex; /* Use inline-flex for alignment */
+    align-items: center;
+    justify-content: center;
+    width: 40px; /* M3 standard touch target size */
+    height: 40px;
+    padding: 0;
     border: none;
-    padding: var(--space-xs);
+    border-radius: 50%; /* Circular */
+    background-color: transparent;
+    color: var(--color-primary); /* Icon color */
     cursor: pointer;
-    color: var(--color-text-secondary-light);
-    transition: color 0.2s ease-in-out;
+    position: relative; /* Needed for pseudo-element state layer */
+    overflow: hidden; /* Clip the state layer */
+    transition: background-color var(--transition-duration-short) ease;
+}
+
+.actionButton::before {
+    /* State Layer */
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+    opacity: 0;
+    transition: opacity var(--transition-duration-short) ease;
+    pointer-events: none; /* Don't block clicks */
+}
+
+.actionButton:hover::before {
+    opacity: var(--state-layer-opacity-hover, 0.08);
+}
+
+.actionButton:focus-visible::before {
+    opacity: var(--state-layer-opacity-focus, 0.12);
+}
+
+.actionButton:active::before {
+    opacity: var(--state-layer-opacity-pressed, 0.12); /* Same as focus or slightly more */
 }
 
 .actionButton:disabled {
-    color: var(--color-border-light); /* More muted */
+    color: color-mix(in srgb, var(--color-on-surface) 0.38, transparent); /* M3 disabled content */
     cursor: not-allowed;
-    opacity: 0.6;
+    background-color: transparent;
 }
 
-.actionButton:hover:not(:disabled) {
-    color: var(--color-primary);
+.actionButton:disabled::before {
+    opacity: 0; /* No state layer when disabled */
 }
 
 .icon {
-    width: 1.25rem; /* 20px */
-    height: 1.25rem;
+    width: 20px; /* Adjust icon size as needed */
+    height: 20px;
 }
 
-.iconEdit:hover {
-    /* Specific hover color if needed */
+.iconEdit {
+    color: var(--color-primary); /* Default state */
 }
 
-.iconDelete:hover {
-    color: var(--color-error-light); /* Make delete hover red */
+.iconDelete {
+    color: var(--color-error); /* Use error color for delete */
+}
+
+/* Adjust icon color for disabled state within the SVG parent */
+.actionButton:disabled .icon {
+    color: color-mix(in srgb, var(--color-on-surface) 0.38, transparent);
+}
+
+/* Specific state layer colors for delete button */
+.actionButton[aria-label*="Delete"]::before {
+    background-color: var(--color-error);
+}
+
+.actionButton[aria-label*="Delete"] .iconDelete {
+    color: var(--color-error);
+}
+
+.actionButton[aria-label*="Delete"]:disabled .iconDelete {
+    color: color-mix(in srgb, var(--color-on-surface) 0.38, transparent);
 }
 
 .noItemsText {
+    font-size: var(--font-size-body-medium);
+    color: var(--color-on-surface-variant);
+    padding: var(--space-m);
     text-align: center;
-    padding: var(--space-l);
-    color: var(--color-text-secondary-light);
 } 

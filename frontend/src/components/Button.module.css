@@ -1,295 +1,411 @@
-/* Button Styles */
+/* === M3 Button Base Styles === */
 .button {
-  display: inline-flex; /* Align icon and text */
+  /* Layout & Box Model */
+  position: relative; /* Needed for state layer positioning */
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-xs); /* Gap between icon and text */
-  padding: var(--space-xs) var(--space-m); /* Vertical/Horizontal padding */
-  font-family: inherit;
-  font-size: var(--font-size-body);
-  font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-base);
-  border-radius: var(--border-radius-m);
-  border: 1px solid transparent; /* Base border */
+  vertical-align: middle; /* Align with text */
+  box-sizing: border-box;
+  min-width: 64px;
+  height: 40px; /* M3 default height */
+  padding: 0 24px; /* Horizontal padding (icon buttons override this) */
+  border: none; /* Use outlines/backgrounds for variants */
+  border-radius: var(--m3-shape-corner-full); /* Fully rounded */
+  overflow: hidden; /* Clip state layer */
+
+  /* Typography */
+  font-family: var(--m3-type-label-large-font);
+  font-size: var(--m3-type-label-large-size);
+  font-weight: var(--m3-type-label-large-weight);
+  line-height: var(--m3-type-label-large-line-height); /* Should match height */
+  letter-spacing: var(--m3-type-label-large-letter-spacing);
+  white-space: nowrap;
+  text-decoration: none;
+  text-transform: none; /* M3 uses sentence case */
+
+  /* Interaction & Appearance */
   cursor: pointer;
-  text-align: center;
-  text-decoration: none; /* For link-styled buttons */
-  white-space: nowrap; /* Prevent wrapping */
-  transition: background-color var(--transition-duration) ease,
-              border-color var(--transition-duration) ease,
-              color var(--transition-duration) ease,
-              box-shadow var(--transition-duration) ease,
-              transform var(--transition-duration) ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+
+  /* Transitions (using M3 tokens) */
+  transition:
+    background-color var(--m3-motion-duration-short4) var(--m3-motion-easing-standard),
+    box-shadow var(--m3-motion-duration-short4) var(--m3-motion-easing-standard),
+    border-color var(--m3-motion-duration-short4) var(--m3-motion-easing-standard),
+    color var(--m3-motion-duration-short4) var(--m3-motion-easing-standard);
 }
 
-/* === Variants === */
-
-/* Primary */
-.primary {
-  background-color: var(--color-primary);
-  color: var(--color-text-on-primary);
-  border-color: var(--color-primary);
+.button:focus {
+  outline: none; /* Handled by focus state layer */
 }
 
-.primary:hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--color-primary) 85%, black);
-  border-color: color-mix(in srgb, var(--color-primary) 85%, black);
+/* === State Layer === */
+.stateLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: currentColor; /* Default to text color, variants override */
+  opacity: 0;
+  pointer-events: none; /* Allow clicks to pass through */
+  transition: opacity var(--m3-motion-duration-short2) var(--m3-motion-easing-standard);
 }
 
-.primary:active:not(:disabled) {
-  background-color: color-mix(in srgb, var(--color-primary) 70%, black);
-  border-color: color-mix(in srgb, var(--color-primary) 70%, black);
-  transform: translateY(1px);
+.button:hover > .stateLayer {
+  opacity: var(--m3-state-hover-opacity);
 }
 
-/* Secondary */
-.secondary {
-  background-color: var(--color-ui-background);
-  color: var(--color-primary);
-  border-color: var(--color-primary);
+.button:focus-visible > .stateLayer {
+  opacity: var(--m3-state-focus-opacity);
 }
 
-html[data-theme='dark'] .secondary {
-  color: var(--color-text-link);
-  border-color: var(--color-text-link);
+.button:active > .stateLayer {
+  opacity: var(--m3-state-pressed-opacity);
 }
 
-.secondary:hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 80%, black);
-}
-
-html[data-theme='dark'] .secondary:hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--color-text-link) 15%, transparent);
-  border-color: color-mix(in srgb, var(--color-text-link) 85%, white);
-}
-
-.secondary:active:not(:disabled) {
-  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
-  transform: translateY(1px);
-}
-
-html[data-theme='dark'] .secondary:active:not(:disabled) {
-  background-color: color-mix(in srgb, var(--color-text-link) 25%, transparent);
-}
-
-/* Destructive */
-.destructive {
-  background-color: var(--color-ui-background);
-  color: var(--color-error);
-  border-color: var(--color-error);
-}
-
-.destructive:hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--color-error) 10%, transparent);
-  border-color: color-mix(in srgb, var(--color-error) 80%, black);
-}
-
-html[data-theme='dark'] .destructive:hover:not(:disabled) {
-    background-color: color-mix(in srgb, var(--color-error) 15%, transparent);
-    border-color: color-mix(in srgb, var(--color-error) 85%, white);
-}
-
-.destructive:active:not(:disabled) {
-  background-color: color-mix(in srgb, var(--color-error) 20%, transparent);
-  transform: translateY(1px);
-}
-
-html[data-theme='dark'] .destructive:active:not(:disabled) {
-    background-color: color-mix(in srgb, var(--color-error) 25%, transparent);
-}
-
-
-/* === States === */
-
-/* Focus */
-.button:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 40%, transparent);
-}
-
-.secondary:focus-visible,
-.destructive:focus-visible {
-  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 40%, transparent);
-}
-
-/* Disabled */
-.button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.primary:disabled {
-  background-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-ui-background));
-  border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-ui-background));
-  color: color-mix(in srgb, var(--color-text-on-primary) 70%, var(--color-ui-background));
-}
-
-.secondary:disabled,
-.destructive:disabled {
-  color: var(--color-text-disabled);
-  border-color: var(--color-text-disabled);
-  background-color: var(--color-ui-background);
-}
-
-html[data-theme='dark'] .secondary:disabled,
-html[data-theme='dark'] .destructive:disabled {
-    border-color: color-mix(in srgb, var(--color-text-disabled) 70%, transparent);
-}
-
-/* Icon styling within buttons */
-.button svg {
-    width: 1.25em; /* Adjust as needed, relative to font size */
-    height: 1.25em;
-}
-
-.buttonBase {
-  display: inline-flex; /* Use inline-flex for alignment */
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-s) var(--space-m); /* Base padding */
-  border-radius: 6px; /* Consistent border radius */
-  font-size: 1rem;
-  font-weight: 500; /* Medium weight */
-  line-height: 1.2;
-  border: 1px solid transparent; /* Start with transparent border */
-  cursor: pointer;
-  text-align: center;
-  text-decoration: none; /* Remove underline */
-  white-space: nowrap; /* Prevent wrapping */
-  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, color 0.2s ease-in-out;
-  user-select: none; /* Prevent text selection */
-}
-
-.buttonBase:focus {
-  outline: none; /* Remove default outline */
-  box-shadow: 0 0 0 3px rgba(5, 63, 150, 0.3); /* Custom focus ring - using primary base */
-}
-
-/* Icon styling */
-.icon {
-  width: 1.125rem; /* ~18px, adjust as needed */
-  height: 1.125rem;
-  margin-right: var(--space-xs); /* Space between icon and text */
-  flex-shrink: 0; /* Prevent icon shrinking */
-}
-
-/* Style for icon-only buttons */
-.icon.buttonBase {
-    padding: var(--space-xs); /* Smaller padding for icon buttons */
-    line-height: 1; /* Adjust line height */
-}
-.icon .icon {
-    margin-right: 0; /* No margin needed if only icon */
-}
-.icon .text {
-    display: none; /* Hide text visually for icon-only */
-}
-
-/* --- Variants --- */
-
-/* Primary (Solid) */
-.primary {
-  background-color: var(--color-primary);
-  color: var(--color-text-on-primary-light);
-  border-color: var(--color-primary);
-}
-
-.primary:hover:not(:disabled) {
-  background-color: #04337a; /* Slightly darker primary */
-  border-color: #04337a;
-}
-
-/* Secondary (Outline) */
-.secondary {
-  background-color: transparent;
-  color: var(--color-primary);
-  border: 1px solid var(--color-primary);
-}
-
-.secondary:hover:not(:disabled) {
-  background-color: rgba(5, 63, 150, 0.1); /* Subtle primary background */
-}
-
-html[data-theme='dark'] .secondary {
-  color: var(--color-secondary); /* Teal in dark mode for secondary? Adjust if needed */
-  border-color: var(--color-secondary);
-}
-
-html[data-theme='dark'] .secondary:hover:not(:disabled) {
-  background-color: rgba(76, 176, 178, 0.15); /* Subtle teal background */
-}
-
-/* Destructive (Solid) */
-.destructive {
-  background-color: var(--color-error-light);
-  color: var(--color-ui-background-light); /* White text on error bg */
-  border-color: var(--color-error-light);
-}
-
-.destructive:hover:not(:disabled) {
-  background-color: #b72d09; /* Darker error */
-  border-color: #b72d09;
-}
-
-html[data-theme='dark'] .destructive {
-  background-color: var(--color-error-dark);
-  color: var(--color-text-primary-dark);
-  border-color: var(--color-error-dark);
-}
-
-html[data-theme='dark'] .destructive:hover:not(:disabled) {
-  background-color: #ef5e5e; /* Lighter/brighter error hover for dark */
-  border-color: #ef5e5e;
-}
-
-
-/* Disabled State */
-.buttonBase:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background-color: var(--color-border-light); /* Neutral background */
-  color: var(--color-text-secondary-light);
-  border-color: var(--color-border-light);
-}
-
-html[data-theme='dark'] .buttonBase:disabled {
-  background-color: var(--color-border-dark);
-  color: var(--color-text-secondary-dark);
-  border-color: var(--color-border-dark);
-}
-
-/* Adjust disabled state specifically for secondary/outline */
-.secondary:disabled {
-    background-color: transparent;
-}
-html[data-theme='dark'] .secondary:disabled {
-    background-color: transparent;
-}
-
-/* Loading State */
-.loading .text {
-    opacity: 0.7;
-}
-
+/* === Icon & Text Styling === */
+.icon,
 .spinner {
-    animation: spin 1s linear infinite;
+  /* Using 18dp size as per M3 spec */
+  width: 18px;
+  height: 18px;
+  display: block;
+  flex-shrink: 0;
+  /* Color should inherit from button */
+}
+
+/* Adjust spacing when icon is present */
+.icon + .text {
+  margin-left: 8px; /* 8dp gap */
+}
+.text + .icon { /* For trailing icon, if ever needed */
+  margin-left: 8px;
+}
+
+/* Loading state specific styles */
+.loading .icon { /* Hide original icon when loading */
+  display: none;
+}
+.loading .spinner { /* Show spinner */
+  display: block;
+}
+.loading .text {
+  /* Optionally reduce opacity or add space */
+  margin-left: 8px; /* Ensure space for spinner */
 }
 
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.spinner {
+  animation: spin 1s linear infinite;
 }
 
-/* Disabled State (General) */
-.buttonBase:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    /* Specific background/color/border often handled by variant styles below */
+/* === Icon Only Button === */
+.iconOnly {
+  min-width: 40px; /* Square aspect ratio */
+  width: 40px;
+  height: 40px;
+  padding: 0; /* Remove padding */
 }
 
-/* ... potential variant-specific disabled styles ... */ 
+.iconOnly .icon,
+.iconOnly .spinner {
+  /* Center the icon */
+  margin: 0;
+}
+
+/* Visually hide text but keep for screen readers */
+.visuallyHidden {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+  white-space: nowrap;
+}
+
+/* === Variant Styles === */
+
+/* --- Filled --- */
+.filled {
+  /* Colors are set by .color* classes */
+}
+
+/* --- Tonal --- */
+.tonal {
+  /* Colors are set by .color* classes */
+}
+
+/* --- Outlined --- */
+.outlined {
+  background-color: transparent;
+  border-width: 1px;
+  border-style: solid;
+  /* Border color set by .color* classes */
+  /* Text color set by .color* classes */
+}
+.outlined .stateLayer {
+  /* State layer should use text color */
+  background-color: currentColor;
+}
+
+/* --- Text --- */
+.text {
+  background-color: transparent;
+  padding: 0 12px; /* Less padding for text buttons */
+  /* Text color set by .color* classes */
+}
+.text.iconOnly {
+    padding: 0; /* Override text button padding for icon only */
+}
+.text .stateLayer {
+  /* State layer should use text color */
+  background-color: currentColor;
+}
+
+/* --- Elevated --- */
+.elevated {
+  /* Uses surface color, shadow added */
+  box-shadow: var(--m3-elevation-light-1, 0 1px 2px rgba(0,0,0,0.3)); /* Add M3 elevation vars if defined, fallback */
+  /* Background/text colors set by .color* classes */
+}
+.elevated:hover {
+   box-shadow: var(--m3-elevation-light-2, 0 2px 4px rgba(0,0,0,0.3));
+}
+.elevated:focus-visible {
+   box-shadow: var(--m3-elevation-light-2, 0 2px 4px rgba(0,0,0,0.3));
+}
+.elevated:active {
+   box-shadow: var(--m3-elevation-light-1, 0 1px 2px rgba(0,0,0,0.3));
+}
+html[data-theme='dark'] .elevated {
+  box-shadow: var(--m3-elevation-dark-1, 0 1px 2px rgba(0,0,0,0.6));
+}
+html[data-theme='dark'] .elevated:hover {
+   box-shadow: var(--m3-elevation-dark-2, 0 2px 4px rgba(0,0,0,0.6));
+}
+html[data-theme='dark'] .elevated:focus-visible {
+   box-shadow: var(--m3-elevation-dark-2, 0 2px 4px rgba(0,0,0,0.6));
+}
+html[data-theme='dark'] .elevated:active {
+   box-shadow: var(--m3-elevation-dark-1, 0 1px 2px rgba(0,0,0,0.6));
+}
+
+
+/* === Color Modifier Styles === */
+
+/* --- Primary --- */
+.colorPrimary.filled {
+  background-color: var(--m3-color-primary);
+  color: var(--m3-color-on-primary);
+}
+.colorPrimary.filled > .stateLayer {
+  background-color: var(--m3-color-on-primary);
+}
+
+.colorPrimary.tonal {
+  background-color: var(--m3-color-primary-container);
+  color: var(--m3-color-on-primary-container);
+}
+.colorPrimary.tonal > .stateLayer {
+  background-color: var(--m3-color-on-primary-container);
+}
+
+.colorPrimary.outlined {
+  border-color: var(--m3-color-outline); /* Default outline */
+  color: var(--m3-color-primary);
+}
+.colorPrimary.outlined:focus-visible, /* Use primary for focus/hover state */
+.colorPrimary.outlined:hover {
+    border-color: var(--m3-color-primary);
+}
+.colorPrimary.outlined > .stateLayer {
+    background-color: var(--m3-color-primary);
+}
+
+.colorPrimary.text {
+  color: var(--m3-color-primary);
+}
+.colorPrimary.text > .stateLayer {
+  background-color: var(--m3-color-primary);
+}
+
+.colorPrimary.elevated {
+  background-color: var(--m3-color-surface-container-low);
+  color: var(--m3-color-primary);
+}
+.colorPrimary.elevated > .stateLayer {
+  background-color: var(--m3-color-primary);
+}
+
+/* --- Secondary --- */
+.colorSecondary.filled {
+  background-color: var(--m3-color-secondary);
+  color: var(--m3-color-on-secondary);
+}
+.colorSecondary.filled > .stateLayer {
+  background-color: var(--m3-color-on-secondary);
+}
+
+.colorSecondary.tonal {
+  background-color: var(--m3-color-secondary-container);
+  color: var(--m3-color-on-secondary-container);
+}
+.colorSecondary.tonal > .stateLayer {
+  background-color: var(--m3-color-on-secondary-container);
+}
+
+.colorSecondary.outlined {
+  border-color: var(--m3-color-outline);
+  color: var(--m3-color-secondary);
+}
+.colorSecondary.outlined:focus-visible,
+.colorSecondary.outlined:hover {
+    border-color: var(--m3-color-secondary);
+}
+.colorSecondary.outlined > .stateLayer {
+    background-color: var(--m3-color-secondary);
+}
+
+.colorSecondary.text {
+  color: var(--m3-color-secondary);
+}
+.colorSecondary.text > .stateLayer {
+  background-color: var(--m3-color-secondary);
+}
+
+.colorSecondary.elevated {
+  background-color: var(--m3-color-surface-container-low);
+  color: var(--m3-color-secondary);
+}
+.colorSecondary.elevated > .stateLayer {
+  background-color: var(--m3-color-secondary);
+}
+
+/* --- Tertiary --- */
+.colorTertiary.filled {
+  background-color: var(--m3-color-tertiary);
+  color: var(--m3-color-on-tertiary);
+}
+.colorTertiary.filled > .stateLayer {
+  background-color: var(--m3-color-on-tertiary);
+}
+
+.colorTertiary.tonal {
+  background-color: var(--m3-color-tertiary-container);
+  color: var(--m3-color-on-tertiary-container);
+}
+.colorTertiary.tonal > .stateLayer {
+  background-color: var(--m3-color-on-tertiary-container);
+}
+
+.colorTertiary.outlined {
+  border-color: var(--m3-color-outline);
+  color: var(--m3-color-tertiary);
+}
+.colorTertiary.outlined:focus-visible,
+.colorTertiary.outlined:hover {
+    border-color: var(--m3-color-tertiary);
+}
+.colorTertiary.outlined > .stateLayer {
+    background-color: var(--m3-color-tertiary);
+}
+
+.colorTertiary.text {
+  color: var(--m3-color-tertiary);
+}
+.colorTertiary.text > .stateLayer {
+  background-color: var(--m3-color-tertiary);
+}
+
+.colorTertiary.elevated {
+  background-color: var(--m3-color-surface-container-low);
+  color: var(--m3-color-tertiary);
+}
+.colorTertiary.elevated > .stateLayer {
+  background-color: var(--m3-color-tertiary);
+}
+
+/* --- Error --- */
+.colorError.filled {
+  background-color: var(--m3-color-error);
+  color: var(--m3-color-on-error);
+}
+.colorError.filled > .stateLayer {
+  background-color: var(--m3-color-on-error);
+}
+
+.colorError.tonal {
+  background-color: var(--m3-color-error-container);
+  color: var(--m3-color-on-error-container);
+}
+.colorError.tonal > .stateLayer {
+  background-color: var(--m3-color-on-error-container);
+}
+
+.colorError.outlined {
+  border-color: var(--m3-color-outline);
+  color: var(--m3-color-error);
+}
+.colorError.outlined:focus-visible,
+.colorError.outlined:hover {
+    border-color: var(--m3-color-error);
+}
+.colorError.outlined > .stateLayer {
+    background-color: var(--m3-color-error);
+}
+
+.colorError.text {
+  color: var(--m3-color-error);
+}
+.colorError.text > .stateLayer {
+  background-color: var(--m3-color-error);
+}
+
+.colorError.elevated {
+  background-color: var(--m3-color-surface-container-low);
+  color: var(--m3-color-error);
+}
+.colorError.elevated > .stateLayer {
+  background-color: var(--m3-color-error);
+}
+
+/* === Disabled State === */
+.button:disabled {
+  cursor: not-allowed;
+  box-shadow: none; /* Remove elevation on disabled */
+  /* Text color */
+  color: color-mix(in srgb, var(--m3-color-on-surface) 38%, transparent);
+}
+
+/* Disabled Background/Border */
+.button:disabled,
+.filled:disabled,
+.tonal:disabled,
+.elevated:disabled {
+  background-color: color-mix(in srgb, var(--m3-color-on-surface) 12%, transparent);
+  border-color: transparent;
+}
+
+.outlined:disabled {
+  background-color: transparent;
+  border-color: color-mix(in srgb, var(--m3-color-on-surface) 12%, transparent);
+}
+
+.text:disabled {
+  background-color: transparent;
+  border-color: transparent;
+}
+
+/* Disabled state layer (no interaction) */
+.button:disabled > .stateLayer {
+  opacity: 0;
+} 
