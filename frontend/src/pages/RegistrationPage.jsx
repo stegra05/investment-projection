@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // Import Link for login redirect
 import { useAuth } from '../contexts/AuthContext';
 import styles from './RegistrationPage.module.css'; // Import CSS Module (can potentially reuse LoginPage styles)
+import toast from 'react-hot-toast'; // Import toast
 // Consider import loginStyles from './LoginPage.module.css' and reuse classes if identical
 
 // Basic email regex (can be shared in a utils file)
@@ -14,7 +15,7 @@ function RegistrationPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [apiError, setApiError] = useState(''); // For API errors
+  const [apiError, setApiError] = useState(''); // For API errors (used by toast)
   const [fieldErrors, setFieldErrors] = useState({}); // For field validation errors
   const { register, loading } = useAuth();
   const navigate = useNavigate();
@@ -68,9 +69,13 @@ function RegistrationPage() {
     try {
       await register({ username, email, password });
       navigate('/'); // Navigate to dashboard on success
+      toast.success('Registration successful!'); // Optional: Success toast
     } catch (err) {
-      // Handle API errors separately
-      setApiError(err.response?.data?.message || err.message || 'Registration failed');
+      // Handle API errors separately via toast
+      const errorMessage = err.response?.data?.message || err.message || 'Registration failed';
+      setApiError(errorMessage); // Keep state if needed, but display via toast
+      toast.error(errorMessage);
+      // setApiError(err.response?.data?.message || err.message || 'Registration failed'); // Original
     }
   };
 
@@ -78,8 +83,8 @@ function RegistrationPage() {
     // Using similar structure and class names as LoginPage for consistency
     <main className={styles.registrationContainer}> 
       <h1 className={styles.title}>Register</h1>
-      {/* Display API Error */} 
-      {apiError && <p className={styles.errorMessage}>{apiError}</p>}
+      {/* Display API Error via toast, remove banner */}
+      {/* {apiError && <p className={styles.errorMessage}>{apiError}</p>} */}
       <form onSubmit={handleSubmit} className={styles.registrationForm} noValidate>
         {/* Username Input */}
         <div className={styles.formGroup}>

@@ -182,11 +182,14 @@ export default function PortfolioDetailPage() {
     try {
       // Asset form no longer sends allocation, backend defaults to 0
       await saveAssetHook(assetData);
-      await refetchPortfolio(); // Refetch will update portfolio and trigger useEffect to update currentAllocations
+      await refetchPortfolio();
       closeModal();
       toast.success('Asset saved successfully!');
     } catch (err) {
-      setActionError(assetHookError || 'Failed to save asset.');
+      // Error is handled by hook, just display via toast if it exists
+      const message = assetHookError || 'Failed to save asset.';
+      toast.error(message);
+      // setActionError is removed, hooks manage their errors internally
     }
   };
 
@@ -195,7 +198,7 @@ export default function PortfolioDetailPage() {
     const assetToDelete = modalState.data;
     if (!assetToDelete) return;
 
-    setActionError(null);
+    setActionError(null); // Clear any previous general action error
     setAssetErrorHook(null);
     try {
       await deleteAssetHook(assetToDelete);
@@ -204,9 +207,11 @@ export default function PortfolioDetailPage() {
       closeModal();
       toast.success('Asset deleted successfully!');
     } catch (err) {
-      closeModal();
-      setActionError(assetHookError || 'Failed to delete asset.');
-      toast.error(assetHookError || 'Failed to delete asset.');
+      // Error is handled by hook, display via toast
+      const message = assetHookError || 'Failed to delete asset.';
+      toast.error(message);
+      // setActionError is removed
+      closeModal(); // Close modal even on error
     }
   };
 
@@ -232,8 +237,9 @@ export default function PortfolioDetailPage() {
         toast.success('Allocations saved successfully!');
     } catch (err) {
         console.error("Failed to save allocations:", err);
-        setActionError(err.response?.data?.message || 'Failed to save allocations.');
-        toast.error(err.response?.data?.message || 'Failed to save allocations.');
+        const message = err.response?.data?.message || 'Failed to save allocations.';
+        toast.error(message);
+        // setActionError is removed
     } finally {
         setIsSavingAllocations(false);
     }
@@ -249,7 +255,10 @@ export default function PortfolioDetailPage() {
       closeModal();
       toast.success('Planned change saved successfully!');
     } catch (err) {
-      setActionError(changeHookError || 'Failed to save change.');
+      // Error handled by hook, display via toast
+      const message = changeHookError || 'Failed to save change.';
+      toast.error(message);
+      // setActionError is removed
     }
   };
 
@@ -258,7 +267,7 @@ export default function PortfolioDetailPage() {
     const changeToDelete = modalState.data;
     if (!changeToDelete) return;
 
-    setActionError(null);
+    setActionError(null); // Clear any previous general action error
     setChangeErrorHook(null);
     try {
       await deleteChangeHook(changeToDelete);
@@ -266,24 +275,29 @@ export default function PortfolioDetailPage() {
       closeModal();
       toast.success('Planned change deleted successfully!');
     } catch (err) {
-      closeModal();
-      setActionError(changeHookError || 'Failed to delete change.');
-      toast.error(changeHookError || 'Failed to delete change.');
+      // Error handled by hook, display via toast
+      const message = changeHookError || 'Failed to delete change.';
+      toast.error(message);
+      // setActionError is removed
+      closeModal(); // Close modal even on error
     }
   };
 
   // Called from DeleteConfirmation for portfolio
   const handleDeletePortfolioConfirmed = async () => {
-    setActionError(null);
+    setActionError(null); // Clear any previous general action error
     try {
       await deletePortfolioHook();
       closeModal();
       toast.success(`Portfolio "${portfolio?.name || 'this portfolio'}" deleted successfully!`);
       navigate('/portfolios');
     } catch (err) {
-      closeModal();
-      setActionError('Failed to delete portfolio.');
-      toast.error('Failed to delete portfolio.');
+      // Use hook error if available, otherwise generic message
+      // Assuming deletePortfolioHook sets an error state accessible via `pageError` or similar
+      const message = pageError || 'Failed to delete portfolio.';
+      toast.error(message);
+      // setActionError is removed
+      closeModal(); // Close modal even on error
     }
   };
 
@@ -326,10 +340,10 @@ export default function PortfolioDetailPage() {
   }
 
   if (pageError && !portfolio) {
+    toast.error(`Error loading portfolio details: ${pageError.toString()}`);
     return (
       <div className={styles.errorContainer}>
         <p className={styles.errorText}>Error loading portfolio details.</p>
-        <p className={styles.errorDetails}>{pageError.toString()}</p>
         <Button onClick={() => navigate('/portfolios')} variant="secondary">
           Back to Portfolios
         </Button>
@@ -348,9 +362,6 @@ export default function PortfolioDetailPage() {
     );
   }
 
-  const currentActionError = actionError || assetHookError || changeHookError;
-  // Include isSavingAllocations in the general processing check
-  const isProcessing = isAssetProcessing || isChangeProcessing || isSavingAllocations;
   // Calculate total current allocation for display - Ensure values are numbers
   const totalCurrentAllocation = roundToTwoDecimals(Object.values(currentAllocations).reduce((sum, p) => sum + (Number(p) || 0), 0));
 
@@ -368,7 +379,7 @@ export default function PortfolioDetailPage() {
                 variant="secondary"
                 onClick={() => navigate(`/portfolios/${portfolioId}/edit`)}
                 icon={<PencilIcon />}
-                disabled={isProcessing}
+                disabled={isAssetProcessing || isChangeProcessing || isSavingAllocations}
             >
                 Edit Portfolio
             </Button>
@@ -376,7 +387,7 @@ export default function PortfolioDetailPage() {
                 variant="destructive"
                 onClick={openDeletePortfolioModal}
                 icon={<TrashIcon />}
-                disabled={isProcessing}
+                disabled={isAssetProcessing || isChangeProcessing || isSavingAllocations}
             >
                 Delete Portfolio
             </Button>
@@ -408,8 +419,6 @@ export default function PortfolioDetailPage() {
         totalValue={calculatedTotalValue}
       />
 
-      {currentActionError && <p className={`${styles.errorText} ${styles.actionError}`}>{currentActionError}</p>}
-
       {/* Assets Section - Now includes allocation management */}
       <section className={styles.section}>
         <header className={styles.sectionHeader}>
@@ -426,7 +435,7 @@ export default function PortfolioDetailPage() {
                         onClick={handleSaveAllocations}
                         icon={<SaveIcon />}
                         // FIX: Adjust loading prop passing
-                        disabled={isProcessing || Math.abs(totalCurrentAllocation - 100) > 0.01} // Disable save if not 100% (with tolerance) or processing
+                        disabled={isAssetProcessing || isChangeProcessing || Math.abs(totalCurrentAllocation - 100) > 0.01} // Disable save if not 100% (with tolerance) or processing
                         loading={isSavingAllocations ? true : undefined}
                         className={styles.saveButton} // Add class for specific styling if needed
                     >
@@ -438,7 +447,7 @@ export default function PortfolioDetailPage() {
                 variant="primary"
                 onClick={openAddAssetModal}
                 icon={<PlusIcon />}
-                disabled={isProcessing}
+                disabled={isAssetProcessing || isChangeProcessing || isSavingAllocations}
               >
                 Add Asset
               </Button>
@@ -450,7 +459,7 @@ export default function PortfolioDetailPage() {
           onAllocationChange={handleAllocationChange} // Pass handler
           onEdit={openEditAssetModal}
           onDelete={openDeleteAssetModal}
-          disabled={isProcessing} // Disable list interactions while processing
+          disabled={isAssetProcessing || isChangeProcessing || isSavingAllocations} // Disable list interactions while processing
           portfolioId={portfolioId} // Pass portfolioId if needed inside AssetList
         />
       </section>
@@ -463,7 +472,7 @@ export default function PortfolioDetailPage() {
             variant="primary"
             onClick={openAddChangeModal}
             icon={<PlusIcon />}
-            disabled={isProcessing}
+            disabled={isAssetProcessing || isChangeProcessing || isSavingAllocations}
           >
             Add Change
           </Button>
@@ -472,7 +481,7 @@ export default function PortfolioDetailPage() {
           changes={portfolio.planned_changes || []}
           onEdit={openEditChangeModal}
           onDelete={openDeleteChangeModal}
-          disabled={isProcessing}
+          disabled={isAssetProcessing || isChangeProcessing || isSavingAllocations}
         />
       </section>
 

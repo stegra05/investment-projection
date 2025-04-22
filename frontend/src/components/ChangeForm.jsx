@@ -186,7 +186,8 @@ export default function ChangeForm({ portfolioId, existingChange = null, onSaved
      // If any validation errors, update state and stop submission
      if (hasValidationErrors) {
          setFieldErrors(currentFieldErrors);
-         setSubmissionError('Please fix the errors in the form.'); // Generic submission error
+         // Remove generic submission error, inline errors are sufficient
+         // setSubmissionError('Please fix the errors in the form.');
          return;
      }
      // --- End Validation ---

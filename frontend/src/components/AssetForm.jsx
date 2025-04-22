@@ -151,7 +151,6 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaveAss
     // If any validation errors, update state and stop submission
     if (hasValidationErrors) {
         setFieldErrors(currentFieldErrors);
-        setSubmissionError('Please fix the errors in the form.'); // Generic submission error
         return;
     }
     // --- End Validation ---

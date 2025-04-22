@@ -1,3 +1,4 @@
+import logging
 import functools
 from flask import request, jsonify, abort
 from pydantic import ValidationError
@@ -36,6 +37,8 @@ def handle_api_errors(schema=None):
                     except ValidationError as e:
                         # Convert Pydantic errors to a more readable format if needed
                         error_details = e.errors()
+                        # Log the validation failure
+                        logging.warning(f"Validation Error on endpoint '{request.path}': {error_details}. Source IP: {request.remote_addr}")
                         # Return JSON directly instead of aborting
                         # abort(400, description=error_details)
                         return jsonify(validation_error=error_details), 400

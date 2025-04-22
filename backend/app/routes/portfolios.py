@@ -5,6 +5,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 import functools
 from app.utils.decorators import handle_api_errors # Keep it for create/update
 from decimal import Decimal # Add Decimal import
+import logging
 
 # Import Pydantic Schemas
 from app.schemas.portfolio_schemas import (
@@ -43,6 +44,8 @@ def verify_portfolio_ownership(f):
             abort(404, description=f"Portfolio with id {portfolio_id} not found.")
 
         if portfolio.user_id != current_user_id:
+            # Log access control denial
+            logging.warning(f"Access denied: UserID='{current_user_id}' attempted to access PortfolioID='{portfolio_id}' owned by UserID='{portfolio.user_id}'. Source IP: {request.remote_addr}")
             abort(403, description="User does not have permission to access this portfolio.")
 
         kwargs['portfolio'] = portfolio

@@ -6,6 +6,7 @@ from sqlalchemy import or_
 # Import the limiter instance from the app factory
 from app import limiter
 import re # Add re import for regex validation
+import logging
 
 # Define the blueprint: 'auth', prefix: /api/v1/auth
 # Following API spec (prefix /api/v1/)
@@ -44,16 +45,26 @@ def register():
     # --- Add Password Validation ---
     is_complex, message = is_password_complex(password)
     if not is_complex:
+        # Log password validation failure
+        logging.warning(f"Registration failed for username '{username}' due to weak password: {message}. Source IP: {request.remote_addr}")
         return jsonify({"message": message}), 400
     # --- End Password Validation ---
 
-    if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
+    existing_user = User.query.filter(
+        or_(User.username == username, User.email == email)
+    ).first()
+    if existing_user:
+        # Log registration conflict
+        logging.warning(f"Registration failed: Username '{username}' or email '{email}' already exists. Source IP: {request.remote_addr}")
         return jsonify({"message": "Username or email already exists"}), 409
 
     new_user = User(username=username, email=email)
     new_user.set_password(password)
     db.session.add(new_user)
     db.session.commit()
+
+    # Log successful registration
+    logging.info(f"User registered successfully: Username='{username}', Email='{email}', UserID='{new_user.id}'. Source IP: {request.remote_addr}")
 
     return jsonify({"message": "User registered successfully"}), 201
 
@@ -65,6 +76,8 @@ def login():
     identifier = data.get('email') or data.get('username')
     password = data.get('password')
     if not identifier or not password:
+        # Log missing credentials attempt
+        logging.warning(f"Login attempt failed: Missing identifier or password. Source IP: {request.remote_addr}")
         return jsonify({"message": "Missing username/email or password"}), 400
     # Search for user by email or username
     user = User.query.filter(
@@ -72,6 +85,8 @@ def login():
     ).first()
 
     if user and user.check_password(password):
+        # Log successful login
+        logging.info(f"Login successful: UserID='{user.id}', Identifier='{identifier}'. Source IP: {request.remote_addr}")
         access_token = create_access_token(identity=str(user.id))
         refresh_token = create_refresh_token(identity=str(user.id))
         # Prepare the JSON response without the refresh token
@@ -90,6 +105,8 @@ def login():
         set_refresh_cookies(response, refresh_token)
         return response, 200 # Return the response object with the cookie
     else:
+        # Log failed login
+        logging.warning(f"Login failed: Invalid credentials for identifier '{identifier}'. Source IP: {request.remote_addr}")
         return jsonify({"message": "Invalid email or password"}), 401
 
 @auth_bp.route('/logout', methods=['POST'])
@@ -111,10 +128,22 @@ def refresh():
 # Potential future endpoints:
 # @auth_bp.route('/request-password-reset', methods=['POST'])
 # def request_password_reset():
+#     # email = request.json.get('email')
+#     # logging.info(f"Password reset requested for email '{email}'. Source IP: {request.remote_addr}")
 #     # ... implementation for task 4.6 ...
 #     pass
 
 # @auth_bp.route('/reset-password/<token>', methods=['POST'])
 # def reset_password(token):
+#     # user = User.verify_reset_token(token)
+#     # logging.info(f"Password reset attempt with token '{token}' for UserID '{user.id if user else 'unknown'}'. Source IP: {request.remote_addr}")
+#     # if user:
+#     #     password = request.json.get('password')
+#     #     # Validate password complexity...
+#     #     user.set_password(password)
+#     #     db.session.commit()
+#     #     logging.info(f"Password reset successful for UserID '{user.id}'. Source IP: {request.remote_addr}")
+#     # else:
+#     #     logging.warning(f"Password reset failed: Invalid or expired token '{token}'. Source IP: {request.remote_addr}")
 #     # ... implementation for task 4.6 ...
 #     pass 

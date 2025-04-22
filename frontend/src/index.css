@@ -52,7 +52,7 @@ html:not([data-theme='dark']) {
   --color-text-on-primary: var(--color-text-on-primary-light);
   --color-text-error: #BF2600; /* Darker red for text */
   --color-text-success: #006644; /* Darker green */
-  --color-border: #DFE1E6;
+  --color-border: #8993A4; /* Adjusted from #DFE1E6 for WCAG AA on borders (3:1) */
   --color-ui-background: #FFFFFF;
   --color-app-background: #F4F5F7; /* App background solid */
   --color-success: #36B37E;
@@ -71,7 +71,7 @@ html[data-theme='dark'] {
   --color-text-on-primary: var(--color-text-on-primary-dark);
   --color-text-error: #FFA0A0; /* Lighter red */
   --color-text-success: #6EE7B7; /* Lighter green */
-  --color-border: #3E4C5F;
+  --color-border: #5A697E; /* Adjusted from #3E4C5F for WCAG AA on borders (3:1) */
   --color-ui-background: #171F2A; /* Cards/Inputs */
   --color-app-background-start: #0E131B; /* Gradient Start */
   --color-app-background-end: #1A2B42; /* Gradient End */

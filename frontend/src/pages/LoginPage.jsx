@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext'; // Import useAuth hook
 import { useNavigate, Link } from 'react-router-dom';
 import styles from './LoginPage.module.css'; // Import CSS Module
+import toast from 'react-hot-toast'; // Import toast
 
 // Basic email regex (adjust as needed for stricter validation)
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -9,7 +10,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function LoginPage() {
   const [username, setUsername] = useState(''); // Can be username or email
   const [password, setPassword] = useState('');
-  const [apiError, setApiError] = useState(''); // For errors from the login API call
+  const [apiError, setApiError] = useState(''); // For errors from the login API call (used by toast)
   const [fieldErrors, setFieldErrors] = useState({}); // For inline field validation errors
   const { login, loading } = useAuth(); // Use auth context
   const navigate = useNavigate();
@@ -48,18 +49,20 @@ function LoginPage() {
         : { username, password };
       await login(payload);
       navigate('/'); // Redirect to dashboard on success
+      toast.success('Login successful!'); // Optional: Add success toast
     } catch (err) {
-      // Error is re-thrown by context, catch it here to display message
-      // Display API error separately from field errors
-      setApiError(err.response?.data?.message || err.message || 'Login failed');
+      // Error is re-thrown by context, catch it here to display message via toast
+      const errorMessage = err.response?.data?.message || err.message || 'Login failed';
+      setApiError(errorMessage); // Keep state if needed elsewhere, but display via toast
+      toast.error(errorMessage);
     }
   };
 
   return (
     <main className={styles.loginContainer}>
       <h1 className={styles.title}>Login</h1>
-      {/* Display API Error at the top */}
-      {apiError && <p className={styles.errorMessage}>{apiError}</p>}
+      {/* Display API Error via toast, remove banner */}
+      {/* {apiError && <p className={styles.errorMessage}>{apiError}</p>} */}
       <form onSubmit={handleSubmit} className={styles.loginForm} noValidate> {/* Add noValidate to prevent browser default validation */}
         <div className={styles.formGroup}>
           {/* Add required indicator */}
