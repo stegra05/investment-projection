@@ -12,9 +12,10 @@ import styles from './ChangeList.module.css'; // Import CSS Module
  * @param {object} props.change - The planned change object to display.
  * @param {Function} props.onEdit - Callback function triggered when the edit button is clicked.
  * @param {Function} props.onDelete - Callback function triggered when the delete button is clicked.
+ * @param {boolean} [props.disabled=false] - Whether the interactive elements (edit/delete buttons) should be disabled.
  * @returns {JSX.Element} The ChangeListItem component.
  */
-function ChangeListItem({ change, onEdit, onDelete }) {
+function ChangeListItem({ change, onEdit, onDelete, disabled = false }) {
   // Format date nicely (consider a date formatting library like date-fns later)
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -45,10 +46,20 @@ function ChangeListItem({ change, onEdit, onDelete }) {
         {change.description && <p className={styles.changeDescription}>Description: {change.description}</p>}
       </div>
       <div className={styles.actions}>
-        <button onClick={() => onEdit(change)} className={styles.actionButton} aria-label={`Edit change on ${formatDate(change.change_date)}`}>
+        <button
+          onClick={() => onEdit(change)}
+          className={styles.actionButton}
+          aria-label={`Edit change on ${formatDate(change.change_date)}`}
+          disabled={disabled}
+        >
           <PencilIcon className={`${styles.icon} ${styles.iconEdit}`} />
         </button>
-        <button onClick={() => onDelete(change)} className={styles.actionButton} aria-label={`Delete change on ${formatDate(change.change_date)}`}>
+        <button
+          onClick={() => onDelete(change)}
+          className={styles.actionButton}
+          aria-label={`Delete change on ${formatDate(change.change_date)}`}
+          disabled={disabled}
+        >
           <TrashIcon className={`${styles.icon} ${styles.iconDelete}`} />
         </button>
       </div>
@@ -66,9 +77,10 @@ function ChangeListItem({ change, onEdit, onDelete }) {
  * @param {Array<object>} props.changes - An array of planned change objects to display.
  * @param {Function} props.onEdit - Callback function passed down to ChangeListItem for editing.
  * @param {Function} props.onDelete - Callback function passed down to ChangeListItem for deleting.
+ * @param {boolean} [props.disabled=false] - Whether the list items should be disabled.
  * @returns {JSX.Element} The ChangeList component.
  */
-export default function ChangeList({ changes, onEdit, onDelete }) {
+export default function ChangeList({ changes, onEdit, onDelete, disabled = false }) {
   if (!changes || changes.length === 0) {
     return <p className={styles.noItemsText}>No planned changes have been added yet.</p>;
   }
@@ -76,7 +88,13 @@ export default function ChangeList({ changes, onEdit, onDelete }) {
   return (
     <ul className={styles.list}>
       {changes.map((change) => (
-        <ChangeListItem key={change.change_id} change={change} onEdit={onEdit} onDelete={onDelete} />
+        <ChangeListItem
+          key={change.change_id}
+          change={change}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          disabled={disabled}
+        />
       ))}
     </ul>
   );

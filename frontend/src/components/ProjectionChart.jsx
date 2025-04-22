@@ -106,9 +106,10 @@ const CustomTooltip = ({ active, payload, label, data }) => {
  * @param {string|number} props.portfolioId - The ID of the portfolio for which to run the projection.
  * @param {number} [props.initialProjectionValue=0] - The initial total value passed from the parent page.
  * @param {Array<object>} [props.futureChanges=[]] - Array of planned future change objects (e.g., { date: 'YYYY-MM-DD', type: 'contribution', ... }).
+ * @param {boolean} [props.disabled=false] - Indicates whether the component is disabled.
  * @returns {JSX.Element} The ProjectionChart component.
  */
-export default function ProjectionChart({ portfolioId, initialProjectionValue = 0, futureChanges = [] }) {
+export default function ProjectionChart({ portfolioId, initialProjectionValue = 0, futureChanges = [], disabled }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -124,6 +125,9 @@ export default function ProjectionChart({ portfolioId, initialProjectionValue = 
   // Track if the user has manually changed the initial value input
   const [isInitialValueManuallySet, setIsInitialValueManuallySet] = useState(false);
 
+  // NEW: State for date validation error
+  const [dateError, setDateError] = useState('');
+
   // Effect to set initial value from prop, but only if user hasn't edited it
   useEffect(() => {
     // Check if prop is valid and user hasn't touched the input
@@ -137,6 +141,15 @@ export default function ProjectionChart({ portfolioId, initialProjectionValue = 
     }
   }, [initialProjectionValue, isInitialValueManuallySet]);
 
+  // NEW: Effect for date validation
+  useEffect(() => {
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+      setDateError('End date cannot be before start date.');
+    } else {
+      setDateError(''); // Clear error if dates are valid
+    }
+  }, [startDate, endDate]); // Re-run whenever dates change
+
   // Handle manual changes to the initial value input
   const handleInitialValueChange = (e) => {
     setInitialValue(e.target.value);
@@ -144,6 +157,11 @@ export default function ProjectionChart({ portfolioId, initialProjectionValue = 
   };
 
   const handleRunProjection = async () => {
+    // Don't run if there's a date error or if component is disabled externally
+    if (dateError || disabled) { // Check external disabled prop too
+        setError('Please fix the date range before running the projection.');
+        return;
+    }
     setError('');
     setLoading(true);
     try {
@@ -195,6 +213,10 @@ export default function ProjectionChart({ portfolioId, initialProjectionValue = 
   //   0%, 100% { opacity: 1; }
   //   50% { opacity: 0.5; }
   // }
+
+  // NEW: Determine if Run button should be disabled (consider external disabled prop)
+  // Note: 'loading' here refers to the internal projection loading state
+  const isRunDisabled = disabled || loading || !!dateError; 
 
   return (
     <div style={{ marginTop: 'var(--space-m)' }}>
@@ -317,7 +339,8 @@ export default function ProjectionChart({ portfolioId, initialProjectionValue = 
         </h3>
 
         {/* Input Row */}
-        <div style={{ display: 'flex', gap: 'var(--space-m)', flexWrap: 'wrap', marginBottom: 'var(--space-m)' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-m)', flexWrap: 'wrap', marginBottom: 'var(--space-s)' }}> {/* Reduced bottom margin */}
+          {/* Start Date Input */}
           <div style={{ flex: '1 1 150px' }}>
             <Input
               label="Start Date"
@@ -325,8 +348,11 @@ export default function ProjectionChart({ portfolioId, initialProjectionValue = 
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
+              aria-invalid={!!dateError}
+              disabled={disabled}
             />
           </div>
+          {/* End Date Input */}
           <div style={{ flex: '1 1 150px' }}>
             <Input
               label="End Date"
@@ -334,8 +360,11 @@ export default function ProjectionChart({ portfolioId, initialProjectionValue = 
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
+              aria-invalid={!!dateError}
+              disabled={disabled}
             />
           </div>
+          {/* Initial Value Input */}
           <div style={{ flex: '1 1 200px' }}>
             <Input
               label="Initial Total Value"
@@ -345,14 +374,22 @@ export default function ProjectionChart({ portfolioId, initialProjectionValue = 
               placeholder="e.g., 10000"
               value={initialValue}
               onChange={handleInitialValueChange}
+              disabled={disabled}
             />
           </div>
         </div>
 
-        {/* Action Button */}
+        {/* NEW: Display Date Error Message */} 
+        {dateError && (
+          <p style={{ color: 'var(--color-error)', fontSize: '0.875rem', marginTop: 0, marginBottom: 'var(--space-m)' }}>
+            {dateError}
+          </p>
+        )}
+
+        {/* Action Button (use isRunDisabled) */}
         <Button
           onClick={handleRunProjection}
-          disabled={loading}
+          disabled={isRunDisabled} // Use combined disabled state
           variant="filled"
         >
           {loading ? 'Running...' : 'Run Projection'}

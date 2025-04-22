@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 // import axios from 'axios'; // Use apiClient instead
 import changeService from '../services/changeService'; // <-- Add this
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, InformationCircleIcon } from '@heroicons/react/24/outline'; // <-- Add InformationCircleIcon
 import styles from './ChangeForm.module.css'; // Import CSS Module
 import { useFormState } from '../hooks/useFormState'; // <-- Add this
 import Button from './Button';
@@ -9,6 +9,7 @@ import Input from './Input';
 import Select from './Select';
 import { FormCommon } from './FormCommon';
 import Textarea from './Textarea';
+import Tooltip from './Tooltip'; // <-- Add Tooltip import
 
 // const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'; // Handled by apiClient
 
@@ -235,6 +236,9 @@ export default function ChangeForm({ portfolioId, existingChange = null, onSubmi
         {/* Change Type Input (Using Select) */}
         <div className={styles.formGroup}>
           <label htmlFor="changeType" className={styles.label}>Change Type*</label>
+          <Tooltip text="'Contribution' adds funds, 'Withdrawal' removes funds, 'Rebalance' adjusts asset allocations to target percentages (ignores amount).">
+            <InformationCircleIcon className={styles.infoIcon} />
+          </Tooltip>
           <Select
             id="changeType"
             name="changeType"
@@ -272,6 +276,9 @@ export default function ChangeForm({ portfolioId, existingChange = null, onSubmi
           </div>
           <div className={styles.formGroup}>
               <label htmlFor="amount" className={styles.label}>Amount{isAmountRequired ? '*' : ' (N/A for Rebalance)'}</label>
+              <Tooltip text="Required for Contribution/Withdrawal. Enter positive for contributions, negative for withdrawals. Disabled for Rebalance.">
+                <InformationCircleIcon className={styles.infoIcon} />
+              </Tooltip>
               <Input
                 id="amount"
                 name="amount"

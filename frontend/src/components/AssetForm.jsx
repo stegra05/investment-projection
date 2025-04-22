@@ -176,6 +176,9 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSubmit,
         {/* Asset Type Select */}
         <div className={styles.formGroup}>
           <label htmlFor="assetType" className={styles.label}>Asset Type*</label>
+          <Tooltip text="Select the type of asset. Choose 'Other' to enter a custom type not listed.">
+            <InformationCircleIcon className={styles.infoIcon} />
+          </Tooltip>
           <Select
             id="assetType"
             value={assetType}

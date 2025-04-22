@@ -73,6 +73,9 @@ export default function PortfolioDetailPage() {
     saveSuccess,
   } = useAllocationManagement(portfolioId, portfolio?.assets, refetchPortfolio);
 
+  // --- Consolidated Loading State --- 
+  const isProcessing = loading || isAssetProcessing || isChangeProcessing || isSavingAllocations;
+
   // UPDATED: Use manualTotalValue state as the source for calculatedTotalValue
   const calculatedTotalValue = useMemo(() => {
     const numericValue = parseFloat(manualTotalValue);
@@ -275,98 +278,82 @@ export default function PortfolioDetailPage() {
 
   // Prepare props for header
   const editPortfolioHandler = () => navigate(`/portfolios/${portfolioId}/edit`);
-  const isActionDisabled = isAssetProcessing || isChangeProcessing || isSavingAllocations;
 
   return (
-    <main className={styles.main}>
-      {/* Use the new header component */}
-      <PortfolioPageHeader 
+    <div className={styles.pageContainer}>
+      <PortfolioPageHeader
         portfolioName={portfolio.name}
         portfolioDescription={portfolio.description}
         onEdit={editPortfolioHandler}
-        onDelete={openDeletePortfolioModal} // Use the modal opening function
-        disabled={isActionDisabled}
-        styles={styles} // Pass the styles object
-      />
-
-      {/* Use the new Total Value Input Section component */}
-      <TotalValueInputSection 
-        value={manualTotalValue}
-        onChange={(e) => setManualTotalValue(e.target.value)}
-        // Pass id, label, placeholder, step, note if needed, or rely on defaults
+        onDelete={() => openDeletePortfolioModal()}
+        disabled={isProcessing}
         styles={styles}
       />
 
-      {/* --- Portfolio Summary (Passes the CURRENT allocations and calculatedTotalValue) --- */}
-      <PortfolioSummary
-        // Pass assets enriched with current allocations
-        assets={portfolio.assets?.map(asset => ({
-            ...asset,
-            // FIX: Convert allocation back to string for PortfolioSummary prop type, use asset.id
-            allocation_percentage: (currentAllocations[asset.id] ?? 0).toFixed(2)
-        })) || []}
-        totalValue={calculatedTotalValue}
-      />
-
-      {/* Wrap Assets, Changes, and Projection sections in a grid container */}
-      <div className={styles.sectionsGrid}>
-        {/* Assets Section - Now includes allocation management */}
-        <section className={styles.section}>
-          <AssetsSectionHeader
-            totalCurrentAllocation={totalCurrentAllocation}
-            allocationsChanged={allocationsChanged}
-            onSaveAllocations={handleSaveAllocations}
-            isSavingAllocations={isSavingAllocations}
-            saveSuccess={saveSuccess}
-            onAddAsset={openAddAssetModal}
-            disabled={isActionDisabled}
+      <div className={styles.contentGrid}>
+        {/* Left Column */}
+        <div className={styles.leftColumn}>
+          {/* Manual Total Value Input */}
+          <TotalValueInputSection
+            value={manualTotalValue}
+            onChange={(e) => setManualTotalValue(e.target.value)}
+            disabled={isProcessing}
             styles={styles}
           />
 
-          <AssetList
-            assets={portfolio.assets || []}
-            allocations={currentAllocations}
-            onAllocationChange={handleAllocationChange}
-            onEdit={openEditAssetModal}
-            onDelete={openDeleteAssetModal}
-            disabled={isActionDisabled}
-            portfolioId={portfolioId}
-          />
-        </section>
+          {/* Assets Section */}
+          <section className={styles.section}>
+            <AssetsSectionHeader
+              totalCurrentAllocation={totalCurrentAllocation}
+              allocationsChanged={allocationsChanged}
+              onSaveAllocations={handleSaveAllocations}
+              isSavingAllocations={isSavingAllocations}
+              saveSuccess={saveSuccess}
+              onAddAsset={openAddAssetModal}
+              disabled={isProcessing}
+              styles={styles}
+            />
+            <AssetList
+              assets={portfolio.assets || []}
+              allocations={currentAllocations}
+              onAllocationChange={handleAllocationChange}
+              onEdit={openEditAssetModal}
+              onDelete={openDeleteAssetModal}
+              disabled={isProcessing}
+            />
+          </section>
 
-        {/* Planned Changes Section */}
-        <section className={styles.section}>
-          <ChangesSectionHeader
-            onAddChange={openAddChangeModal}
-            disabled={isActionDisabled}
-            styles={styles}
-          />
+          {/* Changes Section */}
+          <section className={styles.section}>
+            <ChangesSectionHeader
+              onAddChange={openAddChangeModal}
+              disabled={isProcessing}
+              styles={styles}
+            />
+            <ChangeList
+              changes={portfolio.future_changes || []}
+              onEdit={openEditChangeModal}
+              onDelete={openDeleteChangeModal}
+              disabled={isProcessing}
+            />
+          </section>
+        </div>
 
-          <ChangeList
-            changes={portfolio.planned_changes || []}
-            onEdit={openEditChangeModal}
-            onDelete={openDeleteChangeModal}
-            disabled={isActionDisabled}
-          />
-        </section>
-
-        {/* Projection Section - Add projectionSection class */}
-        <section className={`${styles.section} ${styles.projectionSection}`}>
-          {/* Use the new Projection Section Header */}
-          <ProjectionSectionHeader styles={styles} />
-
-           {/* Pass current allocations to projection chart if it needs them directly */}
-           {/* Ensure ProjectionChart uses the fetched/refreshed portfolio data primarily */}
-          <ProjectionChart
-            portfolioId={portfolioId}
-            initialProjectionValue={calculatedTotalValue}
-            // Optional: Pass currentAllocations if the chart needs live updates
-            // allocations={currentAllocations}
-          />
-        </section>
-      </div> {/* End of sectionsGrid */}
+        {/* Right Column (Projection Chart) */}
+        <div className={styles.rightColumn}>
+          <section className={styles.section}>
+            <ProjectionSectionHeader styles={styles} />
+            <ProjectionChart
+              portfolioId={portfolioId}
+              initialProjectionValue={calculatedTotalValue}
+              futureChanges={portfolio.future_changes || []}
+              disabled={isProcessing}
+            />
+          </section>
+        </div>
+      </div>
 
       <Modal {...modalProps} />
-    </main>
+    </div>
   );
 }

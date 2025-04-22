@@ -11,6 +11,7 @@ export default function TotalValueInputSection({
     placeholder = "e.g., 10000.00",
     step = "0.01",
     note = "This value is used to calculate individual asset values based on their allocation percentages for the chart below.",
+    disabled,
     styles 
 }) {
     return (
@@ -23,6 +24,7 @@ export default function TotalValueInputSection({
                 value={value}
                 onChange={onChange}
                 step={step}
+                disabled={disabled}
             />
             {note && <p className={styles.inputNote}>{note}</p>}
         </section>

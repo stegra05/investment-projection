@@ -4,8 +4,9 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-s) var(--space-m);
-  border-bottom: 1px solid var(--color-border);
-  background-color: var(--color-ui-background);
+  border-bottom: 1px solid var(--color-outline-variant); /* Use M3 outline variant */
+  background-color: var(--color-surface-container-low); /* Use explicit M3 surface role */
+  color: var(--color-on-surface); /* Set default text color for content */
   transition: background-color var(--transition-duration) ease,
               border-color var(--transition-duration) ease;
   width: 100%; /* Ensure it takes full width in a list */
@@ -35,19 +36,22 @@
 }
 
 .listItem.interactive:hover {
-  background-color: var(--color-ui-background-hover, color-mix(in srgb, var(--color-ui-background) 95%, black));
+  /* Reverting hover for now, M3 prefers state layers */
+  /* background-color: var(--color-ui-background-hover, color-mix(in srgb, var(--color-ui-background) 95%, black)); */
 }
 
 .listItem.interactive:focus-visible {
-  outline: 2px solid var(--color-info);
-  outline-offset: -2px; /* Inset outline */
-  z-index: 1; /* Ensure outline is visible */
-  position: relative; /* Needed for z-index */
+  /* Reverting focus for now, M3 prefers state layers */
+  /* outline: 2px solid var(--color-info); */
+  /* outline-offset: -2px; */ 
+  /* z-index: 1; */
+  /* position: relative; */
 }
 
 /* Dark mode adjustments */
 html[data-theme='dark'] .listItem.interactive:hover {
-  background-color: var(--color-ui-background-hover);
+  /* Reverting hover for now */
+  /* background-color: var(--color-ui-background-hover); */
 }
 
 /* Reset button styles if rendered as button */
