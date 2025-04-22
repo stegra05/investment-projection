@@ -27,6 +27,11 @@
     line-height: 1.6;
     padding-left: var(--space-s); /* Align with card padding */
     padding-right: var(--space-s); 
+    /* Add max-width for readability */
+    max-width: 70ch;
+    /* Center if needed, but depends on parent layout */
+    /* margin-left: auto; */
+    /* margin-right: auto; */
 }
 
 .section {

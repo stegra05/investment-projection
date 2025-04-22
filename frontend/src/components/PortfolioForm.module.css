@@ -1,9 +1,10 @@
 /* Styles for PortfolioForm.module.css */
 
 .formContainer {
-    margin: var(--space-xl) auto;
+    margin: var(--space-xl) auto; /* Center horizontally */
     padding: var(--space-l);
-    max-width: 600px;
+    /* Removed max-width, constrain form fields internally if needed */
+    /* max-width: 600px; */
     /* Optional: Add background/border if needed on the page */
     /* background-color: var(--color-ui-background); */
     /* border: 1px solid var(--color-border); */
@@ -51,6 +52,12 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-m);
+    /* Constrain the form fields width and center */
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    /* Keep top/bottom margin if needed, handled by formContainer */
+    /* margin: var(--space-xl) auto; NO - conflicts with container */
 }
 
 .formGroup {

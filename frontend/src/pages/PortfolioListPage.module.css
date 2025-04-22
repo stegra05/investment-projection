@@ -1,8 +1,9 @@
 /* Styles for PortfolioListPage.module.css */
 
 .listContainer {
-  max-width: 900px; /* Or adjust as needed */
-  margin: var(--space-l) auto; /* Center the list */
+  /* Removed max-width */
+  /* max-width: 900px; */
+  margin: var(--space-l) auto; /* Keep original margin */
   padding: var(--space-l);
 }
 
@@ -97,6 +98,7 @@ html[data-theme='dark'] .portfolioItem:hover {
   color: var(--color-text-primary-light);
   text-decoration: none;
   transition: color 0.2s ease;
+  max-width: 80ch;
 }
 
 html[data-theme='dark'] .portfolioLink {
