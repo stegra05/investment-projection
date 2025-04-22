@@ -7,6 +7,8 @@ from sqlalchemy import or_
 from app import limiter
 import re # Add re import for regex validation
 import logging
+import hashlib # Add hashlib for SHA-1 hashing
+import requests # Add requests for API calls
 
 # Define the blueprint: 'auth', prefix: /api/v1/auth
 # Following API spec (prefix /api/v1/)
@@ -31,6 +33,39 @@ def is_password_complex(password):
     # TODO: Implement breached password check (e.g., using Have I Been Pwned API)
     return True, ""
 
+def is_password_pwned(password):
+    """Checks if the password appears in the Pwned Passwords database using k-anonymity."""
+    try:
+        # 1. Hash the password using SHA-1
+        sha1_hash = hashlib.sha1(password.encode('utf-8')).hexdigest().upper()
+        prefix = sha1_hash[:5]
+        suffix = sha1_hash[5:]
+
+        # 2. Query the Pwned Passwords API range endpoint
+        # Using a timeout is crucial for external API calls
+        response = requests.get(f'https://api.pwnedpasswords.com/range/{prefix}', timeout=5)
+        response.raise_for_status() # Raise an exception for bad status codes (4xx or 5xx)
+
+        # 3. Check if the hash suffix exists in the response
+        # Response format: HASH_SUFFIX:COUNT\r\n
+        for line in response.text.splitlines():
+            if line.startswith(suffix):
+                count = int(line.split(':')[1])
+                logging.warning(f"Password pwned check failed: Password found {count} times. Hash prefix: {prefix}. Source IP: {request.remote_addr}")
+                return True, f"This password has appeared in a data breach {count} times and is unsafe. Please choose a different password."
+
+        return False, "" # Password not found in the pwned list for this prefix
+
+    except requests.exceptions.RequestException as e:
+        # Log API request errors but allow registration to proceed (fail-open)
+        # Alternatively, could block registration if the check fails (fail-closed)
+        logging.error(f"Pwned Passwords API request failed: {e}. Allowing registration attempt to proceed. Source IP: {request.remote_addr}")
+        return False, "" # Treat API errors as non-pwned to avoid blocking users
+    except Exception as e:
+        # Log other unexpected errors during the check
+        logging.error(f"Unexpected error during pwned password check: {e}. Allowing registration attempt to proceed. Source IP: {request.remote_addr}")
+        return False, ""
+
 @auth_bp.route('/register', methods=['POST'])
 @limiter.limit("10/minute") # Apply rate limit
 def register():
@@ -48,7 +83,13 @@ def register():
         # Log password validation failure
         logging.warning(f"Registration failed for username '{username}' due to weak password: {message}. Source IP: {request.remote_addr}")
         return jsonify({"message": message}), 400
-    # --- End Password Validation ---
+
+    # --- Add Pwned Password Check ---
+    is_pwned, pwned_message = is_password_pwned(password)
+    if is_pwned:
+        # Logging is handled within is_password_pwned
+        return jsonify({"message": pwned_message}), 400
+    # --- End Pwned Password Check ---
 
     existing_user = User.query.filter(
         or_(User.username == username, User.email == email)

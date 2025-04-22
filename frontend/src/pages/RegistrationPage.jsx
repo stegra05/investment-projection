@@ -1,14 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // Import Link for login redirect
 import { useAuth } from '../contexts/AuthContext';
 import styles from './RegistrationPage.module.css'; // Import CSS Module (can potentially reuse LoginPage styles)
 import toast from 'react-hot-toast'; // Import toast
 // Consider import loginStyles from './LoginPage.module.css' and reuse classes if identical
+// Import zxcvbn and language packs
+import { zxcvbn, zxcvbnOptions } from '@zxcvbn-ts/core';
+import * as zxcvbnCommonPackage from '@zxcvbn-ts/language-common';
+import * as zxcvbnEnPackage from '@zxcvbn-ts/language-en'; // Import English pack
 
 // Basic email regex (can be shared in a utils file)
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Password regex (example: min 8 chars, at least one letter and one number)
 // const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+
+// Initialize zxcvbn options
+const options = {
+  dictionary: {
+    ...zxcvbnCommonPackage.dictionary,
+    ...zxcvbnEnPackage.dictionary, // Add English dictionary
+  },
+  graphs: zxcvbnCommonPackage.adjacencyGraphs,
+  translations: zxcvbnEnPackage.translations, // Add English translations
+};
+zxcvbnOptions.setOptions(options);
 
 function RegistrationPage() {
   const [username, setUsername] = useState('');
@@ -17,6 +32,8 @@ function RegistrationPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [apiError, setApiError] = useState(''); // For API errors (used by toast)
   const [fieldErrors, setFieldErrors] = useState({}); // For field validation errors
+  const [passwordStrength, setPasswordStrength] = useState(null); // State for password strength score (0-4)
+  const [passwordFeedback, setPasswordFeedback] = useState(null); // State for feedback object
   const { register, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -49,6 +66,42 @@ function RegistrationPage() {
     setFieldErrors(errors);
     return Object.keys(errors).length === 0; // True if valid
   };
+
+  const handlePasswordChange = (e) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+
+    if (newPassword) {
+      const result = zxcvbn(newPassword);
+      setPasswordStrength(result.score);
+      setPasswordFeedback(result.feedback);
+    } else {
+      setPasswordStrength(null); // Reset strength if password is empty
+      setPasswordFeedback(null);
+    }
+  };
+
+  const getStrengthLabel = (score) => {
+    switch (score) {
+      case 0: return 'Very Weak';
+      case 1: return 'Weak';
+      case 2: return 'Fair';
+      case 3: return 'Good';
+      case 4: return 'Strong';
+      default: return '';
+    }
+  };
+
+  const getStrengthColor = (score) => {
+     switch (score) {
+      case 0: return styles.strengthVeryWeak; // Red
+      case 1: return styles.strengthWeak; // Orange
+      case 2: return styles.strengthFair; // Yellow
+      case 3: return styles.strengthGood; // Light Green
+      case 4: return styles.strengthStrong; // Dark Green
+      default: return '';
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -140,14 +193,51 @@ function RegistrationPage() {
               id="password" 
               type="password" 
               value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
+              onChange={handlePasswordChange}
               // required // Handled by validation state
               placeholder="Create a password"
               aria-invalid={!!fieldErrors.password}
-              aria-describedby={fieldErrors.password ? "password-error" : undefined}
+              aria-describedby={`${fieldErrors.password ? 'password-error ' : ''}password-strength-indicator`}
             />
           </div>
           {fieldErrors.password && <p id="password-error" className={styles.errorMessageInline}>{fieldErrors.password}</p>}
+          {/* Password Strength Indicator */}
+          {password && ( // Only show when password is not empty
+            <div id="password-strength-indicator" className={styles.strengthIndicatorContainer}>
+              {/* Segmented Bar */}
+              <div className={styles.strengthSegmentsContainer}>
+                {[...Array(4)].map((_, index) => {
+                  const segmentScore = index + 1; // Score this segment represents (1 to 4)
+                  let segmentClass = styles.strengthSegment;
+                  // Determine if segment should be filled and which color to use
+                  if (passwordStrength !== null && passwordStrength >= segmentScore) {
+                    // Segment is filled, use the color corresponding to the *overall* strength
+                    segmentClass += ` ${getStrengthColor(passwordStrength)}`;
+                  } else {
+                    // Segment is empty
+                    segmentClass += ` ${styles.strengthSegmentEmpty}`;
+                  }
+                  return <div key={index} className={segmentClass}></div>;
+                })}
+              </div>
+              {/* Only show label if strength is calculated */}
+              {passwordStrength !== null && (
+                <span className={styles.strengthLabel}>
+                  Strength: {getStrengthLabel(passwordStrength)}
+                </span>
+              )}
+              {passwordFeedback?.warning && (
+                <p className={styles.strengthWarning}>{passwordFeedback.warning}</p>
+              )}
+              {passwordFeedback?.suggestions?.length > 0 && (
+                 <ul className={styles.strengthSuggestions}>
+                  {passwordFeedback.suggestions.map((suggestion, index) => (
+                    <li key={index}>{suggestion}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
         {/* Confirm Password Input */}
         <div className={styles.formGroup}>

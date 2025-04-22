@@ -157,4 +157,99 @@
 
 .link:hover {
     text-decoration: none;
-} 
+}
+
+/* === Updated Password Strength Indicator Styles === */
+.strengthIndicatorContainer {
+  margin-top: 8px;
+  font-size: 0.875rem;
+}
+
+/* New styles for segment layout */
+.strengthSegmentsContainer {
+  display: flex;
+  gap: 4px; /* Space between segments */
+  height: 6px; /* Thinner bar */
+  width: 100%;
+  margin-bottom: 6px; /* Space below bar */
+}
+
+.strengthSegment {
+  flex-grow: 1; /* Each segment takes equal width */
+  border-radius: 3px;
+  transition: background-color 0.3s ease-in-out;
+  height: 100%; /* Explicitly set height to fill container */
+}
+
+.strengthSegmentEmpty {
+  background-color: var(--color-border, #e0e0e0); /* Use border color or fallback gray */
+}
+
+/* Adjusted label style */
+.strengthLabel {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary); /* Use neutral secondary text color */
+  /* Removed transition: color */
+}
+
+/* --- Adjusted Strength Colors (Background Only) --- */
+.strengthVeryWeak {
+  background-color: #ef4444; /* Red */
+  /* color property removed */
+}
+.strengthWeak {
+  background-color: #f97316; /* Orange */
+   /* color property removed */
+}
+.strengthFair {
+  background-color: #eab308; /* Yellow */
+   /* color property removed */
+}
+.strengthGood {
+  background-color: #84cc16; /* Light Green */
+   /* color property removed */
+}
+.strengthStrong {
+  background-color: #22c55e; /* Dark Green */
+   /* color property removed */
+}
+
+.strengthWarning {
+  color: #dc2626; /* Darker Red for warnings */
+  margin-top: 4px;
+  font-size: 0.8rem;
+}
+
+.strengthSuggestions {
+  margin-top: 4px;
+  padding-left: 20px;
+  font-size: 0.8rem;
+  color: #6b7280; /* Gray text for suggestions */
+  list-style: disc;
+}
+
+.strengthSuggestions li {
+  margin-bottom: 2px;
+}
+
+/* --- REMOVED OLD STYLES --- */
+/* 
+.strengthBarContainer {
+  height: 8px;
+  width: 100%;
+  background-color: #e0e0e0; 
+  border-radius: 4px;
+  margin-bottom: 4px;
+  overflow: hidden; 
+}
+
+.strengthBar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out; 
+  width: 0%; 
+}
+*/ 
