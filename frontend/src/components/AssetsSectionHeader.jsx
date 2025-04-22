@@ -9,14 +9,25 @@ export default function AssetsSectionHeader({
     allocationsChanged,
     onSaveAllocations,
     isSavingAllocations,
+    saveSuccess,
     onAddAsset,
     disabled, // General disabled state for buttons (e.g., while other actions are processing)
     styles
 }) {
-    // Disable save specifically if total is not 100% (within tolerance)
-    const isSaveDisabled = disabled || Math.abs(totalCurrentAllocation - 100) > 0.01;
+    // Determine if the total allocation is exactly 100% (within tolerance)
+    const isTotal100 = Math.abs(totalCurrentAllocation - 100) <= 0.01;
+
+    // Disable save specifically if total is not 100% or if general disable is true
+    const isSaveDisabled = disabled || !isTotal100 || isSavingAllocations;
     // Disable add asset if any action is processing
     const isAddDisabled = disabled;
+
+    // Determine class for the total allocation display
+    const totalAllocationClasses = [
+        styles.totalAllocationLabel,
+        !isTotal100 ? styles.totalAllocationWarning : '', // Apply warning if not 100%
+        saveSuccess ? styles.totalAllocationSuccess : '' // Apply success if save succeeded and total was 100%
+    ].filter(Boolean).join(' '); // Filter out empty strings and join
 
     return (
         <header className={styles.sectionHeader}>
@@ -24,13 +35,15 @@ export default function AssetsSectionHeader({
             <div className={styles.assetHeaderActions}> {/* Container for buttons */}
                 {/* Display Total Allocation and Save Button */}
                 <div className={styles.allocationSummary}>
-                    <span className={`${styles.totalAllocationLabel} ${Math.abs(totalCurrentAllocation - 100) > 0.01 ? styles.totalAllocationWarning : ''}`}> {/* Use tolerance */}                        Total Allocation: {totalCurrentAllocation.toFixed(2)}%                    </span>
+                    <span className={totalAllocationClasses}>
+                        Total Allocation: {totalCurrentAllocation.toFixed(2)}%
+                    </span>
                     {allocationsChanged && (
                         <Button
                             variant="primary"
                             onClick={onSaveAllocations}
                             icon={<SaveIcon />}
-                            disabled={isSaveDisabled} 
+                            disabled={isSaveDisabled}
                             loading={isSavingAllocations ? true : undefined}
                             className={styles.saveButton} // Add class for specific styling if needed
                         >

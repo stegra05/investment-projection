@@ -182,29 +182,58 @@ export default function ProjectionChart({ portfolioId, initialProjectionValue = 
   const accentColor = 'var(--color-primary)';
   const textColorPrimary = 'var(--color-text-primary)';
 
+  // Define skeleton styles inline for simplicity
+  const skeletonBaseStyle = {
+    backgroundColor: 'var(--color-app-background)', // Use app background for skeleton
+    borderRadius: '4px',
+    // Apply animation directly via style. Assumes 'pulse' keyframes are defined globally.
+    animation: 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+  };
+
+  // Keyframes definition needs to be added globally (e.g., in index.css)
+  // @keyframes pulse {
+  //   0%, 100% { opacity: 1; }
+  //   50% { opacity: 0.5; }
+  // }
+
   return (
     <div style={{ marginTop: 'var(--space-m)' }}>
-      {/* Chart Area or Placeholder */}
+      {/* Chart Area or Placeholder/Skeleton */}
       <div style={{
         width: '100%',
         height: 350,
         display: 'flex',
-        flexDirection: 'column', // Stack content vertically for error state
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: loading || error ? 'var(--color-app-background)' : 'transparent', // Use app background for loading/error
-        border: loading || error ? `1px dashed ${borderColor}` : 'none', // Show border only for loading/error/initial
+        // Use app background only for loading and error states now
+        backgroundColor: loading || error ? 'var(--color-app-background)' : 'transparent',
+        // Show border only for loading, error, or initial empty states
+        border: loading || error || data.length === 0 ? `1px dashed ${borderColor}` : 'none',
         borderRadius: '6px',
         marginBottom: 'var(--space-l)',
         color: textColorSecondary,
-        textAlign: 'center', // Center text
-        padding: 'var(--space-m)' // Add padding for content inside
+        textAlign: 'center',
+        padding: 'var(--space-m)',
+        overflow: 'hidden' // Ensure skeleton stays contained
       }}>
         {loading ? (
-          <p>Loading chart...</p>
+          // Simpler Skeleton Loader
+          <div style={{ width: '90%', height: '80%' }}>
+            {/* Simulate main chart area */}
+            <div style={{ ...skeletonBaseStyle, height: '75%', marginBottom: 'var(--space-m)' }}></div>
+            {/* Simulate X-axis labels */}
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ ...skeletonBaseStyle, height: '15px', width: '15%' }}></div>
+              <div style={{ ...skeletonBaseStyle, height: '15px', width: '15%' }}></div>
+              <div style={{ ...skeletonBaseStyle, height: '15px', width: '15%' }}></div>
+              <div style={{ ...skeletonBaseStyle, height: '15px', width: '15%' }}></div>
+            </div>
+          </div>
         ) : error ? (
           <>
-            <p style={{ color: 'var(--color-error-dark)', marginBottom: 'var(--space-s)' }}>
+            {/* Use --color-error consistently */}
+            <p style={{ color: 'var(--color-error)', marginBottom: 'var(--space-s)' }}>
               Error: {error}
             </p>
             <Button onClick={handleRunProjection} variant="secondary" size="small">
@@ -265,7 +294,7 @@ export default function ProjectionChart({ portfolioId, initialProjectionValue = 
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          // Initial placeholder state
+          // Revert to simple text for initial placeholder state
           <p>Configure and run projection to view results.</p>
         )}
       </div>

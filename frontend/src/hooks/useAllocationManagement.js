@@ -12,6 +12,8 @@ export function useAllocationManagement(portfolioId, initialAssets, refetchPortf
   const [allocationsChanged, setAllocationsChanged] = useState(false);
   // Loading state for save button
   const [isSavingAllocations, setIsSavingAllocations] = useState(false);
+  // NEW STATE: Track successful save when allocation is 100%
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Effect to initialize/reset currentAllocations when initialAssets data loads or changes
   useEffect(() => {
@@ -45,9 +47,11 @@ export function useAllocationManagement(portfolioId, initialAssets, refetchPortf
 
       setCurrentAllocations(numericAllocations);
       setAllocationsChanged(false); // Reset changed state on load/reset
+      setSaveSuccess(false); // Reset success state on load/reset
     } else {
       setCurrentAllocations({}); // Reset if no assets
       setAllocationsChanged(false);
+      setSaveSuccess(false); // Reset success state if no assets
     }
   }, [initialAssets]); // Depend on the initial assets data
 
@@ -71,7 +75,8 @@ export function useAllocationManagement(portfolioId, initialAssets, refetchPortf
     });
   }, []); // No external dependencies needed here
 
-  // --- Calculate Total Current Allocation ---
+  // --- Calculate Total Current Allocation (Memoized) ---
+  // This is calculated *before* the save handler uses it.
   const totalCurrentAllocation = useMemo(() => {
     return roundToTwoDecimals(Object.values(currentAllocations).reduce((sum, p) => sum + (Number(p) || 0), 0));
   }, [currentAllocations]);
@@ -79,6 +84,7 @@ export function useAllocationManagement(portfolioId, initialAssets, refetchPortf
   // --- Handler for Saving Allocations ---
   const handleSaveAllocations = useCallback(async () => {
     setIsSavingAllocations(true);
+    setSaveSuccess(false); // Reset success state before attempting save
     try {
       const allocationPayload = Object.entries(currentAllocations).map(([id, allocation_percentage]) => ({
         asset_id: parseInt(id, 10),
@@ -88,12 +94,24 @@ export function useAllocationManagement(portfolioId, initialAssets, refetchPortf
 
       await portfolioService.updateAllocations(portfolioId, payload);
 
+      // Use the total calculated *before* the save for the check
+      const savedTotalIs100 = Math.abs(totalCurrentAllocation - 100) <= 0.01;
+
       setAllocationsChanged(false);
+      toast.success('Allocations saved successfully!');
+
+      // Trigger success feedback ONLY if the saved total was 100%
+      if (savedTotalIs100) {
+          setSaveSuccess(true);
+          // Reset the success state after a short delay
+          setTimeout(() => setSaveSuccess(false), 2000); // 2 seconds delay
+      }
+
       // Use the passed refetch function
       if (refetchPortfolio) {
         await refetchPortfolio();
       }
-      toast.success('Allocations saved successfully!');
+
     } catch (err) {
       console.error("Failed to save allocations:", err);
       const message = err.response?.data?.message || 'Failed to save allocations.';
@@ -101,7 +119,7 @@ export function useAllocationManagement(portfolioId, initialAssets, refetchPortf
     } finally {
       setIsSavingAllocations(false);
     }
-  }, [portfolioId, currentAllocations, refetchPortfolio]); // Dependencies for the save function
+  }, [portfolioId, currentAllocations, refetchPortfolio, totalCurrentAllocation]); // Add totalCurrentAllocation dependency
 
   return {
     currentAllocations,
@@ -110,5 +128,6 @@ export function useAllocationManagement(portfolioId, initialAssets, refetchPortf
     isSavingAllocations,
     handleAllocationChange,
     handleSaveAllocations,
+    saveSuccess, // Return the new state
   };
 } 

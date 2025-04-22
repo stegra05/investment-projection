@@ -70,6 +70,7 @@ export default function PortfolioDetailPage() {
     isSavingAllocations,
     handleAllocationChange,
     handleSaveAllocations,
+    saveSuccess,
   } = useAllocationManagement(portfolioId, portfolio?.assets, refetchPortfolio);
 
   // UPDATED: Use manualTotalValue state as the source for calculatedTotalValue
@@ -307,59 +308,63 @@ export default function PortfolioDetailPage() {
         totalValue={calculatedTotalValue}
       />
 
-      {/* Assets Section - Now includes allocation management */}
-      <section className={styles.section}>
-        <AssetsSectionHeader
-          totalCurrentAllocation={totalCurrentAllocation}
-          allocationsChanged={allocationsChanged}
-          onSaveAllocations={handleSaveAllocations}
-          isSavingAllocations={isSavingAllocations}
-          onAddAsset={openAddAssetModal}
-          disabled={isActionDisabled}
-          styles={styles}
-        />
+      {/* Wrap Assets, Changes, and Projection sections in a grid container */}
+      <div className={styles.sectionsGrid}>
+        {/* Assets Section - Now includes allocation management */}
+        <section className={styles.section}>
+          <AssetsSectionHeader
+            totalCurrentAllocation={totalCurrentAllocation}
+            allocationsChanged={allocationsChanged}
+            onSaveAllocations={handleSaveAllocations}
+            isSavingAllocations={isSavingAllocations}
+            saveSuccess={saveSuccess}
+            onAddAsset={openAddAssetModal}
+            disabled={isActionDisabled}
+            styles={styles}
+          />
 
-        <AssetList
-          assets={portfolio.assets || []}
-          allocations={currentAllocations}
-          onAllocationChange={handleAllocationChange}
-          onEdit={openEditAssetModal}
-          onDelete={openDeleteAssetModal}
-          disabled={isActionDisabled}
-          portfolioId={portfolioId}
-        />
-      </section>
+          <AssetList
+            assets={portfolio.assets || []}
+            allocations={currentAllocations}
+            onAllocationChange={handleAllocationChange}
+            onEdit={openEditAssetModal}
+            onDelete={openDeleteAssetModal}
+            disabled={isActionDisabled}
+            portfolioId={portfolioId}
+          />
+        </section>
 
-      {/* Planned Changes Section */}
-      <section className={styles.section}>
-        <ChangesSectionHeader
-          onAddChange={openAddChangeModal}
-          disabled={isActionDisabled}
-          styles={styles}
-        />
+        {/* Planned Changes Section */}
+        <section className={styles.section}>
+          <ChangesSectionHeader
+            onAddChange={openAddChangeModal}
+            disabled={isActionDisabled}
+            styles={styles}
+          />
 
-        <ChangeList
-          changes={portfolio.planned_changes || []}
-          onEdit={openEditChangeModal}
-          onDelete={openDeleteChangeModal}
-          disabled={isActionDisabled}
-        />
-      </section>
+          <ChangeList
+            changes={portfolio.planned_changes || []}
+            onEdit={openEditChangeModal}
+            onDelete={openDeleteChangeModal}
+            disabled={isActionDisabled}
+          />
+        </section>
 
-      {/* Projection Section */}
-      <section className={styles.section}>
-        {/* Use the new Projection Section Header */}
-        <ProjectionSectionHeader styles={styles} />
+        {/* Projection Section - Add projectionSection class */}
+        <section className={`${styles.section} ${styles.projectionSection}`}>
+          {/* Use the new Projection Section Header */}
+          <ProjectionSectionHeader styles={styles} />
 
-         {/* Pass current allocations to projection chart if it needs them directly */}
-         {/* Ensure ProjectionChart uses the fetched/refreshed portfolio data primarily */}
-        <ProjectionChart
-          portfolioId={portfolioId}
-          initialProjectionValue={calculatedTotalValue}
-          // Optional: Pass currentAllocations if the chart needs live updates
-          // allocations={currentAllocations}
-        />
-      </section>
+           {/* Pass current allocations to projection chart if it needs them directly */}
+           {/* Ensure ProjectionChart uses the fetched/refreshed portfolio data primarily */}
+          <ProjectionChart
+            portfolioId={portfolioId}
+            initialProjectionValue={calculatedTotalValue}
+            // Optional: Pass currentAllocations if the chart needs live updates
+            // allocations={currentAllocations}
+          />
+        </section>
+      </div> {/* End of sectionsGrid */}
 
       <Modal {...modalProps} />
     </main>

@@ -426,5 +426,15 @@ h3 { font-size: var(--font-size-h3); font-weight: var(--font-weight-medium); lin
   font-variant-numeric: tabular-nums;
 }
 
+/* === Skeleton Loader Animation === */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
 /* --- REMOVE Old Media Query --- */
 /* @media (prefers-color-scheme: light) { ... } */ 

@@ -1,9 +1,9 @@
 /* Styles for PortfolioDetailPage.module.css */
 
 .main {
-    margin: var(--space-xl) auto;
-    padding: var(--space-l); /* Keep some padding around the main container */
-    max-width: 900px; /* Slightly wider for card layout */
+    margin: var(--space-l) auto; /* Adjust top margin if needed */
+    padding: var(--space-m); /* Default padding for mobile */
+    max-width: 100%; /* Allow it to fill mobile width, override later */
     color: var(--color-text-primary);
     /* Remove background/border from main if sections have their own */
 }
@@ -38,7 +38,9 @@
     margin-bottom: var(--space-xl);             /* Space between cards */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow (adjust as needed) */
     /* Add transition for potential hover effects later */
-    transition: box-shadow 0.2s ease-in-out; 
+    transition: box-shadow 0.2s ease-in-out;
+    /* Remove fixed margin-bottom if inside grid, handle spacing via grid gap */
+    /* margin-bottom: var(--space-xl); */
 }
 
 /* Example dark mode adjustment for shadow if needed */
@@ -119,8 +121,19 @@
 }
 
 /* Common error message style */
+.errorContainer { /* Assuming errorContainer wraps errorText and button */
+    max-width: 600px; /* Give them a reasonable max-width */
+    margin: var(--space-xl) auto; /* Center horizontally */
+    padding: var(--space-xl);
+    text-align: center;
+    /* Add background/border if desired */
+    /* background-color: rgba(222, 53, 11, 0.05); */
+    /* border: 1px solid var(--color-error); */
+    /* border-radius: 4px; */
+}
+
 .errorText {
-    padding: var(--space-l);
+    /* padding: var(--space-l); */
     color: var(--color-error); /* Use theme-aware error color */
     /* Use RGBA for background transparency - Define --color-error-rgb if possible */
     /* background: rgba(var(--color-error-rgb), 0.1); */
@@ -128,8 +141,138 @@
     border: 1px solid var(--color-error);
     border-radius: 4px;
     text-align: center;
-    margin: var(--space-l) 0; /* Add vertical margin */
+    /* margin: var(--space-l) 0; */ /* Let container handle spacing */
+    padding: var(--space-l);
+    margin-bottom: var(--space-l); /* Space before button */
+}
+
+/* Align button in error container */
+.errorContainer > button { /* Adjust selector if needed */
+   /* Button styles should handle alignment */
+}
+
+/* Styling for the actions container in the Assets section header */
+.assetHeaderActions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-m); /* Space between summary/save and add button */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+/* Styling for the allocation summary part (label + save button) */
+.allocationSummary {
+    display: flex;
+    align-items: center;
+    gap: var(--space-s); /* Space between label and save button */
+    flex-grow: 1; /* Allow it to take available space */
+    min-width: 250px; /* Prevent excessive shrinking */
+}
+
+/* Base style for the total allocation text display */
+.totalAllocationLabel {
+    font-size: 0.875rem; /* Slightly smaller text */
+    color: var(--color-text-secondary); /* Default color */
+    padding: var(--space-xs) var(--space-s); /* Add some padding */
+    border-radius: 4px; /* Rounded corners */
+    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transitions */
+    white-space: nowrap; /* Prevent wrapping */
+    border: 1px solid transparent; /* Reserve space for border */
+}
+
+/* Style applied when total allocation is NOT 100% */
+.totalAllocationWarning {
+    color: var(--color-error); /* Use theme error color for text */
+    font-weight: 600; /* Make it bolder */
+    background-color: rgba(var(--color-error-rgb, 222, 53, 11), 0.1); /* Use RGB variable if available */
+    border: 1px solid var(--color-error);
+}
+
+/* Style applied temporarily after successful save when total IS 100% */
+.totalAllocationSuccess {
+    color: var(--color-success); /* Use theme success color for text */
+    background-color: rgba(var(--color-success-rgb, 0, 128, 0), 0.1); /* Use RGB variable if available */
+    font-weight: 600;
+    border: 1px solid var(--color-success);
+    /* Apply fade-out animation - linked to the setTimeout duration in the hook */
+    animation: fadeOutHighlight 2s ease forwards;
+}
+
+/* Animation to fade out the success highlight */
+@keyframes fadeOutHighlight {
+  0% {
+    background-color: rgba(var(--color-success-rgb, 0, 128, 0), 0.15);
+    border-color: var(--color-success);
+    color: var(--color-success);
+  }
+  75% { /* Hold the highlight for a bit */
+    background-color: rgba(var(--color-success-rgb, 0, 128, 0), 0.15);
+    border-color: var(--color-success);
+    color: var(--color-success);
+  }
+  100% {
+    background-color: transparent; /* Fade back to default background */
+    color: var(--color-text-secondary); /* Fade back to default text color */
+    border-color: transparent; /* Fade border */
+  }
+}
+
+/* Specific styles for the Save Allocations button */
+.saveButton {
+    /* Add specific styles if needed, e.g., margin-left: auto; */
+}
+
+/* --- Responsive Layout --- */
+
+/* Tablet */
+@media (min-width: 600px) {
+    .main {
+        padding: var(--space-l); /* Increase padding */
+        max-width: 960px; /* Max width for tablet */
+    }
+
+    .sectionsGrid {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Two equal columns */
+        gap: var(--space-l); /* Gap between grid items */
+    }
+
+    /* Reset margin-bottom for sections directly inside the grid */
+    .sectionsGrid > .section {
+         margin-bottom: 0; /* Grid gap handles vertical spacing between rows */
+    }
+
+    /* Make Projection section span both columns */
+    .sectionsGrid > .projectionSection {
+        grid-column: 1 / -1; /* Span full width */
+         /* Add margin-bottom back since it's the last item in its row */
+         margin-bottom: var(--space-l); 
+    }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+    .main {
+        max-width: 1200px; /* Wider max width for desktop */
+        margin-top: var(--space-xl); /* More top margin */
+        margin-bottom: var(--space-xl); /* More bottom margin */
+    }
+     .sectionsGrid {
+        gap: var(--space-xl); /* Increase gap for desktop */
+    }
+
+     /* Adjust projection margin if needed for larger gap */
+     .sectionsGrid > .projectionSection {
+         margin-bottom: var(--space-xl);
+     }
 }
 
 /* Add dark mode adjustments for error background if needed */
-/* html[data-theme='dark'] .errorText { ... } */ 
+/* html[data-theme='dark'] .errorText { ... } */
+
+/* Add dark mode adjustments if needed for warning/success backgrounds */
+/* html[data-theme='dark'] .totalAllocationWarning { background-color: rgba(var(--color-error-rgb), 0.2); } */
+/* html[data-theme='dark'] .totalAllocationSuccess { background-color: rgba(var(--color-success-rgb), 0.2); } */
+/* html[data-theme='dark'] .totalAllocationSuccess { 
+    animation: fadeOutHighlightDark 2s ease forwards;
+} */
+/* @keyframes fadeOutHighlightDark { ... } */ 
