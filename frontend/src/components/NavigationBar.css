@@ -1,8 +1,7 @@
 /* NavigationBar Component Styles */
 
 .navbar {
-  background-color: var(--color-ui-background);
-  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-surface-container);
   padding: 0 var(--space-l); /* Horizontal padding */
   height: 64px; /* Fixed height */
   display: flex;
@@ -10,7 +9,8 @@
   position: sticky; /* Keep navbar visible */
   top: 0;
   z-index: 100; /* Ensure it's above content */
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.15); /* Subtle shadow, adjust if needed */
+  transition: background-color 0.2s ease, box-shadow 0.2s ease; /* Update transition */
 }
 
 .navbar-container {
@@ -42,27 +42,66 @@
   align-items: center;
   gap: var(--space-xs);
   padding: var(--space-xs) var(--space-s);
-  border-radius: 6px;
-  color: var(--color-text-secondary);
+  color: var(--color-on-surface-variant);
   text-decoration: none;
   font-weight: 500;
   font-size: 1rem;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  z-index: 0;
+  transition: color 0.2s ease;
 }
 
-.nav-link:hover {
-  color: var(--color-text-primary);
-  background-color: rgba(var(--color-primary-rgb), 0.05);
+/* State Layer Pseudo-Element */
+.nav-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-primary);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: -1;
+  border-radius: var(--m3-shape-corner-full);
 }
 
+.nav-link:hover::before {
+  opacity: 0.08;
+}
+
+.nav-link:focus-visible::before {
+  opacity: 0.12;
+}
+
+/* Active State */
 .nav-link.active {
-  color: var(--color-primary);
-  background-color: rgba(var(--color-primary-rgb), 0.1);
+  font-weight: 600;
+}
+
+/* New style for the actual indicator element */
+.active-indicator-pill {
+  position: absolute;
+  inset: 4px; /* Replicates padding inside the link */
+  background-color: var(--color-secondary-container);
+  border-radius: var(--m3-shape-corner-full); /* Pill shape */
+  z-index: -1; /* Behind text/icon */
+}
+
+/* Active state text and icon color (Should still work) */
+.nav-link.active .nav-icon,
+.nav-link.active span {
+  color: var(--color-on-secondary-container);
+  position: relative; /* Ensure text/icon stay above the new pill */
+  z-index: 1;
 }
 
 .nav-icon {
   width: 1.25rem; /* 20px */
   height: 1.25rem;
+  color: currentColor; /* Ensure icon inherits link color */
+  /* No longer need z-index here, handle on active state */
 }
 
 /* Actions Section (Theme Toggle, User Menu/Auth Links) */
@@ -79,21 +118,47 @@
   justify-content: center;
   background: none;
   border: none;
-  color: var(--color-text-secondary);
-  padding: var(--space-xs);
-  border-radius: 50%;
+  color: var(--color-on-surface-variant);
+  padding: 0; /* Remove padding, size controlled by width/height */
+  width: 40px; /* M3 Icon Button size */
+  height: 40px; /* M3 Icon Button size */
+  border-radius: var(--m3-shape-corner-full); /* Circular */
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  position: relative; /* For state layer */
+  overflow: hidden; /* Contain state layer */
+  transition: color 0.2s ease; /* Keep color transition */
 }
 
-.theme-toggle-button:hover {
-  color: var(--color-text-primary);
-  background-color: rgba(var(--color-primary-rgb), 0.05);
+/* Theme Toggle State Layer */
+.theme-toggle-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-on-surface-variant);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 0; /* Behind icon */
+}
+
+.theme-toggle-button:hover::before {
+  opacity: 0.08; /* M3 Hover */
+}
+
+.theme-toggle-button:focus-visible {
+  outline: 2px solid var(--color-primary); /* Basic focus outline */
+  outline-offset: 2px;
+}
+
+.theme-toggle-button:focus-visible::before {
+  opacity: 0.12; /* M3 Focus */
 }
 
 .theme-icon {
-  width: 1.5rem; /* 24px */
+  width: 1.5rem; /* 24px - Should fit within 40px */
   height: 1.5rem;
+  z-index: 1; /* Above state layer */
+  position: relative; /* Ensure z-index works */
+  color: currentColor; /* Inherit button color */
 }
 
 /* User Menu (Authenticated) */
@@ -107,7 +172,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  color: var(--color-text-secondary);
+  color: var(--color-on-surface-variant);
   font-size: 0.875rem;
 }
 
@@ -116,32 +181,67 @@
   height: 1.25rem;
 }
 
+/* Logout Button */
 .logout-button {
   display: flex;
   align-items: center;
   justify-content: center;
   background: none;
   border: none;
-  color: var(--color-text-secondary);
-  padding: var(--space-xs);
-  border-radius: 50%;
+  color: var(--color-on-surface-variant);
+  padding: 0; /* Remove padding */
+  width: 40px; /* M3 Icon Button size */
+  height: 40px; /* M3 Icon Button size */
+  border-radius: var(--m3-shape-corner-full); /* Circular */
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  position: relative; /* For state layer */
+  overflow: hidden; /* Contain state layer */
+  transition: color 0.2s ease;
+}
+
+/* Logout Button State Layer */
+.logout-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-error);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 0; /* Behind icon */
 }
 
 .logout-button:hover:not(:disabled) {
-  color: var(--color-error);
-  background-color: rgba(222, 53, 11, 0.1); /* Use error color with low opacity */
+  color: var(--color-error); /* Change icon color on hover */
+  /* Remove old background */
+  /* background-color: rgba(222, 53, 11, 0.1); */
+}
+
+.logout-button:hover:not(:disabled)::before {
+  opacity: 0.08; /* M3 Hover */
+}
+
+.logout-button:focus-visible:not(:disabled) {
+  outline: 2px solid var(--color-error); /* Error focus outline */
+  outline-offset: 2px;
+  color: var(--color-error); /* Change icon color on focus */
+}
+
+.logout-button:focus-visible:not(:disabled)::before {
+  opacity: 0.12; /* M3 Focus */
 }
 
 .logout-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  color: var(--color-outline); /* Use outline for disabled color */
 }
 
 .logout-icon {
-  width: 1.25rem; /* 20px */
+  width: 1.25rem; /* 20px - Should fit within 40px */
   height: 1.25rem;
+  z-index: 1; /* Above state layer */
+  position: relative; /* Ensure z-index works */
+  /* Color is handled by the button's state */
 }
 
 /* Auth Links (Not Authenticated) */

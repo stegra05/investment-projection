@@ -1,0 +1,100 @@
+/* NavigationRail Component Styles */
+
+.railContainer {
+  position: fixed;
+  left: 0;
+  top: 64px; /* Below Top App Bar */
+  height: calc(100vh - 64px);
+  width: 80px;
+  background-color: var(--color-surface); /* Use base surface for rail */
+  /* M3 Elevation Level 1 (same as top bar) */
+  box-shadow: 1px 0 2px 0 rgba(0, 0, 0, 0.1);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-s) 0; /* Vertical padding */
+  gap: var(--space-s); /* Gap between items */
+  box-sizing: border-box;
+  transition: background-color 0.2s ease;
+}
+
+.navItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 64px; /* Tap target area width */
+  height: 56px; /* Tap target area height */
+  border-radius: var(--m3-shape-corner-full);
+  text-decoration: none;
+  color: var(--color-on-surface-variant);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.navItem .icon {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 4px; /* Space between icon and label */
+  position: relative;
+  z-index: 1;
+  color: currentColor;
+}
+
+.navItem .label {
+  font-size: var(--m3-type-label-medium-size);
+  line-height: var(--m3-type-label-medium-line-height);
+  font-weight: var(--m3-type-label-medium-weight);
+  text-align: center;
+  white-space: nowrap;
+  position: relative;
+  z-index: 1;
+  color: currentColor;
+}
+
+/* State Layer */
+.navItem::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-on-surface-variant); /* Use variant for subtle states */
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 0;
+}
+
+.navItem:hover::before {
+  opacity: 0.08;
+}
+
+.navItem:focus-visible {
+  outline: none;
+}
+
+.navItem:focus-visible::before {
+  opacity: 0.12;
+}
+
+/* Active State */
+.navItem.active .icon,
+.navItem.active .label {
+  color: var(--color-on-secondary-container);
+}
+
+/* Active Indicator Pill */
+.activeIndicator {
+  position: absolute;
+  width: 56px; /* M3 spec: indicator width */
+  height: 32px; /* M3 spec: indicator height */
+  background-color: var(--color-secondary-container);
+  border-radius: var(--m3-shape-corner-full);
+  z-index: 0; /* Behind icon/label */
+  /* Centered within the 64x56 tap area */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+} 
