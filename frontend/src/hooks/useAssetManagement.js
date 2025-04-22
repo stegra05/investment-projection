@@ -53,7 +53,12 @@ export function useAssetManagement(portfolioId) {
       try {
           if (assetToEdit) {
               // Update existing asset
-              await assetService.updateAsset(portfolioId, assetToEdit.asset_id, assetData);
+              if (!assetToEdit || typeof assetToEdit.id === 'undefined') {
+                  console.error("handleSaveAsset (update) called with invalid assetToEdit object:", assetToEdit);
+                  setError("Cannot update asset: Invalid asset data.");
+                  throw new Error("Invalid asset data for update.");
+              }
+              await assetService.updateAsset(portfolioId, assetToEdit.id, assetData);
           } else {
               // Create new asset
               await assetService.createAsset(portfolioId, assetData);
@@ -77,29 +82,38 @@ export function useAssetManagement(portfolioId) {
   // Handle deleting an asset
   // Now takes asset and performs the API call, returns promise.
   const handleDeleteAsset = useCallback(async (asset) => {
-    // Use window.confirm for simplicity, consider a modal component later
-    if (window.confirm(`Are you sure you want to delete the asset "${asset.name_or_ticker}"?`)) {
-      setIsProcessing(true);
-      setError(null);
-      try {
-        await assetService.deleteAsset(portfolioId, asset.asset_id);
+    // Confirmation logic removed/handled by modal in PortfolioDetailPage
+    // Ensure asset and asset.id exist before proceeding
+    if (!asset || typeof asset.id === 'undefined') {
+        console.error("handleDeleteAsset called with invalid asset object:", asset);
+        setError("Cannot delete asset: Invalid asset data received.");
+        throw new Error("Invalid asset data for deletion."); // Prevent API call
+    }
+
+    // Remove the window.confirm as it's handled by the modal
+    // if (window.confirm(`Are you sure you want to delete the asset "${asset.name_or_ticker}"?`)) {
+    setIsProcessing(true);
+    setError(null);
+    try {
+        // --- Use asset.id instead of asset.asset_id --- 
+        await assetService.deleteAsset(portfolioId, asset.id);
+        // ----------------------------------------------
+
         // The calling component will handle refetching after this promise resolves.
-        // No need for onMutationSuccess callback here.
-      } catch (err) {
+    } catch (err) {
         console.error('Delete asset failed:', err);
         const errorMsg = err.response?.data?.message || 'Failed to delete asset.';
         setError(errorMsg);
         // Re-throw the error so the calling component knows the operation failed
         throw err;
-      } finally {
+    } finally {
         setIsProcessing(false);
-      }
-    } else {
-      // If user cancelled confirmation, throw an error or resolve? Resolve seems less disruptive.
-      // Or simply do nothing and let the promise resolve void.
-      return Promise.resolve(); // Indicate cancellation didn't cause an error
     }
-  }, [portfolioId]); // Added dependency
+    // Remove the else block related to window.confirm
+    // } else {
+    //   return Promise.resolve(); 
+    // }
+  }, [portfolioId, setError]); // Added setError dependency
 
   return {
     showAssetForm,

@@ -73,11 +73,11 @@ const validateChangeField = (name, value, changeType) => {
  * @param {string|number} props.portfolioId - The ID of the portfolio this change belongs to.
  * @param {object} [props.existingChange=null] - If provided, the form will be pre-filled with this change's data
  *                                              for editing. If null, the form is for creating a new change.
- * @param {Function} props.onSaved - Callback function executed successfully after creating or updating a change.
+ * @param {Function} props.onSubmit - Callback function executed successfully after creating or updating a change.
  * @param {Function} [props.onCancel] - Optional callback function executed when the cancel button is clicked.
  * @returns {JSX.Element} The ChangeForm component.
  */
-export default function ChangeForm({ portfolioId, existingChange = null, onSaved, onCancel }) {
+export default function ChangeForm({ portfolioId, existingChange = null, onSubmit, onCancel }) {
   const { isEditing, error: submissionError, setError: setSubmissionError } = useFormState(existingChange);
   const [changeType, setChangeType] = useState('');
   const [changeDate, setChangeDate] = useState('');
@@ -198,33 +198,29 @@ export default function ChangeForm({ portfolioId, existingChange = null, onSaved
        if (isAmountRequired) {
          parsedAmount = parseFloat(amount);
          // We already validated isNaN earlier, but could double check
-         if (isNaN(parsedAmount)) {
-             // This case should ideally not be reached due to pre-validation
-             setFieldErrors(prev => ({ ...prev, amount: 'Invalid number format.'}));
-             setSubmissionError('Please fix the errors in the form.');
-             return;
-         }
        }
 
       const payload = {
+        portfolio_id: portfolioId,
         change_type: changeType,
         change_date: changeDate,
-        // Conditionally include amount ONLY if it's required AND has been parsed
-        ...(isAmountRequired && parsedAmount !== null && { amount: parsedAmount }),
-        description, // Send description even if empty
+        amount: parsedAmount, // Use parsed amount or null
+        description: description || null, // Send null if empty
       };
 
-      // Call the onSaved prop (which connects to the useChangeManagement hook)
-      await onSaved(payload); // The hook should handle success/error states ideally
+      // Use the onSubmit prop which now comes from the hook
+      await onSubmit(payload);
 
-      // If onSaved doesn't throw on error, we might not reach the catch block.
-      // Assuming the hook sets the submissionError state if needed.
+      // Call onCancel to close the modal after successful submission
+      if (onCancel) {
+        onCancel();
+      }
 
-    } catch (err) {
-      // This catch block might be redundant if useChangeManagement handles errors
-      console.error('Change save failed in form submit catch:', err);
-      setSubmissionError(err.message || 'An unexpected error occurred while saving.');
-      // We could also try parsing backend validation errors here if they are structured
+    } catch (error) {
+      console.error("Change save failed in form submit catch:", error);
+      const message = error.response?.data?.message || error.message || 'Failed to save change.';
+      setSubmissionError(message); // Display error in the form
+      // Error toast is handled by the parent component using the hook's error state
     }
   };
 

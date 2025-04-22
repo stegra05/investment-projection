@@ -55,12 +55,12 @@ const validateField = (name, value) => {
  * @param {string|number} props.portfolioId - The ID of the portfolio this asset belongs to.
  * @param {object} [props.existingAsset=null] - If provided, the form will be pre-filled with this asset's data
  *                                             for editing. If null, the form is for creating a new asset.
- * @param {Function} props.onSaveAsset - Callback function executed successfully after creating or updating an asset.
+ * @param {Function} props.onSubmit - Callback function executed successfully after creating or updating an asset.
  * @param {Function} [props.onCancel] - Optional callback function executed when the cancel button is clicked.
  * @returns {JSX.Element} The AssetForm component.
  */
-export default function AssetForm({ portfolioId, existingAsset = null, onSaveAsset, onCancel }) {
-  const { isEditing, error: submissionError, setError: setSubmissionError } = useFormState(existingAsset); // Renamed for clarity
+export default function AssetForm({ portfolioId, existingAsset = null, onSubmit, onCancel }) {
+  const { isEditing } = useFormState(existingAsset);
   const [assetType, setAssetType] = useState('');
   const [customAssetType, setCustomAssetType] = useState('');
   const [ticker, setTicker] = useState('');
@@ -86,9 +86,8 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaveAss
         setTicker('');
         setExpectedReturn('0');
     }
-    setSubmissionError(''); // Clear submission error on init or change
     setFieldErrors({}); // Clear field errors on init or change
-  }, [existingAsset, isEditing, setSubmissionError]); // Removed setError dependency, using setSubmissionError
+  }, [existingAsset, isEditing]);
 
   // Helper to handle updates from either slider or number input
   const handleValueChange = (setter, fieldName) => (e) => {
@@ -119,8 +118,6 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaveAss
   const handleSubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setSubmissionError(''); // Clear previous submission errors
-    setFieldErrors({}); // Clear field errors before attempting submission
 
     // --- Pre-submission Validation ---
     let hasValidationErrors = false;
@@ -155,28 +152,18 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaveAss
     }
     // --- End Validation ---
 
+    // Use helper to parse values, assuming they are now valid due to pre-submission checks
+    const parsedReturn = parseNumericValue(expectedReturn);
 
-    try {
-      // Use helper to parse values, assuming they are now valid due to pre-submission checks
-      const parsedReturn = parseNumericValue(expectedReturn);
+    // Construct the payload
+    const payload = {
+      asset_type: finalAssetType,
+      name_or_ticker: ticker,
+      manual_expected_return: parsedReturn,
+    };
 
-      // Payload construction remains the same
-      const payload = {
-        asset_type: finalAssetType,
-        name_or_ticker: ticker,
-        manual_expected_return: parsedReturn,
-      };
-
-      if (isEditing && existingAsset) {
-        await assetService.updateAsset(portfolioId, existingAsset.asset_id, payload);
-      } else {
-        await assetService.createAsset(portfolioId, payload);
-      }
-      onSaveAsset(); // Changed onSaved() to onSaveAsset()
-    } catch (err) {
-      console.error('Asset save failed:', err);
-      setSubmissionError(err.response?.data?.message || 'Failed to save asset. Please check the details.'); // Use setSubmissionError
-    }
+    // Pass the validated data to the onSubmit prop
+    onSubmit(payload);
   };
 
   return (
@@ -185,8 +172,6 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaveAss
         <h3 className={styles.formTitle}>
           {isEditing ? 'Edit Asset' : 'Add New Asset'}
         </h3>
-        {/* Display submission error */}
-        {submissionError && <p className={styles.errorMessage}>{submissionError}</p>}
 
         {/* Asset Type Select */}
         <div className={styles.formGroup}>
@@ -197,7 +182,7 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaveAss
             onChange={(e) => setAssetType(e.target.value)}
             required
             placeholder="-- Select Asset Type --"
-            error={!!fieldErrors.assetType} // Indicate error on Select
+            error={fieldErrors.assetType || undefined} // Pass error message string or undefined
           >
             {assetTypeOptions.map(option => (
                 <option key={option.value} value={option.value}>{option.label}</option>
@@ -215,7 +200,7 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaveAss
                onChange={(e) => setCustomAssetType(e.target.value)}
                required={assetType === 'Other'}
                className={styles.customTypeInput}
-               error={!!fieldErrors.customAssetType} // Indicate error on Input
+               error={fieldErrors.customAssetType || undefined} // Pass error message string or undefined
              />
              {fieldErrors.customAssetType && <p className={styles.fieldErrorMessage}>{fieldErrors.customAssetType}</p>}
             </>
@@ -232,7 +217,7 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaveAss
             value={ticker}
             onChange={(e) => setTicker(e.target.value)}
             required
-            error={!!fieldErrors.ticker} // Indicate error on Input
+            error={fieldErrors.ticker || undefined} // Pass error message string or undefined
           />
            {fieldErrors.ticker && <p className={styles.fieldErrorMessage}>{fieldErrors.ticker}</p>}
         </div>
@@ -251,11 +236,11 @@ export default function AssetForm({ portfolioId, existingAsset = null, onSaveAss
               value={expectedReturn}
               onChange={handleValueChange(setExpectedReturn, 'expectedReturn')}
               onBlur={() => handleBlur('expectedReturn', expectedReturn)} // Validate on blur
-              step="0.1"
+              step="0.01"
               min="-50" // Example range, adjust if needed
               max="100" // Example range, adjust if needed
               className={styles.numberInput} // Add class for potential specific styling
-              error={!!fieldErrors.expectedReturn} // Indicate error on Input
+              error={fieldErrors.expectedReturn || undefined} // Pass error message string or undefined
             />
             <input
               type="range"

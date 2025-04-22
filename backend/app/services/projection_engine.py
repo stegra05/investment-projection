@@ -1,6 +1,8 @@
 import datetime
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal, InvalidOperation
+from abc import ABC, abstractmethod # Added for Strategy pattern
+import math # Added for potential future use, though Decimal handles power
 
 # Import models from app.models
 from app.models import Portfolio, Asset, PlannedFutureChange
@@ -33,17 +35,83 @@ from app.enums import ChangeType, AssetType
 
 # --- Default Annual Return Assumptions (Placeholder) ---
 # Expressed as Decimal percentages (e.g., 7.0 for 7%)
-DEFAULT_ANNUAL_RETURNS = {
-    'STOCK': Decimal('8.0'),
-    'BOND': Decimal('4.0'),
-    'MUTUAL_FUND': Decimal('7.5'),
-    'ETF': Decimal('7.8'),
-    'REAL_ESTATE': Decimal('5.0'),
-    'CASH': Decimal('1.5'),
-    'CRYPTOCURRENCY': Decimal('15.0'), # High potential, high risk
-    'OPTIONS': Decimal('0.0'),       # Require manual input for meaningful projection
-    'OTHER': Decimal('0.0'),         # Require manual input
+# Moved inside the StandardAnnualReturnStrategy where it's used
+# DEFAULT_ANNUAL_RETURNS = { ... }
+
+
+# --- Return Calculation Strategy ---
+
+class AbstractReturnCalculationStrategy(ABC):
+    """Abstract base class for asset return calculation strategies."""
+    @abstractmethod
+    def calculate_monthly_return(self, asset: Asset) -> Decimal:
+        """Calculates the expected monthly return rate for a given asset."""
+        pass
+
+class StandardAnnualReturnStrategy(AbstractReturnCalculationStrategy):
+    """Calculates monthly return based on annual return (manual or default)."""
+
+    DEFAULT_ANNUAL_RETURNS = {
+        AssetType.STOCK: Decimal('8.0'),
+        AssetType.BOND: Decimal('4.0'),
+        AssetType.MUTUAL_FUND: Decimal('7.5'),
+        AssetType.ETF: Decimal('7.8'),
+        AssetType.REAL_ESTATE: Decimal('5.0'),
+        AssetType.CASH: Decimal('1.5'),
+        AssetType.CRYPTOCURRENCY: Decimal('15.0'), # High potential, high risk
+        AssetType.OPTIONS: Decimal('0.0'),       # Require manual input for meaningful projection
+        AssetType.OTHER: Decimal('0.0'),         # Require manual input
+    }
+
+    def calculate_monthly_return(self, asset: Asset) -> Decimal:
+        r_annual_percent = None
+        # Prioritize manual return
+        if asset.manual_expected_return is not None:
+            try:
+                r_annual_percent = Decimal(asset.manual_expected_return)
+            except (InvalidOperation, TypeError):
+                print(f"Warning: Invalid manual_expected_return for asset {asset.asset_id}. Using default.")
+                r_annual_percent = self.DEFAULT_ANNUAL_RETURNS.get(asset.asset_type, Decimal('0.0'))
+        else:
+            r_annual_percent = self.DEFAULT_ANNUAL_RETURNS.get(asset.asset_type, Decimal('0.0'))
+            if asset.asset_type in [AssetType.OPTIONS, AssetType.OTHER] and r_annual_percent == Decimal('0.0'):
+                 print(f"Info: Asset {asset.asset_id} type '{asset.asset_type.name}' has no manual return. Projection assumes 0% growth. Provide 'manual_expected_return' for custom projection.")
+
+        r_annual = r_annual_percent / Decimal('100')
+
+        # Calculate monthly return from annual return: (1 + R_annual)^(1/12) - 1
+        monthly_return = Decimal('0.0')
+        if r_annual > Decimal('-1.0'): # Avoid issues with (1 + r_annual) being negative
+            try:
+                monthly_return = (Decimal('1.0') + r_annual) ** (Decimal('1.0') / Decimal('12.0')) - Decimal('1.0')
+            except InvalidOperation:
+                print(f"Warning: Could not calculate monthly return for asset {asset.asset_id} from annual return {r_annual*100}%. Defaulting monthly return to 0.")
+                monthly_return = Decimal('0.0')
+        else:
+             # Handle extremely negative annual returns (e.g., -100% or less) - monthly equivalent is -100%
+             monthly_return = Decimal('-1.0')
+
+        return monthly_return
+
+# --- Strategy Factory/Registry ---
+
+# Instantiate strategies (can be extended later)
+_standard_strategy = StandardAnnualReturnStrategy()
+
+# Map AssetType to strategy instances
+# For now, all types use the standard strategy. This can be customized.
+_strategy_registry = {
+    asset_type: _standard_strategy for asset_type in AssetType
 }
+
+def _get_return_strategy(asset_type: AssetType) -> AbstractReturnCalculationStrategy:
+    """Gets the appropriate return calculation strategy for the asset type."""
+    strategy = _strategy_registry.get(asset_type)
+    if not strategy:
+        print(f"Warning: No return calculation strategy found for asset type {asset_type}. Using standard strategy as fallback.")
+        return _standard_strategy # Fallback to standard strategy
+    return strategy
+
 
 # --- Helper Functions ---
 
@@ -109,40 +177,27 @@ def _initialize_projection(assets: list[Asset], initial_total_value: Decimal | N
         current_asset_values[asset.asset_id] = initial_value
         actual_calculated_total += initial_value
 
-        # --- Calculate Monthly Asset Returns (R_step_i) ---
-        r_annual = Decimal('0.0') # Default annual return
-        if asset.manual_expected_return is not None:
-            try:
-                r_annual = Decimal(asset.manual_expected_return) / Decimal('100')
-            except (InvalidOperation, TypeError):
-                print(f"Warning: Invalid manual_expected_return for asset {asset.asset_id}. Using default.")
-                # Fall through to use default based on type
-                asset_type_str = asset.asset_type.name if isinstance(asset.asset_type, AssetType) else str(asset.asset_type)
-                r_annual = DEFAULT_ANNUAL_RETURNS.get(asset_type_str, Decimal('0.0')) / Decimal('100')
-        else:
-            # Use default based on asset type
-            # Ensure asset.asset_type is the Enum member name (string) for dict lookup
-            asset_type_str = asset.asset_type.name if isinstance(asset.asset_type, AssetType) else str(asset.asset_type)
-            r_annual = DEFAULT_ANNUAL_RETURNS.get(asset_type_str, Decimal('0.0')) / Decimal('100')
-            if asset_type_str in ['OPTIONS', 'OTHER'] and r_annual == Decimal('0.0'):
-                 print(f"Info: Asset {asset.asset_id} type '{asset_type_str}' has no manual return. Projection assumes 0% growth. Provide 'manual_expected_return' for custom projection.")
+        # --- Calculate Monthly Asset Returns using Strategy ---
+        try:
+            # Ensure asset.asset_type is the Enum member if not already
+            asset_enum_type = asset.asset_type
+            if not isinstance(asset_enum_type, AssetType):
+                 # Attempt to convert string representation back to Enum member if needed
+                 # This might occur if data isn't loaded correctly as Enum from DB
+                 try:
+                     asset_enum_type = AssetType[asset_enum_type] # Assumes the string matches enum member name
+                 except KeyError:
+                      print(f"Error: Asset {asset.asset_id} has an unrecognized asset type '{asset_enum_type}'. Cannot determine return strategy.")
+                      monthly_asset_returns[asset.asset_id] = Decimal('0.0') # Assign default zero return
+                      continue # Skip to next asset
 
 
-        # Calculate monthly return from annual return
-        monthly_return = Decimal('0.0')
-        if r_annual > Decimal('-1.0'): # Avoid issues with (1 + r_annual) being negative
-             try:
-                # (1 + R_annual_i)^(1/12) - 1
-                monthly_return = (Decimal('1.0') + r_annual) ** (Decimal('1.0') / Decimal('12.0')) - Decimal('1.0')
-             except InvalidOperation:
-                 print(f"Warning: Could not calculate monthly return for asset {asset.asset_id} from annual return {r_annual*100}%. Defaulting monthly return to 0.")
-                 monthly_return = Decimal('0.0')
-        else:
-             # Handle extremely negative annual returns (e.g., -100% or less) - monthly equivalent is -100%
-             monthly_return = Decimal('-1.0')
-
-
-        monthly_asset_returns[asset.asset_id] = monthly_return
+            strategy = _get_return_strategy(asset_enum_type)
+            monthly_return = strategy.calculate_monthly_return(asset)
+            monthly_asset_returns[asset.asset_id] = monthly_return
+        except Exception as e:
+             print(f"Error calculating monthly return for asset {asset.asset_id} using strategy: {e}. Setting return to 0.")
+             monthly_asset_returns[asset.asset_id] = Decimal('0.0')
 
 
     # Optional Validation: Compare final actual calculated total with provided initial_total_value

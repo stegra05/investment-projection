@@ -7,6 +7,8 @@ class AssetType(enum.Enum):
     ETF = 'ETF'
     REAL_ESTATE = 'Real Estate'
     CASH = 'Cash'
+    CRYPTOCURRENCY = 'Cryptocurrency'
+    OPTIONS = 'Options'
     OTHER = 'Other'
 
 class ChangeType(enum.Enum):

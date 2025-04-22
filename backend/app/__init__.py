@@ -1,4 +1,5 @@
-from flask import Flask
+from flask import Flask, jsonify
+import json
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
@@ -8,6 +9,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 # Import the config dictionary along with the base Config class
 from config import Config, config
+from werkzeug.exceptions import HTTPException
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -60,6 +62,49 @@ def create_app(config_name='default'): # Changed argument name for clarity
     # Register the projections blueprint
     from app.routes.projections import projections_bp
     app.register_blueprint(projections_bp)
+
+    # --- Custom JSON Error Handlers ---
+    @app.errorhandler(HTTPException)
+    def handle_exception(e):
+        """Return JSON instead of HTML for HTTP errors."""
+        # Start with the correct headers and status code from the exception
+        response = e.get_response()
+        # Replace the body with JSON
+        response.data = json.dumps({
+            "code": e.code,
+            "name": e.name,
+            "description": e.description,
+        })
+        response.content_type = "application/json"
+        return response
+
+    @app.errorhandler(404) # Specific handler for 404 if needed
+    def handle_404_error(e):
+        return jsonify(error=str(e.description or "Not Found")), 404
+
+    @app.errorhandler(500) # Specific handler for 500 if needed
+    def handle_500_error(e):
+        # Log the original exception for debugging
+        original_exception = getattr(e, "original_exception", None)
+        app.logger.error(
+            f"Internal Server Error: {e.description}",
+            exc_info=original_exception or e
+        )
+        return jsonify(error=str(e.description or "Internal Server Error")), 500
+    
+    @app.errorhandler(400) # Handler for Bad Request
+    def handle_400_error(e):
+        return jsonify(error=str(e.description or "Bad Request")), 400
+
+    @app.errorhandler(401) # Handler for Unauthorized
+    def handle_401_error(e):
+        return jsonify(error=str(e.description or "Unauthorized")), 401
+
+    @app.errorhandler(403) # Handler for Forbidden
+    def handle_403_error(e):
+        return jsonify(error=str(e.description or "Forbidden")), 403
+
+    # --- End Custom Error Handlers ---
 
     @app.route('/test/')
     def test_page():
