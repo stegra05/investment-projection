@@ -2,10 +2,11 @@
     display: grid;
     grid-template-columns: 1fr 1fr; /* Two equal columns */
     gap: var(--space-l);
-    background-color: var(--color-ui-background);
-    padding: var(--space-l);
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    /* M3 Surface Styling */
+    background-color: var(--color-surface-container); /* Use M3 surface container color */
+    padding: var(--space-l); /* Keep using spacing token */
+    border-radius: var(--m3-shape-corner-medium); /* Use M3 shape token */
+    /* Remove old box-shadow, rely on surface color difference */
     margin-bottom: var(--space-l);
 }
 
@@ -52,24 +53,27 @@
 
 /* Custom Tooltip Styles */
 .customTooltip {
-    background-color: var(--color-ui-background); /* Handled inline for now */
-    border: 1px solid var(--color-border); /* Handled inline for now */
-    border-radius: 6px;
+    /* Use M3 surface and text colors */
+    background-color: var(--color-surface-container-high); /* Elevated tooltip surface */
+    border: 1px solid var(--color-outline); /* Use M3 outline */
+    border-radius: var(--m3-shape-corner-small); /* M3 shape token */
     padding: var(--space-s);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    font-size: 0.875rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Keep a subtle shadow for tooltip elevation */
+    font-size: var(--m3-type-body-small-size); /* M3 type token */
 }
 
 .tooltipLabel {
-    color: var(--color-text-secondary); /* Handled inline for now */
+    color: var(--color-on-surface-variant); /* M3 secondary text color */
     margin-bottom: var(--space-xxs);
-    font-weight: 500;
+    font-weight: var(--m3-type-label-medium-weight); /* M3 type token */
+    font-size: var(--m3-type-label-medium-size); /* M3 type token */
 }
 
 .tooltipValue {
-    color: var(--color-text-primary); /* Handled inline for now */
+    color: var(--color-on-surface); /* M3 primary text color */
     margin: 0;
-    font-weight: 600;
+    font-weight: var(--m3-type-body-small-weight); /* M3 type token */
+    font-size: var(--m3-type-body-small-size); /* M3 type token */
 }
 
 

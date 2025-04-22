@@ -1,12 +1,42 @@
 /* === Base Variables (Apply to both themes unless overridden) === */
 :root {
-  /* Colors */
-  --color-primary: #053f96;
-  --color-primary-rgb: 5, 63, 150; /* Added RGB */
-  --color-secondary: #4CB0B2;
+  /* NEW M3 Light Mode Color Roles */
+  --color-primary: #005FB0;
+  --color-on-primary: #FFFFFF;
+  --color-primary-container: #D1E4FF;
+  --color-on-primary-container: #001C3B;
+  --color-secondary: #006D3D;
+  --color-on-secondary: #FFFFFF;
+  --color-secondary-container: #9CF2B9;
+  --color-on-secondary-container: #00210F;
+  --color-tertiary: #605B7D;
+  --color-on-tertiary: #FFFFFF;
+  --color-error: #B3261E;
+  --color-on-error: #FFFFFF;
+  --color-background: #F8F9FD;
+  --color-on-background: #191C1F;
+  --color-surface: #F8F9FD;
+  --color-on-surface: #191C1F;
+  --color-surface-variant: #DFE2EB;
+  --color-on-surface-variant: #43474E;
+  --color-outline: #73777F;
+  --color-surface-container-lowest: #FFFFFF;
+  --color-surface-container-low: #F4F4F5;
+  --color-surface-container: #EEEEEF;
+  --color-surface-container-high: #E8E8EE;
+  --color-surface-container-highest: #E2E2E9;
+  /* RGB for state layers */
+  --color-on-surface-rgb: 25, 28, 31; /* #191C1F */
+
+  /* === OLD Colors (To be Removed - Kept here briefly for context) === */
+  /*
+  --color-primary: #005FB0;
+  --color-primary-rgb: 0, 95, 176; // REMOVED
+  --color-secondary: #006D3D;
   --color-accent-green: #36B37E;
   --color-text-on-primary-light: #FFFFFF;
   --color-text-on-primary-dark: #FFFFFF;
+  */
 
   /* Spacing Scale */
   --space-xxs: 0.25rem;
@@ -185,160 +215,60 @@
 
 /* === Light Mode Variables === */
 html:not([data-theme='dark']) {
-  --color-text-primary: #1E2A3B;
-  --color-text-secondary: #6B778C;
-  --color-text-disabled: #A5ADBA;
-  --color-text-link: var(--color-primary);
-  --color-text-on-primary: var(--color-text-on-primary-light);
-  --color-text-error: #BF2600; /* Darker red for text */
-  --color-text-success: #006644; /* Darker green */
-  --color-border: #8993A4; /* Adjusted from #DFE1E6 for WCAG AA on borders (3:1) */
-  --color-ui-background: #FFFFFF;
-  --color-app-background: #F4F5F7; /* App background solid */
-  --color-success: #36B37E;
-  --color-error: #DE350B;
-  --color-warning: #FFAB00;
-  --color-info: #0065FF;
-  --color-text-on-primary: var(--color-text-on-primary-light);
 
-  /* === M3 Color Roles - Light Theme === */
-  /* Using existing vars where possible, placeholders/approximations otherwise */
-  /* Primary */
-  --m3-color-primary: var(--color-primary); /* #053f96 */
-  --m3-color-on-primary: var(--color-text-on-primary-light); /* #FFFFFF */
-  --m3-color-primary-container: #D0E4FF; /* Approximation */
-  --m3-color-on-primary-container: #001D36; /* Approximation */
-  /* Secondary */
-  --m3-color-secondary: var(--color-secondary); /* #4CB0B2 */
-  --m3-color-on-secondary: #FFFFFF; /* Assumed white */
-  --m3-color-secondary-container: #CFE6F7; /* Approximation */
-  --m3-color-on-secondary-container: #0A1E29; /* Approximation */
-  /* Tertiary (Using accent green as base) */
-  --m3-color-tertiary: var(--color-accent-green); /* #36B37E */
-  --m3-color-on-tertiary: #FFFFFF; /* Assumed white */
-  --m3-color-tertiary-container: #B8F3DA; /* Approximation */
-  --m3-color-on-tertiary-container: #002117; /* Approximation */
-  /* Error */
-  --m3-color-error: var(--color-error); /* #DE350B */
-  --m3-color-on-error: #FFFFFF; /* Assumed white */
-  --m3-color-error-container: #FFDAD6; /* Approximation */
-  --m3-color-on-error-container: #410002; /* Approximation */
-  /* Background */
-  --m3-color-background: var(--color-app-background); /* #F4F5F7 */
-  --m3-color-on-background: var(--color-text-primary); /* #1E2A3B */
-  /* Surface */
-  --m3-color-surface: var(--color-ui-background); /* #FFFFFF */
-  --m3-color-on-surface: var(--color-text-primary); /* #1E2A3B */
-  --m3-color-surface-variant: #DFE1E6; /* Approximation (old border?) */
-  --m3-color-on-surface-variant: #43474E; /* Approximation */
-  /* Surface Containers */
-  --m3-color-surface-container-lowest: #FFFFFF; /* Same as surface */
-  --m3-color-surface-container-low: #F8F9FA; /* Slightly off-white */
-  --m3-color-surface-container: #F1F3F5; /* Bit more off-white */
-  --m3-color-surface-container-high: #EBEDEF; /* Higher emphasis */
-  --m3-color-surface-container-highest: #E6E8EA; /* Highest emphasis */
-  /* Outline */
-  --m3-color-outline: var(--color-border); /* #8993A4 */
-  --m3-color-outline-variant: #C4C6CF; /* Lighter outline */
-  /* Inverse (For snackbars etc. on dark elements in light theme) */
-  --m3-color-inverse-surface: #2F3033; /* Approximation */
-  --m3-color-inverse-on-surface: #F1F0F4; /* Approximation */
-  --m3-color-inverse-primary: #A8C7FA; /* Approximation */
-  /* Other */
-  --m3-color-shadow: #000000;
-  --m3-color-surface-tint-color: var(--m3-color-primary);
-  --m3-color-scrim: #000000;
-
-  /* Links (using M3 primary for consistency) */
-  --m3-color-link: var(--m3-color-primary);
-  --m3-color-link-visited: #551A8B; /* Standard browser visited */
-
-  /* --- M3 States --- */
-  --m3-state-hover-opacity: 0.08;
-  --m3-state-focus-opacity: 0.12;
-  --m3-state-pressed-opacity: 0.12;
-  --m3-state-dragged-opacity: 0.16;
+  /* --- M3 States (Light) --- */
+  /* Ensure --color-on-surface-rgb is defined in :root */
+  --m3-state-hover-layer: rgba(var(--color-on-surface-rgb), 0.08);
+  --m3-state-focus-layer: rgba(var(--color-on-surface-rgb), 0.12);
+  --m3-state-pressed-layer: rgba(var(--color-on-surface-rgb), 0.12);
+  --m3-state-dragged-layer: rgba(var(--color-on-surface-rgb), 0.16);
 }
 
 /* === Dark Mode Variables === */
 html[data-theme='dark'] {
-  --color-text-primary: #E1E8F2;
-  --color-text-secondary: #A1ADBE;
-  --color-text-disabled: #5A697E;
-  --color-text-link: #60A5FA; /* Lighter blue for links */
-  --color-text-on-primary: var(--color-text-on-primary-dark);
-  --color-text-error: #FFA0A0; /* Lighter red */
-  --color-text-success: #6EE7B7; /* Lighter green */
-  --color-border: #5A697E; /* Adjusted from #3E4C5F for WCAG AA on borders (3:1) */
-  --color-ui-background: #171F2A; /* Cards/Inputs */
-  --color-app-background-start: #0E131B; /* Gradient Start */
-  --color-app-background-end: #1A2B42; /* Gradient End */
-  --color-app-background: transparent; /* Use gradient on body */
-  --color-ui-background-hover: #202A3A; /* Subtle hover */
-  --color-ui-background-disabled: #111823;
-  --color-success: #4ADE80;
-  --color-error: #F87171;
-  --color-warning: #FBBF24;
-  --color-info: #60A5FA;
-  --color-text-on-primary: var(--color-text-on-primary-dark);
+  /* NEW M3 Dark Mode Color Roles */
+  --color-primary: #9ECBFF;
+  --color-on-primary: #00325A;
+  --color-primary-container: #004881;
+  --color-on-primary-container: #D1E4FF;
+  --color-secondary: #80D59E;
+  --color-on-secondary: #00391C;
+  --color-secondary-container: #00522A;
+  --color-on-secondary-container: #9CF2B9;
+  --color-tertiary: #C8C0E5;
+  --color-on-tertiary: #312D4C;
+  --color-error: #F2B8B5;
+  --color-on-error: #601410;
+  --color-background: #111316;
+  --color-on-background: #E2E2E9;
+  --color-surface: #111316;
+  --color-on-surface: #E2E2E9;
+  --color-surface-variant: #43474E;
+  --color-on-surface-variant: #C3C6CE;
+  --color-outline: #8D9199;
+  --color-surface-container-lowest: #0C0E11;
+  --color-surface-container-low: #1B1D21;
+  --color-surface-container: #1F2125;
+  --color-surface-container-high: #292B2F;
+  --color-surface-container-highest: #33353A;
+  /* RGB for state layers */
+  --color-on-surface-rgb: 226, 226, 233; /* #E2E2E9 */
 
-  /* === M3 Color Roles - Dark Theme === */
-  /* Approximations based on light theme and base colors */
-  /* Primary */
-  --m3-color-primary: #A8C7FA; /* Approximation */
-  --m3-color-on-primary: #003366; /* Approximation */
-  --m3-color-primary-container: #004A94; /* Approximation */
-  --m3-color-on-primary-container: #D0E4FF; /* Approximation */
-  /* Secondary */
-  --m3-color-secondary: #ADCBE1; /* Approximation */
-  --m3-color-on-secondary: #1D333F; /* Approximation */
-  --m3-color-secondary-container: #334A57; /* Approximation */
-  --m3-color-on-secondary-container: #CFE6F7; /* Approximation */
-  /* Tertiary */
-  --m3-color-tertiary: #9BD0B5; /* Approximation */
-  --m3-color-on-tertiary: #00382A; /* Approximation */
-  --m3-color-tertiary-container: #1F4F3E; /* Approximation */
-  --m3-color-on-tertiary-container: #B8F3DA; /* Approximation */
-  /* Error */
-  --m3-color-error: var(--color-error); /* #F87171 (Existing is close) */
-  --m3-color-on-error: #601410; /* Approximation */
-  --m3-color-error-container: #8C1D18; /* Approximation */
-  --m3-color-on-error-container: #FFDAD6; /* Approximation */
-  /* Background */
-  --m3-color-background: #111318; /* Darker than surface */
-  --m3-color-on-background: var(--color-text-primary); /* #E1E8F2 */
-  /* Surface */
-  --m3-color-surface: var(--color-ui-background); /* #171F2A */
-  --m3-color-on-surface: var(--color-text-primary); /* #E1E8F2 */
-  --m3-color-surface-variant: #43474E; /* Approximation */
-  --m3-color-on-surface-variant: #C4C6CF; /* Approximation */
-  /* Surface Containers */
-  --m3-color-surface-container-lowest: #0C0E13; /* Darkest */
-  --m3-color-surface-container-low: #171F2A; /* Same as Surface */
-  --m3-color-surface-container: #1C2330; /* Slightly Lighter */
-  --m3-color-surface-container-high: #272E3B; /* Higher emphasis */
-  --m3-color-surface-container-highest: #313948; /* Highest emphasis */
-  /* Outline */
-  --m3-color-outline: var(--color-border); /* #5A697E */
-  --m3-color-outline-variant: #43474E; /* Darker outline */
-  /* Inverse (For snackbars etc. on light elements in dark theme) */
-  --m3-color-inverse-surface: #E2E2E6; /* Approximation */
-  --m3-color-inverse-on-surface: #2F3033; /* Approximation */
-  --m3-color-inverse-primary: var(--color-primary); /* #053f96 */
-  /* Other */
-  --m3-color-shadow: #000000;
-  --m3-color-surface-tint-color: var(--m3-color-primary);
-  --m3-color-scrim: #000000;
+  /* --- M3 States (Dark) --- */
+  /* Ensure --color-on-surface-rgb is defined */
+  --m3-state-hover-layer: rgba(var(--color-on-surface-rgb), 0.08);
+  --m3-state-focus-layer: rgba(var(--color-on-surface-rgb), 0.12);
+  --m3-state-pressed-layer: rgba(var(--color-on-surface-rgb), 0.12);
+  --m3-state-dragged-layer: rgba(var(--color-on-surface-rgb), 0.16);
 
-  /* Links (using M3 primary for consistency) */
-  --m3-color-link: var(--m3-color-primary);
-  --m3-color-link-visited: #BEA0E5; /* Lighter purple */
-
-  /* --- M3 States --- */
-  --m3-state-hover-opacity: 0.08;
-  --m3-state-focus-opacity: 0.12;
-  --m3-state-pressed-opacity: 0.12;
-  --m3-state-dragged-opacity: 0.16;
+  /* --- Other Non-M3-Role Specific Dark Vars (REMOVED or UPDATED) --- */
+  /* Align gradient with M3 container/background colors */
+  --color-app-background-start: var(--color-surface-container-lowest); /* Darkest */
+  --color-app-background-end: var(--color-background); /* Standard background */
+  --color-app-background: transparent; /* Keep gradient for body */
+  /* Old hover/disabled - REMOVED (use state layers) */
+  /* --color-ui-background-hover: #202A3A; */
+  /* --color-ui-background-disabled: #111823; */
 }
 
 /* === Global Base Styles === */
@@ -352,14 +282,15 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  color: var(--m3-color-on-background, var(--color-text-primary)); /* Use M3 variable */
-  background-color: var(--m3-color-background, var(--color-app-background, var(--color-ui-background))); /* Use M3 variable, with fallbacks */
+  color: var(--color-on-background);
+  background-color: var(--color-background);
   transition: color 0.2s ease, background-color 0.2s ease; /* Basic transitions */
 }
 
 /* Apply dark mode gradient to body or a wrapper if needed */
 html[data-theme='dark'] body {
   /* Keep gradient for now, but M3 typically uses solid background colors */
+  /* Updated gradient stops to match new dark theme colors */
   background-image: linear-gradient(to bottom right, var(--color-app-background-start), var(--color-app-background-end));
   background-attachment: fixed; /* Keep gradient fixed */
 }
@@ -391,7 +322,7 @@ ul, ol {
 /* Basic link styling */
 a {
   font-weight: var(--font-weight-medium);
-  color: var(--m3-color-link, var(--color-text-link)); /* Use M3 variable */
+  color: var(--m3-color-link, var(--color-primary)); /* Use theme link or primary - KEEP THIS FALLBACK */
   text-decoration: none;
   transition: color var(--transition-duration) ease;
 }
@@ -435,6 +366,3 @@ h3 { font-size: var(--font-size-h3); font-weight: var(--font-weight-medium); lin
     opacity: 0.5;
   }
 }
-
-/* --- REMOVE Old Media Query --- */
-/* @media (prefers-color-scheme: light) { ... } */ 

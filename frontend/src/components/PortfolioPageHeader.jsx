@@ -25,7 +25,7 @@ export default function PortfolioPageHeader({
             </div>
             <div className={styles.headerActions}>
                 <Button
-                    variant="secondary"
+                    variant="tonal"
                     onClick={onEdit} // Parent passes the complete handler
                     icon={<PencilIcon />}
                     disabled={disabled}
@@ -33,7 +33,8 @@ export default function PortfolioPageHeader({
                     Edit Portfolio
                 </Button>
                 <Button
-                    variant="destructive"
+                    variant="filled"
+                    color="error"
                     onClick={onDelete}
                     icon={<TrashIcon />}
                     disabled={disabled}

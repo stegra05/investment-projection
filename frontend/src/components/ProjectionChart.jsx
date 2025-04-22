@@ -206,15 +206,15 @@ export default function ProjectionChart({ portfolioId, initialProjectionValue = 
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        // Use app background only for loading and error states now
-        backgroundColor: loading || error ? 'var(--color-app-background)' : 'transparent',
-        // Show border only for loading, error, or initial empty states
-        border: loading || error || data.length === 0 ? `1px dashed ${borderColor}` : 'none',
-        borderRadius: '6px',
+        /* Apply M3 Surface Styling */
+        backgroundColor: 'var(--color-surface-container)', /* Use M3 surface */
+        // Remove conditional background
+        // border: loading || error || data.length === 0 ? `1px dashed ${borderColor}` : 'none', // Remove border
+        borderRadius: 'var(--m3-shape-corner-medium)', /* Use M3 shape token */
         marginBottom: 'var(--space-l)',
         color: textColorSecondary,
         textAlign: 'center',
-        padding: 'var(--space-m)',
+        padding: 'var(--space-m)', // Keep padding
         overflow: 'hidden' // Ensure skeleton stays contained
       }}>
         {loading ? (
@@ -236,7 +236,11 @@ export default function ProjectionChart({ portfolioId, initialProjectionValue = 
             <p style={{ color: 'var(--color-error)', marginBottom: 'var(--space-s)' }}>
               Error: {error}
             </p>
-            <Button onClick={handleRunProjection} variant="secondary" size="small">
+            <Button 
+              onClick={handleRunProjection} 
+              variant="tonal"
+              size="small"
+            >
               Retry Projection
             </Button>
           </>
@@ -301,11 +305,12 @@ export default function ProjectionChart({ portfolioId, initialProjectionValue = 
 
       {/* Control Panel */}
       <div style={{
-        border: `1px solid ${borderColor}`,
-        borderRadius: '8px', // Slightly larger radius for panel
-        padding: 'var(--space-l)', // More padding for the panel
-        backgroundColor: uiBackgroundColor,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)' // Subtle shadow for panel
+        /* Apply M3 Surface Styling to Control Panel as well for consistency */
+        border: 'none', // Remove explicit border
+        borderRadius: 'var(--m3-shape-corner-medium)', // Use M3 shape token
+        padding: 'var(--space-l)', // Keep padding
+        backgroundColor: 'var(--color-surface-container)', // Use M3 surface
+        // boxShadow: '0 1px 3px rgba(0,0,0,0.05)' // Remove subtle shadow, rely on surface difference
       }}>
         <h3 style={{ marginTop: 0, marginBottom: 'var(--space-m)', fontSize: '1.25rem', color: textColorPrimary, borderBottom: `1px solid ${borderColor}`, paddingBottom: 'var(--space-s)' }}>
           Configure Projection
@@ -348,7 +353,7 @@ export default function ProjectionChart({ portfolioId, initialProjectionValue = 
         <Button
           onClick={handleRunProjection}
           disabled={loading}
-          variant="primary"
+          variant="filled"
         >
           {loading ? 'Running...' : 'Run Projection'}
         </Button>

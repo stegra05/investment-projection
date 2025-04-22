@@ -52,6 +52,7 @@ function PortfolioListPage() {
         <Button
           onClick={() => navigate('/portfolios/new')}
           icon={<PlusIcon />}
+          variant="filled"
         >
           New Portfolio
         </Button>

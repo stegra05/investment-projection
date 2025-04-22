@@ -40,7 +40,7 @@ export default function AssetsSectionHeader({
                     </span>
                     {allocationsChanged && (
                         <Button
-                            variant="primary"
+                            variant="filled"
                             onClick={onSaveAllocations}
                             icon={<SaveIcon />}
                             disabled={isSaveDisabled}
@@ -52,7 +52,7 @@ export default function AssetsSectionHeader({
                     )}
                 </div>
                 <Button
-                    variant="primary"
+                    variant="filled"
                     onClick={onAddAsset}
                     icon={<PlusIcon />}
                     disabled={isAddDisabled}

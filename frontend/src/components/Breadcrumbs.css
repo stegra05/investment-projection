@@ -3,11 +3,8 @@
 .breadcrumbs-container {
   padding: var(--space-s) 0; /* Add some vertical padding */
   margin-bottom: var(--space-m); /* Space below breadcrumbs */
-  border-bottom: 1px solid var(--color-border-light);
-}
-
-html[data-theme='dark'] .breadcrumbs-container {
-  border-bottom-color: var(--color-border-dark);
+  /* Use M3 outline color */
+  border-bottom: 1px solid var(--color-outline);
 }
 
 .breadcrumbs-list {
@@ -16,12 +13,13 @@ html[data-theme='dark'] .breadcrumbs-container {
   list-style: none;
   padding: 0;
   margin: 0;
-  font-size: var(--font-size-sm, 0.875rem); /* Use secondary text size */
-  color: var(--color-text-secondary-light);
-}
-
-html[data-theme='dark'] .breadcrumbs-list {
-  color: var(--color-text-secondary-dark);
+  /* Apply M3 Label Large Typography */
+  font-family: var(--m3-type-label-large-font);
+  font-size: var(--m3-type-label-large-size); /* 14px */
+  font-weight: var(--m3-type-label-large-weight); /* Medium (500) */
+  line-height: var(--m3-type-label-large-line-height);
+  letter-spacing: var(--m3-type-label-large-letter-spacing);
+  /* Default color set on items below */
 }
 
 .breadcrumb-item {
@@ -29,51 +27,46 @@ html[data-theme='dark'] .breadcrumbs-list {
   align-items: center;
 }
 
-.breadcrumb-link,
-.breadcrumb-current {
-  color: inherit;
+.breadcrumb-link {
+  /* Use M3 muted color for non-current links */
+  color: var(--color-on-surface-variant);
   text-decoration: none;
+  padding: 0 var(--space-xxs);
+  display: flex;
+  align-items: center;
+  transition: color var(--transition-duration) ease; /* Add transition */
+}
+
+.breadcrumb-link:hover,
+.breadcrumb-link:focus {
+  /* Change color on hover/focus, remove underline */
+  color: var(--color-primary); /* Use primary color for interaction */
+  text-decoration: none;
+  outline: none;
+}
+
+.breadcrumb-current {
+  /* Use M3 primary text color for current item */
+  color: var(--color-on-surface);
+  font-weight: var(--m3-type-label-large-weight); /* Keep consistent weight */
   padding: 0 var(--space-xxs);
   display: flex;
   align-items: center;
 }
 
-.breadcrumb-link:hover,
-.breadcrumb-link:focus {
-  text-decoration: underline;
-  color: var(--color-primary);
-  outline: none;
-}
-
-html[data-theme='dark'] .breadcrumb-link:hover,
-html[data-theme='dark'] .breadcrumb-link:focus {
-    color: var(--color-secondary); /* Or adjust for dark mode */
-}
-
-.breadcrumb-current {
-  font-weight: 500; /* Slightly bolder */
-  color: var(--color-text-primary-light);
-}
-
-html[data-theme='dark'] .breadcrumb-current {
-  color: var(--color-text-primary-dark);
-}
-
-
 .breadcrumb-separator {
   margin: 0 var(--space-xxs);
   user-select: none;
-  color: var(--color-text-secondary-light);
-}
-
-html[data-theme='dark'] .breadcrumb-separator {
-    color: var(--color-text-secondary-dark);
+  /* Use same muted color as links */
+  color: var(--color-on-surface-variant);
 }
 
 .breadcrumb-icon {
   width: 1rem; /* 16px */
   height: 1rem;
-  margin-right: var(--space-xxs); /* Space between icon and text if needed */
+  margin-right: var(--space-xxs);
+  /* Ensure icon color matches text */
+  fill: currentColor;
 }
 
 /* Hide the home text visually but keep for screen readers */

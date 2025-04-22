@@ -119,6 +119,40 @@
   margin: 0;
 }
 
+/* === Specific overrides for iconOnly buttons === */
+/* Default icon color for standard variants when iconOnly */
+.iconOnly.outlined,
+.iconOnly.text,
+.iconOnly.elevated,
+.iconOnly.tonal { /* Add other variants if needed */
+  color: var(--color-on-surface-variant); /* Neutral default icon color */
+}
+
+/* Override hover/focus for standard outlined iconOnly button */
+/* (Does not apply if .colorError, .colorSecondary etc. is also applied) */
+.iconOnly.outlined:not([class*='color']):hover,
+.iconOnly.outlined:not([class*='color']):focus-visible {
+  color: var(--color-secondary); /* Edit icon hover/focus */
+  border-color: var(--color-secondary); /* Match border */
+}
+.iconOnly.outlined:not([class*='color']) > .stateLayer {
+  background-color: var(--color-secondary); /* Use secondary for state layer too */
+}
+
+/* Ensure error color still applies correctly for iconOnly text buttons */
+.iconOnly.text.colorError {
+  color: var(--color-error); /* Error color for delete */
+}
+.iconOnly.text.colorError > .stateLayer {
+  background-color: var(--color-error);
+}
+
+/* Reset color for variants that use background color as primary indicator */
+.iconOnly.filled {
+    /* Keep default filled behavior (color determined by .colorPrimary etc) */
+    /* This override section is primarily for text/outlined/elevated */
+}
+
 /* Visually hide text but keep for screen readers */
 .visuallyHidden {
   border: 0;
@@ -149,11 +183,11 @@
   background-color: transparent;
   border-width: 1px;
   border-style: solid;
-  /* Border color set by .color* classes */
-  /* Text color set by .color* classes */
+  /* Border color set by .color* classes or defaults */
+  /* Text color set by .color* classes or defaults (or iconOnly override) */
 }
 .outlined .stateLayer {
-  /* State layer should use text color */
+  /* State layer should use text color (which might be overridden by iconOnly rules) */
   background-color: currentColor;
 }
 
@@ -161,7 +195,7 @@
 .text {
   background-color: transparent;
   padding: 0 12px; /* Less padding for text buttons */
-  /* Text color set by .color* classes */
+  /* Text color set by .color* classes or defaults (or iconOnly override) */
 }
 .text.iconOnly {
     padding: 0; /* Override text button padding for icon only */
@@ -204,178 +238,216 @@ html[data-theme='dark'] .elevated:active {
 
 /* --- Primary --- */
 .colorPrimary.filled {
-  background-color: var(--m3-color-primary);
-  color: var(--m3-color-on-primary);
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
 }
 .colorPrimary.filled > .stateLayer {
-  background-color: var(--m3-color-on-primary);
+  background-color: var(--color-on-primary);
 }
 
 .colorPrimary.tonal {
-  background-color: var(--m3-color-primary-container);
-  color: var(--m3-color-on-primary-container);
+  background-color: var(--color-primary-container);
+  color: var(--color-on-primary-container);
 }
 .colorPrimary.tonal > .stateLayer {
-  background-color: var(--m3-color-on-primary-container);
+  background-color: var(--color-on-primary-container);
 }
 
 .colorPrimary.outlined {
-  border-color: var(--m3-color-outline); /* Default outline */
-  color: var(--m3-color-primary);
+  border-color: var(--color-outline); /* Default outline */
+  color: var(--color-primary);
 }
 .colorPrimary.outlined:focus-visible, /* Use primary for focus/hover state */
 .colorPrimary.outlined:hover {
-    border-color: var(--m3-color-primary);
+    border-color: var(--color-primary);
 }
 .colorPrimary.outlined > .stateLayer {
-    background-color: var(--m3-color-primary);
+    background-color: var(--color-primary);
+}
+
+/* Explicitly reset iconOnly outlined primary back to primary if specified */
+.colorPrimary.outlined.iconOnly {
+    color: var(--color-primary);
+}
+.colorPrimary.outlined.iconOnly:hover,
+.colorPrimary.outlined.iconOnly:focus-visible {
+    border-color: var(--color-primary); /* Ensure border matches */
+}
+.colorPrimary.outlined.iconOnly > .stateLayer {
+    background-color: var(--color-primary);
 }
 
 .colorPrimary.text {
-  color: var(--m3-color-primary);
+  color: var(--color-primary);
 }
 .colorPrimary.text > .stateLayer {
-  background-color: var(--m3-color-primary);
+  background-color: var(--color-primary);
 }
 
 .colorPrimary.elevated {
-  background-color: var(--m3-color-surface-container-low);
-  color: var(--m3-color-primary);
+  background-color: var(--color-surface-container-low);
+  color: var(--color-primary);
 }
 .colorPrimary.elevated > .stateLayer {
-  background-color: var(--m3-color-primary);
+  background-color: var(--color-primary);
 }
 
 /* --- Secondary --- */
 .colorSecondary.filled {
-  background-color: var(--m3-color-secondary);
-  color: var(--m3-color-on-secondary);
+  background-color: var(--color-secondary);
+  color: var(--color-on-secondary);
 }
 .colorSecondary.filled > .stateLayer {
-  background-color: var(--m3-color-on-secondary);
+  background-color: var(--color-on-secondary);
 }
 
 .colorSecondary.tonal {
-  background-color: var(--m3-color-secondary-container);
-  color: var(--m3-color-on-secondary-container);
+  background-color: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
 }
 .colorSecondary.tonal > .stateLayer {
-  background-color: var(--m3-color-on-secondary-container);
+  background-color: var(--color-on-secondary-container);
 }
 
 .colorSecondary.outlined {
-  border-color: var(--m3-color-outline);
-  color: var(--m3-color-secondary);
+  border-color: var(--color-outline);
+  color: var(--color-secondary);
 }
 .colorSecondary.outlined:focus-visible,
 .colorSecondary.outlined:hover {
-    border-color: var(--m3-color-secondary);
+    border-color: var(--color-secondary);
 }
 .colorSecondary.outlined > .stateLayer {
-    background-color: var(--m3-color-secondary);
+    background-color: var(--color-secondary);
+}
+
+/* Explicitly reset iconOnly outlined secondary back to secondary if specified */
+.colorSecondary.outlined.iconOnly {
+    color: var(--color-secondary);
+}
+.colorSecondary.outlined.iconOnly:hover,
+.colorSecondary.outlined.iconOnly:focus-visible {
+    border-color: var(--color-secondary); /* Ensure border matches */
+}
+.colorSecondary.outlined.iconOnly > .stateLayer {
+    background-color: var(--color-secondary);
 }
 
 .colorSecondary.text {
-  color: var(--m3-color-secondary);
+  color: var(--color-secondary);
 }
 .colorSecondary.text > .stateLayer {
-  background-color: var(--m3-color-secondary);
+  background-color: var(--color-secondary);
 }
 
 .colorSecondary.elevated {
-  background-color: var(--m3-color-surface-container-low);
-  color: var(--m3-color-secondary);
+  background-color: var(--color-surface-container-low);
+  color: var(--color-secondary);
 }
 .colorSecondary.elevated > .stateLayer {
-  background-color: var(--m3-color-secondary);
+  background-color: var(--color-secondary);
 }
 
 /* --- Tertiary --- */
 .colorTertiary.filled {
-  background-color: var(--m3-color-tertiary);
-  color: var(--m3-color-on-tertiary);
+  background-color: var(--color-tertiary);
+  color: var(--color-on-tertiary);
 }
 .colorTertiary.filled > .stateLayer {
-  background-color: var(--m3-color-on-tertiary);
+  background-color: var(--color-on-tertiary);
 }
 
+/* Tonal Tertiary not explicitly defined in initial M3 set, using secondary-container as placeholder */
 .colorTertiary.tonal {
-  background-color: var(--m3-color-tertiary-container);
-  color: var(--m3-color-on-tertiary-container);
+  background-color: var(--color-secondary-container); /* Placeholder */
+  color: var(--color-on-secondary-container); /* Placeholder */
 }
 .colorTertiary.tonal > .stateLayer {
-  background-color: var(--m3-color-on-tertiary-container);
+  background-color: var(--color-on-secondary-container); /* Placeholder */
 }
 
 .colorTertiary.outlined {
-  border-color: var(--m3-color-outline);
-  color: var(--m3-color-tertiary);
+  border-color: var(--color-outline);
+  color: var(--color-tertiary);
 }
 .colorTertiary.outlined:focus-visible,
 .colorTertiary.outlined:hover {
-    border-color: var(--m3-color-tertiary);
+    border-color: var(--color-tertiary);
 }
 .colorTertiary.outlined > .stateLayer {
-    background-color: var(--m3-color-tertiary);
+    background-color: var(--color-tertiary);
 }
 
 .colorTertiary.text {
-  color: var(--m3-color-tertiary);
+  color: var(--color-tertiary);
 }
 .colorTertiary.text > .stateLayer {
-  background-color: var(--m3-color-tertiary);
+  background-color: var(--color-tertiary);
 }
 
 .colorTertiary.elevated {
-  background-color: var(--m3-color-surface-container-low);
-  color: var(--m3-color-tertiary);
+  background-color: var(--color-surface-container-low);
+  color: var(--color-tertiary);
 }
 .colorTertiary.elevated > .stateLayer {
-  background-color: var(--m3-color-tertiary);
+  background-color: var(--color-tertiary);
 }
 
 /* --- Error --- */
 .colorError.filled {
-  background-color: var(--m3-color-error);
-  color: var(--m3-color-on-error);
+  background-color: var(--color-error);
+  color: var(--color-on-error);
 }
 .colorError.filled > .stateLayer {
-  background-color: var(--m3-color-on-error);
+  background-color: var(--color-on-error);
 }
 
+/* Tonal Error not explicitly defined in initial M3 set, using primary-container as placeholder */
 .colorError.tonal {
-  background-color: var(--m3-color-error-container);
-  color: var(--m3-color-on-error-container);
+  background-color: var(--color-primary-container); /* Placeholder: Needs error-container */
+  color: var(--color-on-primary-container); /* Placeholder: Needs on-error-container */
 }
 .colorError.tonal > .stateLayer {
-  background-color: var(--m3-color-on-error-container);
+  background-color: var(--color-on-primary-container); /* Placeholder */
 }
 
 .colorError.outlined {
-  border-color: var(--m3-color-outline);
-  color: var(--m3-color-error);
+  border-color: var(--color-outline);
+  color: var(--color-error);
 }
 .colorError.outlined:focus-visible,
 .colorError.outlined:hover {
-    border-color: var(--m3-color-error);
+    border-color: var(--color-error);
 }
 .colorError.outlined > .stateLayer {
-    background-color: var(--m3-color-error);
+    background-color: var(--color-error);
+}
+
+/* Explicitly reset iconOnly outlined error back to error if specified */
+.colorError.outlined.iconOnly {
+    color: var(--color-error);
+}
+.colorError.outlined.iconOnly:hover,
+.colorError.outlined.iconOnly:focus-visible {
+    border-color: var(--color-error); /* Ensure border matches */
+}
+.colorError.outlined.iconOnly > .stateLayer {
+    background-color: var(--color-error);
 }
 
 .colorError.text {
-  color: var(--m3-color-error);
+  color: var(--color-error);
 }
 .colorError.text > .stateLayer {
-  background-color: var(--m3-color-error);
+  background-color: var(--color-error);
 }
 
 .colorError.elevated {
-  background-color: var(--m3-color-surface-container-low);
-  color: var(--m3-color-error);
+  background-color: var(--color-surface-container-low);
+  color: var(--color-error);
 }
 .colorError.elevated > .stateLayer {
-  background-color: var(--m3-color-error);
+  background-color: var(--color-error);
 }
 
 /* === Disabled State === */
@@ -383,7 +455,7 @@ html[data-theme='dark'] .elevated:active {
   cursor: not-allowed;
   box-shadow: none; /* Remove elevation on disabled */
   /* Text color */
-  color: color-mix(in srgb, var(--m3-color-on-surface) 38%, transparent);
+  color: color-mix(in srgb, var(--color-on-surface) 38%, transparent);
 }
 
 /* Disabled Background/Border */
@@ -391,13 +463,13 @@ html[data-theme='dark'] .elevated:active {
 .filled:disabled,
 .tonal:disabled,
 .elevated:disabled {
-  background-color: color-mix(in srgb, var(--m3-color-on-surface) 12%, transparent);
+  background-color: color-mix(in srgb, var(--color-on-surface) 12%, transparent);
   border-color: transparent;
 }
 
 .outlined:disabled {
   background-color: transparent;
-  border-color: color-mix(in srgb, var(--m3-color-on-surface) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-on-surface) 12%, transparent);
 }
 
 .text:disabled {

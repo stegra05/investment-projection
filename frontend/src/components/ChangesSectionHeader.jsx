@@ -13,7 +13,7 @@ export default function ChangesSectionHeader({
         <header className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>Planned Changes</h2>
             <Button
-                variant="primary"
+                variant="filled"
                 onClick={onAddChange}
                 icon={<PlusIcon />}
                 disabled={disabled}
