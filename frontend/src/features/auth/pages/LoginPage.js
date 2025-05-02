@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import useAuthStore from '../../../store/authStore';
 import LoginForm from '../components/LoginForm';
 import Layout from '../../../components/Layout/Layout';
-import authService from '../../../api/authService';
 
 const LoginPage = () => {
   const login = useAuthStore(state => state.login);
@@ -24,7 +23,7 @@ const LoginPage = () => {
     } else {
       // Fallback if error is an object without a standard message
       errorMessage = 'An unexpected error occurred. Please try again.'; 
-      console.error("Unknown error format:", error); // Log for debugging
+      console.error('Unknown error format:', error); // Log for debugging
     }
   }
 
@@ -41,7 +40,7 @@ const LoginPage = () => {
         {/* Pass isLoading, but not error, to LoginForm */}
         <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
         <div className="mt-6 text-center text-sm text-gray-600">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
             Register
           </Link>

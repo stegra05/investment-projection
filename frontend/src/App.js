@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import useAuthStore from './store/authStore';
 import LoginPage from './features/auth/pages/LoginPage';
 import RegisterPage from './features/auth/pages/RegisterPage';
+import DashboardPage from './features/dashboard/pages/DashboardPage';
 
 // Layout Component
 const Layout = ({ children }) => (
@@ -15,29 +16,6 @@ const Layout = ({ children }) => (
 // Add propTypes validation for Layout
 Layout.propTypes = {
   children: PropTypes.node.isRequired,
-};
-
-// Placeholder Dashboard Page (consider moving to features/dashboard/pages)
-const DashboardPage = () => {
-  const logout = useAuthStore(state => state.logout);
-
-  return (
-    <Layout>
-      <div className="container mx-auto py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <button
-            onClick={logout}
-            className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          >
-            Logout
-          </button>
-        </div>
-        <p>Welcome to your investment dashboard.</p>
-        {/* Placeholder for portfolio list */}
-      </div>
-    </Layout>
-  );
 };
 
 // Protected Route Component
