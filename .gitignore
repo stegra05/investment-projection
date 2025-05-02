@@ -42,6 +42,10 @@ venv/
 env/
 ENV/
 
+# Explicitly ignore frontend env files
+frontend/.env.development
+frontend/.env.production
+
 # Flask specific
 instance/
 .webassets-cache

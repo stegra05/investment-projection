@@ -1,0 +1,5 @@
+- As a user I want to be able to look at the password I'm typing if I want to check, so that I have it easier typing in my password.
+- As a user, I want to be able to see live feedback on how strong my password is, when registering. so that I don't use bad passwords
+- As a user, I want to enter my password twice while registering, so that i don't mistakenly enter my password wrong
+- As a user, I want to be able to have hints on what I have to enter, so that i don't get confused when entering information
+- As a user, I want to be able to see feedback if login/  registering worked, so that I know what I have to do.
