@@ -30,7 +30,7 @@ function NavigationPanel() {
               <li key={portfolio.portfolio_id} className="list-none">
                 <button 
                   type="button"
-                  className={`w-full text-left p-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-300 ${isActive ? 'bg-blue-100 font-semibold' : ''}`}
+                  className={`w-full text-left p-2 rounded text-gray-800 hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-300 ${isActive ? 'bg-primary-100 text-primary-700 font-semibold border-l-4 border-primary-500' : ''}`}
                   onClick={() => navigate(`/portfolio/${portfolio.portfolio_id}`)}
                 >
                   {portfolio.name}

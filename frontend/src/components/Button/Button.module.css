@@ -8,12 +8,11 @@
 }
 
 .primary {
-  background-color: #2563eb;
-  color: white;
+  @apply bg-primary-600 text-white;
 }
 
 .primary:hover {
-  background-color: #1d4ed8;
+  @apply bg-primary-700;
 }
 
 .secondary {

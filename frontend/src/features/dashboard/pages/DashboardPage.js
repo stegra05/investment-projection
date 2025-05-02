@@ -30,7 +30,7 @@ function DashboardPage() {
     setIsCreating(true);
     setCreateError(null);
     try {
-      const newPortfolio = await portfolioService.createPortfolio(portfolioData);
+      await portfolioService.createPortfolio(portfolioData);
       setIsModalOpen(false); // Close modal on success
       await fetchPortfolios(); // Refresh the list
     } catch (err) {
