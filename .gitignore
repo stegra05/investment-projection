@@ -190,6 +190,7 @@ cython_debug/
 
 
 # Node.js / Frontend
+package-lock.json
 node_modules/
 dist/
 build/
