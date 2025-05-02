@@ -43,27 +43,27 @@ This plan focuses on completing the authentication flow and setting up the found
 ## 2. Implement Basic Dashboard
 
 * **2.1 Create Portfolio Service:**
-    * [ ] **2.1.1** Create `portfolioService.js`: Create the file `src/api/portfolioService.js`.
-    * [ ] **2.1.2** Add `getUserPortfolios` Signature: Add `getUserPortfolios: async () => { ... }` to the service object.
-    * [ ] **2.1.3** Implement `getUserPortfolios` API Call: Inside the function, use the configured Axios instance (`instance`) to make a GET request to `ENDPOINTS.PORTFOLIO.LIST`.
-    * [ ] **2.1.4** Handle `getUserPortfolios` Response/Error: Return `response.data` in a `try` block. Re-throw or handle errors in a `catch` block.
+    * [x] **2.1.1** Create `portfolioService.js`: Create the file `src/api/portfolioService.js`.
+    * [x] **2.1.2** Add `getUserPortfolios` Signature: Add `getUserPortfolios: async () => { ... }` to the service object.
+    * [x] **2.1.3** Implement `getUserPortfolios` API Call: Inside the function, use the configured Axios instance (`instance`) to make a GET request to `ENDPOINTS.PORTFOLIO.LIST`.
+    * [x] **2.1.4** Handle `getUserPortfolios` Response/Error: Return `response.data` in a `try` block. Re-throw or handle errors in a `catch` block.
     * Relevant Files: `src/api/portfolioService.js` (New), `src/config/api.js`, `src/api/axiosInstance.js`
 
 * **2.2 Create Portfolio List Store:**
-    * [ ] **2.2.1** Create `portfolioListStore.js`: Create the file `src/store/portfolioListStore.js` and import `create` from `zustand`.
-    * [ ] **2.2.2** Define Store State: Inside `create((set) => ({ ... }))`, define initial state: `portfolios: []`, `isLoading: false`, `error: null`.
-    * [ ] **2.2.3** Add `WorkspacePortfolios` Action Signature: Define an async action: `WorkspacePortfolios: async () => { ... }`.
-    * [ ] **2.2.4** Implement `WorkspacePortfolios` Logic: Inside the action: call `set({ isLoading: true, error: null })`. Use a `try...catch` block. In `try`, call `portfolioService.getUserPortfolios()`. On success, call `set({ portfolios: data, isLoading: false })`. In `catch`, call `set({ error: errorMessage, isLoading: false })`.
+    * [x] **2.2.1** Create `portfolioListStore.js`: Create the file `src/store/portfolioListStore.js` and import `create` from `zustand`.
+    * [x] **2.2.2** Define Store State: Inside `create((set) => ({ ... }))`, define initial state: `portfolios: []`, `isLoading: false`, `error: null`.
+    * [x] **2.2.3** Add `fetchPortfolios` Action Signature: Define an async action: `fetchPortfolios: async () => { ... }`.
+    * [x] **2.2.4** Implement `fetchPortfolios` Logic: Inside the action: call `set({ isLoading: true, error: null })`. Use a `try...catch` block. In `try`, call `portfolioService.getUserPortfolios()`. On success, call `set({ portfolios: data, isLoading: false })`. In `catch`, call `set({ error: errorMessage, isLoading: false })`.
     * Relevant Files: `src/store/portfolioListStore.js` (New), `src/api/portfolioService.js`
 
 * **2.3 Update Dashboard Page:**
-    * [ ] **2.3.1** Move `DashboardPage`: (Optional but recommended) Create `src/features/dashboard/pages/DashboardPage.js`. Move the `DashboardPage` component definition from `src/App.js` into this new file. Update the import and route in `src/App.js`.
-    * [ ] **2.3.2** Use Store State: In `DashboardPage.js`, import `usePortfolioListStore`. Get state needed: `const { portfolios, isLoading, error, fetchPortfolios } = usePortfolioListStore();`.
-    * [ ] **2.3.3** Fetch Data on Mount: Import `useEffect` from `react`. Add `useEffect(() => { fetchPortfolios(); }, [fetchPortfolios]);`.
-    * [ ] **2.3.4** Render Loading State: Add conditional rendering: `if (isLoading) { return <div>Loading...</div>; }`.
-    * [ ] **2.3.5** Render Error State: Add conditional rendering: `if (error) { return <div>Error: {error}</div>; }`.
-    * [ ] **2.3.6** Render Portfolio List: Map over the `portfolios` array. For each `portfolio`, render its `name` (e.g., inside an `li` or a `div`). Add a unique `key` prop.
-    * [ ] **2.3.7** Add Create Button Stub: Import `Button` component. Add `<Button>Create New Portfolio</Button>` below the list.
+    * [x] **2.3.1** Move `DashboardPage`: (Optional but recommended) Create `src/features/dashboard/pages/DashboardPage.js`. Move the `DashboardPage` component definition from `src/App.js` into this new file. Update the import and route in `src/App.js`.
+    * [x] **2.3.2** Use Store State: In `DashboardPage.js`, import `usePortfolioListStore`. Get state needed: `const { portfolios, isLoading, error, fetchPortfolios } = usePortfolioListStore();`.
+    * [x] **2.3.3** Fetch Data on Mount: Import `useEffect` from `react`. Add `useEffect(() => { fetchPortfolios(); }, [fetchPortfolios]);`.
+    * [x] **2.3.4** Render Loading State: Add conditional rendering: `if (isLoading) { return <div>Loading...</div>; }`.
+    * [x] **2.3.5** Render Error State: Add conditional rendering: `if (error) { return <div>Error: {error}</div>; }`.
+    * [x] **2.3.6** Render Portfolio List: Map over the `portfolios` array. For each `portfolio`, render its `name` (e.g., inside an `li` or a `div`). Add a unique `key` prop.
+    * [x] **2.3.7** Add Create Button Stub: Import `Button` component. Add `<Button>Create New Portfolio</Button>` below the list.
     * Relevant Files: `src/features/dashboard/pages/DashboardPage.js` (New/Modify), `src/App.js`, `src/store/portfolioListStore.js`, `src/components/Button/Button.js`
 
 ## 3. Set up Portfolio Workspace Structure

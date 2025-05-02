@@ -5,6 +5,7 @@ import useAuthStore from './store/authStore';
 import LoginPage from './features/auth/pages/LoginPage';
 import RegisterPage from './features/auth/pages/RegisterPage';
 import DashboardPage from './features/dashboard/pages/DashboardPage';
+import PortfolioWorkspacePage from './features/portfolio/pages/PortfolioWorkspacePage';
 
 // Layout Component
 const Layout = ({ children }) => (
@@ -40,6 +41,14 @@ function App() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route 
+          path="/portfolio/:portfolioId"
+          element={
+            <ProtectedRoute>
+              <PortfolioWorkspacePage />
             </ProtectedRoute>
           }
         />
