@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import portfolioService from '../../../api/portfolioService';
 
 // 1. Create the Context
 const PortfolioContext = createContext();
@@ -9,20 +10,46 @@ const PortfolioContext = createContext();
 export const PortfolioProvider = ({ children }) => {
   const { portfolioId } = useParams();
 
-  // TODO: Add state related to the specific portfolio being viewed
-  // e.g., portfolio details, assets, projections, loading/error states
-  const [portfolioData, setPortfolioData] = useState(null); // eslint-disable-line no-unused-vars
-  const [isLoading, setIsLoading] = useState(false); // eslint-disable-line no-unused-vars
-  const [error, setError] = useState(null); // eslint-disable-line no-unused-vars
+  // State for portfolio data, loading, and error
+  const [portfolio, setPortfolio] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // TODO: Add functions to fetch/update portfolio data
+  // Effect to fetch portfolio data when portfolioId changes
+  useEffect(() => {
+    if (!portfolioId) {
+      // Handle case where ID might be missing momentarily or invalid route structure
+      setError(new Error('Portfolio ID is missing.'));
+      setIsLoading(false);
+      setPortfolio(null);
+      return;
+    }
 
+    const fetchPortfolioData = async () => {
+      setIsLoading(true);
+      setError(null);
+      setPortfolio(null); // Clear previous data
+      try {
+        const data = await portfolioService.getPortfolioById(portfolioId);
+        setPortfolio(data); 
+      } catch (err) {
+        console.error('Error fetching portfolio:', err);
+        setError(err.response?.data || err); // Store the error object or response data
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPortfolioData();
+  }, [portfolioId]); // Dependency array ensures this runs when ID changes
+
+  // The value provided to consuming components
   const value = {
     portfolioId,
-    portfolioData,
+    portfolio,
     isLoading,
     error,
-    // TODO: Export functions
+    // TODO: Add functions for updates if needed later
   };
 
   return (

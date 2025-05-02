@@ -40,8 +40,25 @@ const portfolioService = {
     }
   },
 
+  /**
+   * Fetches the details of a specific portfolio by its ID.
+   * @param {string|number} portfolioId - The ID of the portfolio to fetch.
+   * @returns {Promise<object>} A promise that resolves to the portfolio object.
+   * @throws {Error} Throws an error if the API request fails.
+   */
+  getPortfolioById: async (portfolioId) => {
+    try {
+      const endpoint = ENDPOINTS.PORTFOLIO.DETAIL(portfolioId);
+      const response = await instance.get(endpoint);
+      return response.data; // Assuming API returns the portfolio object directly
+    } catch (error) {
+      console.error(`Error fetching portfolio with ID ${portfolioId}:`, error);
+      throw error; // Re-throw for the caller (PortfolioContext) to handle
+    }
+  },
+
   // Add other portfolio-related API calls here in the future
-  // e.g., getPortfolioDetails, updatePortfolio, deletePortfolio
+  // e.g., updatePortfolio, deletePortfolio
 };
 
 export default portfolioService; 
