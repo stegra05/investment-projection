@@ -3,12 +3,14 @@ import PropTypes from 'prop-types';
 import Button from '../../../components/Button/Button';
 import Input from '../../../components/Input/Input';
 import styles from './LoginForm.module.css';
+import useAuthStore from '../../../store/authStore';
 
 const LoginForm = ({ onSubmit, isLoading }) => {
   const [formData, setFormData] = useState({
-    email: '',
+    identifier: '',
     password: '',
   });
+  const clearError = useAuthStore((state) => state.clearError);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -16,25 +18,40 @@ const LoginForm = ({ onSubmit, isLoading }) => {
       ...prev,
       [name]: value,
     }));
+    clearError();
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    const { identifier, password } = formData;
+
+    const isEmail = identifier.includes('@');
+
+    const payload = {
+      password: password,
+    };
+    if (isEmail) {
+      payload.email = identifier;
+    } else {
+      payload.username = identifier;
+    }
+
+    onSubmit(payload);
   };
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
       <Input
-        label="Email"
-        id="email"
-        name="email"
-        type="email"
-        value={formData.email}
+        label="Email or Username"
+        id="identifier"
+        name="identifier"
+        type="text"
+        value={formData.identifier}
         onChange={handleChange}
         required
         disabled={isLoading}
-        autoComplete="email"
+        autoComplete="username email"
+        placeholder="your@email.com or username"
       />
       <Input
         label="Password"
@@ -46,6 +63,7 @@ const LoginForm = ({ onSubmit, isLoading }) => {
         required
         disabled={isLoading}
         autoComplete="current-password"
+        placeholder="Enter your password"
       />
       <Button
         type="submit"
