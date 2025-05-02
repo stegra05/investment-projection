@@ -4,7 +4,7 @@
 
 This document outlines the functional requirements for the Investment Planning Projection website, prioritized using MoSCoW. The core aim remains: *To provide personal finance planners and finance students with a simple, flexible web tool for visualizing long-term (3-40 year) investment projections, allowing detailed planning of future contributions/withdrawals and utilizing customizable projection models.*
 
-Requirements are now contextualized within the adopted **hybrid multi-panel and guided workflow UI structure** for the frontend.
+Requirements are contextualized within the adopted **hybrid multi-panel and guided workflow UI structure**, using a **Data-Focused Flat 2.0 aesthetic**, **purposeful animation**, and **clear, professional content**.
 
 * **Must-have:** Critical for initial launch/core usability.
 * **Should-have:** Important enhancements adding significant value.
@@ -29,11 +29,11 @@ Requirements are now contextualized within the adopted **hybrid multi-panel and 
     * ***Frontend Location:*** **Inputs and visualization implemented within the dedicated 'Projection Panel' of the Portfolio Workspace.** *(See also SH-MC1, SH-MC3, SH-INF2 for enhancements. Consider a Guided Workflow for complex setup - see SH-GW1 below)*
 * **M-7: User Registration & Login:** Users must be able to create an account and log in securely.
     * ***Frontend Location:*** **Handled via dedicated 'Login Page' and 'Registration Page'.**
-* **M-8: Simple Interface:** The UI must be clean and logically structured.
-    * ***Frontend Location:*** **Applies globally, supported by the multi-panel layout and potentially guided workflows.** *(Guided by M3 NFR)*
-* **M-UX1 (Allocation Guidance):** The UI MUST clearly display total current allocation and remaining % needed while adjusting assets.
+* **M-8: Simple Interface:** The UI must be clean and logically structured, reflecting the Flat 2.0 aesthetic and principles.
+    * ***Frontend Location:*** **Applies globally, supported by the multi-panel layout and potentially guided workflows.** *(Guided by aesthetic choice and NFRs)*
+* **M-UX1 (Allocation Guidance):** The UI MUST clearly display total current allocation and remaining % needed while adjusting assets. Microcopy must be clear.
     * ***Frontend Location:*** **Implemented within the 'Assets View' of the Main Content Panel.**
-* **M-UX2 (Allocation Error Msg):** Provide clear error message if allocations don't sum to 100% upon attempting to save/update.
+* **M-UX2 (Allocation Error Msg):** Provide clear, helpful error message if allocations don't sum to 100% upon attempting to save/update.
     * ***Frontend Location:*** **Implemented within the 'Assets View' or via a dedicated allocation adjustment UI.**
 
 ## 3. Should-have Requirements
@@ -49,10 +49,10 @@ Requirements are now contextualized within the adopted **hybrid multi-panel and 
 * **S-7: Password Management:** Secure password management features (reset).
     * *(Separate Settings/Profile page or flow)*
 * **SH-MC1 (Monte Carlo Option):** Option to run Monte Carlo projections.
-    * *(Projection Panel input)*
+    * *(Projection Panel input, likely via SH-GW1 workflow)*
 * **SH-MC2 (Volatility Input/Storage):** Select `asset_class`, optionally input `manual_volatility`.
     * *(Assets View)*
-* **SH-MC3 (Monte Carlo Output):** Display MC results as probability bands.
+* **SH-MC3 (Monte Carlo Output):** Display MC results as probability bands with clear chart styling.
     * *(Projection Panel chart)*
 * **SH-MC4 (MC Backend/API):** Backend/API support for Monte Carlo.
     * *(Backend requirement)*
@@ -64,13 +64,13 @@ Requirements are now contextualized within the adopted **hybrid multi-panel and 
     * *(API/Projection Panel)*
 * **SH-PV1 (Store Portfolio Value):** Store calculated total value persistently.
     * *(Backend/Database requirement, displayed in Navigation/Overview Panel)*
-* **SH-UX1 (Projection Feedback):** Display informative status during projections.
+* **SH-UX1 (Projection Feedback):** Display informative status during projections (e.g., "Calculating...", "Fetching data..."). Uses clear microcopy and subtle animation.
     * *(Projection Panel)*
 * **SH-UX2 (Recurring Changes):** Define recurring future changes.
     * *(Planned Changes View)*
-* **SH-UX3 (Contextual Info):** Display relevant contextual info in change form.
+* **SH-UX3 (Contextual Info):** Display relevant contextual info in change form (e.g., current balance if relevant). Uses clear microcopy/tooltips.
     * *(Planned Changes View)*
-* **SH-GW1 (Guided Projection Workflow):** The system SHOULD use a guided workflow (e.g., modal steps, dedicated workflow panel state) for configuring complex projections like Monte Carlo, breaking down parameter inputs logically. *(New - reflects accepted idea #3)*
+* **SH-GW1 (Guided Projection Workflow):** The system SHOULD use a guided workflow (e.g., modal steps, dedicated workflow panel state) for configuring complex projections like Monte Carlo, breaking down parameter inputs logically. Workflow uses clear, guiding language and smooth animations. *(Reflects accepted idea #3)*
     * ***Frontend Location:*** **Triggered from the 'Projection Panel'.**
 
 ## 4. Could-have Requirements
@@ -98,4 +98,4 @@ Requirements are now contextualized within the adopted **hybrid multi-panel and 
 * (Any other features not listed above)
 
 ---
-*This updated document aligns functional requirements with the multi-panel workspace and incorporates the concept of guided workflows for specific tasks like complex projection setup (SH-GW1).*
+*This updated document aligns functional requirements with the multi-panel workspace and guided workflow structure, incorporating the chosen aesthetic and content principles where relevant (e.g., in M-8, M-UX1, M-UX2, SH-GW1).*

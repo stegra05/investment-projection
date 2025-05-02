@@ -2,7 +2,7 @@
 
 ## 1. Introduction
 
-This document outlines the selected technology stack for the Investment Planning Projection website. These choices are based on the project's functional requirements, non-functional requirements (especially maintainability, usability, budget), developer familiarity, and relevant knowledge base principles. The stack supports the implementation of the **hybrid multi-panel layout and guided workflow** frontend structure.
+This document outlines the selected technology stack for the Investment Planning Projection website. These choices are based on the project's functional requirements, non-functional requirements (especially maintainability, usability, budget), developer familiarity, and relevant knowledge base principles. The stack supports the implementation of the **hybrid multi-panel layout and guided workflow** frontend structure, styled with a **Data-Focused Flat 2.0 aesthetic**, **purposeful animation**, and **clear, professional content**.
 
 ## 2. Core Backend Technologies
 
@@ -28,9 +28,9 @@ This document outlines the selected technology stack for the Investment Planning
 * **Data Fetching:** **Axios**
     * *Rationale:* Small, popular library simplifying client-server communication (API calls); low overhead.
 * **Charting Library:** **Recharts**
-    * *Rationale:* React-centric, component-based library for creating charts; integrates naturally; renders SVG charts suitable for the Projection Panel.
+    * *Rationale:* React-centric, component-based library for creating charts; integrates naturally; renders SVG charts suitable for the Projection Panel. Adheres to Flat 2.0 aesthetic with appropriate configuration.
 * **Animation Library (Consideration):**
-    * *Rationale:* While not part of the initial core stack, implementing smooth transitions between panel states, guided workflow steps, and providing interactive feedback (NFR U-4) might benefit from a dedicated animation library later (e.g., **Framer Motion** for ease of UI interaction/layout animation or **React Spring** for physics-based effects). *(New Consideration)*
+    * *Rationale:* Implementing the approved subtle, performant animations for panel transitions, workflow steps, and microinteractions (NFR U-4) will likely benefit from a dedicated library. **Framer Motion** is a strong conceptual candidate due to its focus on UI interactions and layout animations. **React Spring** is an alternative for physics-based motion. *(Approved Consideration)*
 
 ## 4. Development & Workflow Tools
 
@@ -46,7 +46,7 @@ This document outlines the selected technology stack for the Investment Planning
 ## 5. Testing Frameworks
 
 * **Frontend Testing:** **Jest**
-    * *Rationale:* Popular framework for testing React applications (unit/integration tests for components, hooks, state logic).
+    * *Rationale:* Popular framework for testing React applications (unit/integration tests for components, hooks, state logic, panel interactions, workflow steps).
 * **Backend Testing:** **Pytest**
     * *Rationale:* Powerful and popular testing framework for Python (unit/integration tests for API endpoints, services, models).
 
@@ -56,4 +56,4 @@ This document outlines the selected technology stack for the Investment Planning
 * **Data APIs:** Prioritize free APIs or those with generous free tiers; consider caching.
 
 ---
-*This stack remains largely unchanged but includes notes acknowledging the increased complexity the multi-panel/guided workflow approach might bring to styling/component building and state management, suggesting potential future additions like animation libraries.*
+*This technology stack document confirms the chosen tools and includes notes reflecting the implications of the approved multi-panel/guided workflow structure, Flat 2.0 aesthetic, animation, and content strategy.*
