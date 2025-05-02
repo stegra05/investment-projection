@@ -1,49 +1,50 @@
-# Architecture Overview (Updated Again)
+# Architecture Overview (Updated - Multi-Panel & Guided Workflow)
 
 ## 1. Introduction
 
-This document provides a high-level overview of the system architecture for the Investment Planning Projection website. It describes the main components, how they interact, the flow of data, and how the architecture supports the key Non-Functional Requirements (NFRs).
+This document provides a high-level overview of the system architecture for the Investment Planning Projection website, updated to reflect the adoption of a **hybrid multi-panel and guided workflow UI structure** for the frontend. It describes the main components, how they interact, the flow of data, and how the architecture supports the key Non-Functional Requirements (NFRs).
 
 ## 2. Key Components
 
-The system is designed using a standard client-server architecture consisting of three primary components:
+The system retains a standard client-server architecture:
 
-* **Frontend (Client):** A single-page application (SPA) built using **React**. It runs in the user's web browser and is responsible for rendering the UI, capturing input, and displaying results.
-    * **UI Structure:** Organized into distinct views/pages (Login, Register, Dashboard) and a core **Portfolio Workspace** view utilizing a **tabbed interface** (Overview, Assets, Planned Changes, Projections).
-    * **Component Structure:** Components will be organized primarily by **feature/page/tab** (e.g., `features/AssetsTab/`, `features/Auth/`) to enhance modularity and maintainability (M-1). *(New specification)*
-    * **State Management Strategy:** A tiered approach will be used: *(New Section)*
-        * **Global State (Zustand):** Manages truly global data like user authentication status/details and the basic list of user portfolios.
-        * **Contextual State (React Context API):** Used within the `PortfolioWorkspace` to provide data for the currently selected portfolio (fetched once) to all its child tabs (Overview, Assets, Changes, Projections).
-        * **Local State (`useState`/`useReducer`):** Used extensively within individual components for form inputs, UI toggles, and temporary fetched data (e.g., projection results).
-        * *Rationale:* This balances simplicity, maintainability, and performance by scoping state appropriately.
-* **Backend (Server):** An API server built using **Flask (Python)**. Responsible for API request handling, business logic (auth, portfolio management, projections), database interaction via **SQLAlchemy**, and security enforcement.
-* **Database (Data Store):** A **PostgreSQL** relational database. Stores user data, portfolios, assets, planned changes, etc.
+* **Frontend (Client):** A single-page application (SPA) built using **React**. Runs in the browser, responsible for UI rendering, input capture, and results display.
+    * **UI Structure:** Organized into Login, Register, and Dashboard views. The core interaction area is the **Portfolio Workspace**, which now utilizes a **multi-panel layout** (especially on larger screens) instead of solely tabs. Guided workflows will be implemented for specific complex tasks (e.g., initial setup, advanced projections).
+    * **Component Structure:** Components organized by feature/view (e.g., `features/PortfolioNavigatorPanel/`, `features/AssetsEditor/`, `features/ProjectionViz/`, `workflows/ProjectionSetup/`).
+    * **State Management Strategy:** Tiered approach confirmed:
+        * **Global State (Zustand):** Manages auth status/details, list of user portfolios.
+        * **Contextual State (React Context API):** Likely used to manage the state of the *currently selected portfolio* across the different panels of the Portfolio Workspace. Might also manage state within multi-step guided workflows.
+        * **Local State (`useState`/`useReducer`):** Used extensively within individual components/panels for forms, UI state, and fetched results.
+* **Backend (Server):** API server using **Flask (Python)**. Handles API requests, business logic (auth, portfolio CRUD, change management, projections via `projection_engine.py`), DB interaction via **SQLAlchemy**, security.
+* **Database (Data Store):** **PostgreSQL** relational database. Stores user, portfolio, asset, planned change data.
 
 ## 3. Interactions
 
-* **Client-Server Communication:** React Frontend communicates with Flask Backend via RESTful API calls over HTTPS, defined in the API specification. Frontend uses **Axios** for requests.
+* **Client-Server Communication:** React Frontend communicates with Flask Backend via RESTful API calls (HTTPS) using **Axios**.
 * **Backend-Database Communication:** Flask Backend interacts with PostgreSQL via **SQLAlchemy**.
-* **Internal Frontend Navigation:** **React Router** manages transitions between pages. Tab navigation within the Portfolio Workspace manages view sections.
+* **Internal Frontend Navigation:** **React Router** manages transitions between main views (Login, Dashboard, Workspace). Navigation *within* the Portfolio Workspace primarily involves interactions triggering updates across panels or stepping through guided workflows, rather than traditional page/tab routing.
 
-## 4. Data Flow Example (Running a Projection - Updated)
+## 4. Data Flow Example (Running a Projection - Multi-Panel Context)
 
-1.  **User Action:** User logs in, navigates Dashboard, selects portfolio, clicks "Projections" tab in Portfolio Workspace.
-2.  **Input & API Request:** User enters parameters, clicks "Run Projection." React sends API request via Axios.
-3.  **Backend Processing:** Flask authenticates, queries DB via SQLAlchemy, runs projection engine.
-4.  **API Response:** Flask sends results back as JSON.
-5.  **Frontend Display:** React receives data, displays visualization using **Recharts** within the "Projections" tab. Status updates shown.
+1.  **User Action:** User logs in, sees Dashboard (e.g., in a navigation panel or separate view), selects a portfolio from the list/navigation panel.
+2.  **Workspace Load:** Portfolio data is fetched, populating the relevant panels (e.g., Main Content panel shows Assets/Changes view, Projection panel shows chart/inputs).
+3.  **Input & Workflow Trigger:** User interacts with Projection panel inputs. Clicking "Run Advanced Projection" might trigger a **Guided Workflow** (e.g., a modal sequence) for parameter setup.
+4.  **API Request:** Once parameters are confirmed (via workflow or direct input), React sends API request via Axios to `/projections` endpoint.
+5.  **Backend Processing:** Flask authenticates, verifies ownership, retrieves necessary data via SQLAlchemy, runs the `projection_engine.py` logic.
+6.  **API Response:** Flask sends results (e.g., projection data points) back as JSON.
+7.  **Frontend Display:** React receives data, updates state (potentially local state within the Projection panel or contextual state if other panels need awareness). The **Recharts** chart in the Projection panel re-renders to display the new visualization. Status updates are shown during the process.
 
-## 5. NFR Alignment
+## 5. NFR Alignment (Updated for New Structure)
 
-This architecture supports key NFRs:
+This revised architecture impacts NFR alignment:
 
-* **Maintainability (M-1):** Clear backend/frontend separation; modular **feature-based component structure** and **scoped state management** in React; SQLAlchemy on backend. Use of **ESLint/Prettier** enforced.
-* **Usability (U-1, U-2):** Tabbed workspace improves clarity/efficiency. **Tailwind CSS** allows for custom, clean UI. **M3** as strong guideline.
-* **Security (SEC-1-4):** Backend handles core auth/hashing. HTTPS enforced. Basic client-side validation planned; critical validation on backend.
-* **Performance (P-1, P-2):** Backend calculations separate. Frontend performance addressed via **code-splitting, lazy loading**, and appropriate state management.
-* **Reliability (R-1):** Tolerates occasional downtime.
-* **Data Accuracy (DA-1):** Backend calculations primary; Frontend ensures accurate display formatting using **Recharts** / number formatting.
-* **Constraints (C-1):** All chosen libraries (**React Router, Tailwind, Zustand, Axios, Recharts, Jest**) are free/open-source, adhering to budget.
+* **Maintainability (M-1):** Backend/frontend separation remains. Modular feature-based component structure and scoped state management in React are crucial for managing panel complexity. Linters/formatters enforced.
+* **Usability (U-1, U-2):** Multi-panel layout aims for high efficiency/clarity for target users on desktop. Guided workflows enhance clarity for complex tasks. **Crucially, designing the responsive adaptation for smaller screens is key to maintaining usability across devices.**
+* **Security (SEC-1-4):** Unchanged conceptually. Backend remains central to security. HTTPS, hashing, backend validation critical.
+* **Performance (P-1, P-2):** Backend calculations unchanged. Frontend performance needs careful management due to potentially complex multi-panel state synchronization. Code-splitting/lazy-loading (especially for panels/charts) remains important. Potential for increased JS complexity needs monitoring.
+* **Reliability (R-1):** Unchanged conceptually.
+* **Data Accuracy (DA-1):** Unchanged conceptually. Backend precision, careful frontend display formatting.
+* **Constraints (C-1):** Tech stack choices remain compliant with budget.
 
 ---
-*This architecture overview now includes specifics on the frontend component structure and state management approach.*
+*This architecture overview now reflects the multi-panel structure and the integration of guided workflows, highlighting the impact on frontend structure, state management, and NFRs like usability and performance.*

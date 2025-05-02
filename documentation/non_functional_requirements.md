@@ -1,59 +1,67 @@
-# Non-Functional Requirements (Updated)
+# Non-Functional Requirements (Updated - Multi-Panel & Guided Workflow Context)
 
 ## 1. Introduction
 
-This document outlines the Non-Functional Requirements (NFRs) for the Investment Planning Projection website. NFRs define the quality attributes and constraints of the system, specifying *how well* it should perform its functions[cite: 8, 465, 842]. They complement the Functional Requirements by setting standards for aspects like performance, security, usability, and maintainability[cite: 466], guiding architectural and technological decisions[cite: 467].
+This document outlines the Non-Functional Requirements (NFRs) for the Investment Planning Projection website. NFRs define the quality attributes and constraints, specifying *how well* the system performs functions like performance, security, usability, and maintainability. These requirements are updated to reflect the adoption of a **hybrid multi-panel layout and guided workflow** structure for the frontend.
 
 ## 2. Performance
 
 * **P-1: Calculation Speed:**
-    * *Basic Projections:* Deterministic projection calculations (backend) should complete within a reasonable timeframe (e.g., under 5-10 seconds) .
-    * *Monte Carlo Projections:* Monte Carlo simulations (backend) may take longer but should provide feedback (SH-UX1) and ideally complete within 30-60 seconds . Real-time performance is not critical .
-* **P-2: Load Speed (Frontend):**
-    * **Priority: Moderately High.** Initial application load speed should be reasonably fast (target < 3-5s) to provide a professional user experience[cite: 8, 842].
-    * **Tab/View Switching:** Navigation between tabs/views within the Portfolio Workspace should also be responsive to avoid disrupting user workflow.
-    * **Suggestion:** Implement frontend performance best practices like **code-splitting** per route/tab and **lazy-loading** heavy components (e.g., charts) . *(Updated Section)*
+    * *Basic Projections:* Backend deterministic calculations target < 5-10 seconds.
+    * *Monte Carlo Projections:* Backend simulations target < 30-60 seconds, with frontend feedback (SH-UX1). Real-time not required.
+* **P-2: Load Speed & Responsiveness (Frontend):**
+    * **Priority: High.** Initial application load speed target < 3-5s.
+    * **Interaction Responsiveness:** UI interactions within panels (e.g., opening editors, switching views within the Main Content Panel) and transitions between guided workflow steps MUST feel responsive and immediate.
+    * **Panel Updates:** Updates propagating between panels (e.g., changing an asset affecting the projection panel) should occur without noticeable lag.
+    * **Mitigation:** Aggressively implement frontend performance best practices: **code-splitting** (potentially per panel/route), **lazy-loading** non-critical panels or heavy components (like Recharts), efficient state management (Zustand/Context/Local), memoization (React.memo), and optimizing component re-renders. Monitor JavaScript bundle size and execution time. *(Updated Emphasis)*
 
 ## 3. Security
 
-* **SEC-1: Authentication & Authorization:** Secure user registration and login (backend); access restricted to owner .
-* **SEC-2: Password Security:** Passwords securely hashed using strong algorithms (e.g., bcrypt) on the backend . Secure password reset (Should-have).
-* **SEC-3: Data Transfer Security:** All client-server communication MUST use HTTPS .
+* **SEC-1: Authentication & Authorization:** Secure backend auth; portfolio access restricted to owner.
+* **SEC-2: Password Security:** Strong backend password hashing (bcrypt); secure reset (Should-have).
+* **SEC-3: Data Transfer Security:** HTTPS MUST be used for all client-server communication.
 * **SEC-4: Data Protection & Input Validation:**
-    * Standard backend security measures against common vulnerabilities (XSS, injection) required .
-    * **Frontend Input Validation: Basic client-side validation (e.g., checking for empty required fields, basic formats) is recommended** for better UX and reduced invalid API calls.
-    * **Crucially, all critical security and data integrity validation MUST be performed on the backend (Flask)**, as client-side checks are insufficient alone . *(Updated Section)*
+    * Standard backend protections (XSS, injection).
+    * Basic client-side validation recommended for UX.
+    * **All critical security and data integrity validation MUST occur on the backend.** *(Unchanged)*
 
 ## 4. Usability
 
-* **U-1: Interface Clarity:** Clean design, logically structured (supported by tabbed workspace) . **High Priority.**
-* **U-2: Workflow Efficiency:** Key tasks (portfolio creation, asset management, running projections) should be intuitive and efficient . **High Priority.**
-* **U-3: Design System Alignment (Guideline):** Adherence to Material Design 3 (M3) principles is a **strong guideline** for visual design, interaction patterns, and accessibility . Strict adherence is secondary to core usability if conflicts arise under constraints. *(Updated specification)*
-* **U-4: Animation Feedback (Guideline):** Incorporate **subtle, performant, and purposeful animations** to enhance interactive feedback and state transitions. Avoid complex or purely decorative animations . *(Updated specification)*
-* **U-5: Content & Microcopy:** Clear labels, action-oriented buttons, helpful errors, concise tooltips, guided empty states, professional tone are required . **High Priority.**
+* **U-1: Interface Clarity:**
+    * **Multi-Panel:** Achieved through clear visual separation between panels, strong internal hierarchy within each panel, and consistent information display.
+    * **Guided Workflows:** Achieved by breaking complex tasks into logical, focused steps with clear instructions.
+    * **High Priority.**
+* **U-2: Workflow Efficiency:**
+    * **Multi-Panel:** Aims for high efficiency for expert users on larger screens by providing simultaneous access to related information and controls.
+    * **Guided Workflows:** Optimizes efficiency for specific, complex, multi-step tasks.
+    * **Mobile Adaptation:** Designing an efficient and intuitive experience on smaller screens where panels likely need to stack or collapse is a **critical usability challenge** for the multi-panel approach.
+    * **High Priority.**
+* **U-3: Design System Alignment (Guideline):** M3 principles remain a **strong guideline for component styling, interaction states, and accessibility**, but the overall application layout (multi-panel) is custom. Tailwind CSS facilitates this custom layout.
+* **U-4: Animation Feedback (Guideline):** Incorporate **subtle, performant, purposeful animations** for feedback within panels (e.g., button presses, input validation), transitions between workflow steps, indicating loading states, and clarifying relationships between panel updates. Avoid overly complex or distracting animations. Performance is paramount.
+* **U-5: Content & Microcopy:** Clear labels, action-oriented buttons, helpful errors, concise tooltips, guided empty states (within panels or workflows), professional tone remain **High Priority**.
 
 ## 5. Data Accuracy
 
-* **DA-1: Calculation Precision:** Backend financial calculations must be accurate and reliable . Use appropriate data types (Decimal).
-* **Frontend Display:** **High Priority.** The frontend must display financial data accurately and consistently (e.g., standardizing decimal places for currency and percentages) . *(New specification)*
-* **DA-2: Data Timeliness:** Real-time market data is not required .
+* **DA-1: Calculation Precision:** Backend uses appropriate types (Decimal).
+* **Frontend Display:** **High Priority.** Frontend accurately displays financial data consistently (standardized decimal places).
+* **DA-2: Data Timeliness:** Real-time data not required.
 
 ## 6. Reliability
 
-* **R-1: Availability:** High availability (99.99%) is not required. Acceptable tolerance for occasional downtime .
-* **R-2: Recoverability:** Standard database backup mechanisms should be in place . Frontend state loss on refresh is acceptable if data is refetched.
+* **R-1: Availability:** High availability not required; occasional downtime acceptable.
+* **R-2: Recoverability:** Standard DB backups; frontend state loss on refresh acceptable (refetch data).
 
 ## 7. Maintainability
 
-* **M-1: Modularity & Extensibility:** System architecture (backend/frontend) must be modular .
-    * **Frontend Structure:** The tabbed structure and component-based nature of React support this.
-    * **Suggestion:** Adopt a **consistent folder structure** (e.g., by feature/tab) and use **linters/formatters** (ESLint/Prettier) for React code. *(New suggestion)*
-* **M-2: Code Readability:** Code should follow standard conventions (Python/Flask, JavaScript/React) . Consistent styling via linters helps.
-* **M-3: Configuration Management:** Configuration managed outside codebase (env vars, config files) .
+* **M-1: Modularity & Extensibility:**
+    * Backend/frontend separation maintained.
+    * **Frontend Structure:** Modular component structure (by feature/panel/workflow) is **essential** for managing the increased complexity of the multi-panel layout and state interactions. Linters/formatters (ESLint/Prettier) enforced. *(Updated Emphasis)*
+* **M-2: Code Readability:** Follow standard conventions; linters assist.
+* **M-3: Configuration Management:** Managed via env vars/config files.
 
 ## 8. Constraints Compliance
 
-* **C-1: Budget Adherence:** Technology choices must align with max €10/month budget, prioritizing free tiers/open-source . **Strict Constraint.**
+* **C-1: Budget Adherence:** Tech choices align with max €10/month budget (free tiers/open-source). **Strict Constraint.**
 
 ---
-*This updated NFR document incorporates the specific priorities and suggestions for the frontend.*
+*This updated NFR document emphasizes performance considerations for the multi-panel UI, highlights the usability challenge of mobile adaptation, and reinforces the importance of modularity for maintainability.*
