@@ -6,6 +6,7 @@ import LoginPage from './features/auth/pages/LoginPage';
 import RegisterPage from './features/auth/pages/RegisterPage';
 import DashboardPage from './features/dashboard/pages/DashboardPage';
 import PortfolioWorkspacePage from './features/portfolio/pages/PortfolioWorkspacePage';
+import { PortfolioProvider } from './features/portfolio/state/PortfolioContext';
 
 // Layout Component
 const Layout = ({ children }) => (
@@ -48,7 +49,9 @@ function App() {
           path="/portfolio/:portfolioId"
           element={
             <ProtectedRoute>
-              <PortfolioWorkspacePage />
+              <PortfolioProvider>
+                <PortfolioWorkspacePage />
+              </PortfolioProvider>
             </ProtectedRoute>
           }
         />

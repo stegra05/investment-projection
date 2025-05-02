@@ -20,6 +20,4 @@ instance.interceptors.request.use(
   }
 );
 
-// TODO: Add request interceptor (Task 1.2.2)
-
 export default instance; 

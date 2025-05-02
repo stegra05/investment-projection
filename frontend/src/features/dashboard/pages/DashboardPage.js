@@ -1,16 +1,21 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 // Adjust import paths based on actual file location (frontend/src/features/dashboard/pages)
 import usePortfolioListStore from '../../../store/portfolioListStore';
 import useAuthStore from '../../../store/authStore';
 // Assuming a Button component exists relative to frontend/src
-// import Button from '../../../components/Button/Button';
+import Button from '../../../components/Button/Button';
 // Assuming a Spinner component exists relative to frontend/src
 // import Spinner from '../../../components/Spinner/Spinner';
+import CreatePortfolioModal from '../components/CreatePortfolioModal';
+import portfolioService from '../../../api/portfolioService'; // <-- Import portfolio service
 
 function DashboardPage() {
-  const { portfolios, isLoading, error, fetchPortfolios } = usePortfolioListStore();
+  const { portfolios, isLoading: isLoadingList, error: listError, fetchPortfolios } = usePortfolioListStore();
   const logout = useAuthStore((state) => state.logout);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState(null);
 
   useEffect(() => {
     fetchPortfolios();
@@ -19,6 +24,23 @@ function DashboardPage() {
   const handleLogout = () => {
     logout();
     // No need to navigate here, ProtectedRoute will handle redirect
+  };
+
+  const handleCreatePortfolio = async (portfolioData) => {
+    setIsCreating(true);
+    setCreateError(null);
+    try {
+      const newPortfolio = await portfolioService.createPortfolio(portfolioData);
+      setIsModalOpen(false); // Close modal on success
+      await fetchPortfolios(); // Refresh the list
+    } catch (err) {
+      console.error('Failed to create portfolio:', err);
+      // Attempt to get a meaningful error message
+      const message = err.response?.data?.message || err.message || 'An unexpected error occurred.';
+      setCreateError(message);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -33,7 +55,7 @@ function DashboardPage() {
         </button>
       </div>
 
-      {isLoading && (
+      {isLoadingList && (
         <div className="flex justify-center items-center h-40">
           {/* Replace with Spinner component if available */}
           <p>Loading portfolios...</p>
@@ -41,14 +63,14 @@ function DashboardPage() {
         </div>
       )}
 
-      {error && (
+      {listError && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
           <strong className="font-bold">Error:</strong>
-          <span className="block sm:inline"> {error}</span>
+          <span className="block sm:inline"> {listError}</span>
         </div>
       )}
 
-      {!isLoading && !error && (
+      {!isLoadingList && !listError && (
         <>
           {portfolios.length === 0 ? (
             <div className="text-center text-gray-500 py-10">
@@ -70,13 +92,23 @@ function DashboardPage() {
           )}
 
           <div className="mt-8 flex justify-center">
-            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">
+            <Button 
+              variant="primary" 
+              onClick={() => setIsModalOpen(true)}
+            >
               Create New Portfolio
-            </button>
-            {/* <Button>Create New Portfolio</Button> */}
+            </Button>
           </div>
         </>
       )}
+
+      <CreatePortfolioModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSubmit={handleCreatePortfolio}
+        isLoading={isCreating}
+        error={createError}
+      />
     </div>
   );
 }
