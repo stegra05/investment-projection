@@ -72,19 +72,16 @@ def debug_headers():
 @jwt_required()
 def get_user_portfolios():
     """Retrieves a list of portfolios belonging to the authenticated user."""
-    try:
-        current_user_id = int(get_jwt_identity())
-        # Eager load details for serialization
-        portfolios = Portfolio.query.options(
-             db.joinedload(Portfolio.assets),
-             db.joinedload(Portfolio.planned_changes)
-         ).filter_by(user_id=current_user_id).all()
-        # Use Pydantic schema for serialization, dumping to JSON-compatible types
-        result = [PortfolioSchema.from_orm(p).model_dump(mode='json', by_alias=True) for p in portfolios]
-        return jsonify(result), 200
-    except Exception as e:
-        import traceback; traceback.print_exc()
-        abort(500, description=f"Error fetching portfolios: {e}")
+    # Exceptions are handled by the global 500 handler
+    current_user_id = int(get_jwt_identity())
+    # Eager load details for serialization
+    portfolios = Portfolio.query.options(
+            db.joinedload(Portfolio.assets),
+            db.joinedload(Portfolio.planned_changes)
+        ).filter_by(user_id=current_user_id).all()
+    # Use Pydantic schema for serialization, dumping to JSON-compatible types
+    result = [PortfolioSchema.from_orm(p).model_dump(mode='json', by_alias=True) for p in portfolios]
+    return jsonify(result), 200
 
 @portfolios_bp.route('', methods=['POST'])
 @jwt_required()

@@ -2,6 +2,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal, InvalidOperation
 import math # No longer needed here, moved to strategies? Check if still needed. Let's remove for now.
+import logging
 
 # Import models from app.models
 from app.models import Portfolio, Asset, PlannedFutureChange
@@ -60,9 +61,8 @@ def _fetch_and_prepare_data(portfolio_id: int):
     changes_by_month = {}
     for change in planned_changes:
         key = (change.change_date.year, change.change_date.month)
-        if key not in changes_by_month:
-            changes_by_month[key] = []
-        changes_by_month[key].append(change)
+        # Use setdefault to initialize the list for the key if it doesn't exist, then append
+        changes_by_month.setdefault(key, []).append(change)
 
     return assets, changes_by_month
 
@@ -120,11 +120,12 @@ def _initialize_projection(assets: list[Asset], initial_total_value: Decimal | N
                       continue # Skip to next asset
 
 
-            strategy = _get_return_strategy(asset_enum_type)
+            strategy = _get_return_strategy(asset_enum_type) # type: ignore
             monthly_return = strategy.calculate_monthly_return(asset)
             monthly_asset_returns[asset.asset_id] = monthly_return
         except Exception as e:
-             print(f"Error calculating monthly return for asset {asset.asset_id} using strategy: {e}. Setting return to 0.")
+             # Log the full traceback for unexpected errors during strategy execution
+             logging.exception(f"Error calculating monthly return for asset {asset.asset_id} via strategy. Setting return to 0.")
              monthly_asset_returns[asset.asset_id] = Decimal('0.0')
 
 

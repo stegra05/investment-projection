@@ -38,6 +38,38 @@ class Config:
         'sqlite:///' + os.path.join(basedir, 'app.db') # Default to SQLite if not set
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # --- Talisman Security Headers Configuration ---
+    # Define a basic Content Security Policy (CSP)
+    # Adjust this policy based on your specific frontend needs (scripts, styles, images sources)
+    # Example: Allow self, and Google Fonts/APIs
+    # 'default-src': ['\'self\''],
+    # 'script-src': ['\'self\'', '\'unsafe-inline\'', 'https://apis.google.com', 'https://www.google-analytics.com'],
+    # 'style-src': ['\'self\'', '\'unsafe-inline\'', 'https://fonts.googleapis.com'],
+    # 'font-src': ['\'self\'', 'https://fonts.gstatic.com'],
+    # 'img-src': ['\'self\'', 'data:']
+    # Consider using nonces or hashes instead of 'unsafe-inline' for better security
+    TALISMAN_CSP = {
+        'default-src': ['\'self\''],
+        'script-src': ['\'self\'', '\'nonce\''], # Allows inline scripts with a nonce
+        'style-src': ['\'self\'', 'https://fonts.googleapis.com', '\'unsafe-inline\''], # Allow Google fonts and inline styles (consider removing unsafe-inline)
+        'font-src': ['\'self\'', 'https://fonts.gstatic.com'], # Allow Google fonts
+        'img-src': ['\'self\'', 'data:'], # Allow images from self and data URIs
+        'object-src': ['\'none\''], # Disallow plugins like Flash
+        'base-uri': ['\'self\''],
+        'frame-ancestors': ['\'none\''] # Disallow embedding in frames (stronger than X-Frame-Options)
+    }
+    TALISMAN_FORCE_HTTPS = True # Force HTTPS redirection
+    TALISMAN_HSTS = True # Enable HTTP Strict Transport Security (HSTS)
+    TALISMAN_HSTS_PRELOAD = False # Consider setting to True after verifying HSTS works correctly
+    TALISMAN_HSTS_INCLUDE_SUBDOMAINS = True # Apply HSTS to subdomains
+    TALISMAN_HSTS_MAX_AGE = timedelta(days=365).total_seconds() # HSTS policy duration (1 year)
+    TALISMAN_SESSION_COOKIE_SECURE = True # Ensure session cookies are sent only over HTTPS
+    TALISMAN_SESSION_COOKIE_HTTP_ONLY = True # Prevent client-side script access to session cookies
+    TALISMAN_FRAME_OPTIONS = 'DENY' # Prevent framing (DENY is stronger than SAMEORIGIN)
+    TALISMAN_REFERRER_POLICY = 'strict-origin-when-cross-origin' # Control Referer header information
+    # X-Content-Type-Options: nosniff is enabled by default in Talisman
+    # -----------------------------------------------
+
     # Add other configurations here, e.g., Mail settings, API keys
     # MAIL_SERVER = os.environ.get('MAIL_SERVER')
     # MAIL_PORT = int(os.environ.get('MAIL_PORT') or 25)
@@ -55,6 +87,14 @@ class DevelopmentConfig(Config):
     DEBUG = True
     # Use PostgreSQL for development via Unix socket by default
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or 'postgresql:///investment_projection_dev'
+    # Allow HTTP during development (Talisman)
+    TALISMAN_FORCE_HTTPS = False
+    TALISMAN_SESSION_COOKIE_SECURE = False
+    # Relax CSP for development if needed (e.g., allow 'unsafe-eval' for some tools)
+    # TALISMAN_CSP = {
+    #     **Config.TALISMAN_CSP, # Inherit base CSP
+    #     'script-src': Config.TALISMAN_CSP.get('script-src', []) + ['\'unsafe-eval\''],
+    # }
 
 class TestingConfig(Config):
     """Testing configuration."""
@@ -70,6 +110,10 @@ class ProductionConfig(Config):
         'sqlite:///' + os.path.join(basedir, 'app.db')
     # Ensure DEBUG is False in production
     DEBUG = False
+    # Explicitly ensure Talisman security settings are enforced for production
+    TALISMAN_FORCE_HTTPS = True
+    TALISMAN_SESSION_COOKIE_SECURE = True
+    TALISMAN_HSTS_PRELOAD = True # Enable HSTS preload in production once confirmed
 
 # Dictionary to map configuration names to classes
 config = {

@@ -1,12 +1,13 @@
 import os
+import logging
+
+logging.basicConfig(level=logging.INFO) # Or configure as needed
+
 try:
     from app import create_app, db
 except Exception as e:
-    print(f"--- ERROR during import from app: {e} ---")
-    import traceback
-    traceback.print_exc()
-    import sys
-    sys.exit(1) # Exit if import fails
+    logging.exception("Fatal error creating Flask app")
+    exit(1)
 
 # from app.models import User # Import models if needed for shell context
 

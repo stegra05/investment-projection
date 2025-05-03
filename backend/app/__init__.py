@@ -7,6 +7,8 @@ from flask_jwt_extended import JWTManager
 # Import Flask-Limiter
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+# Import Flask-Talisman
+from flask_talisman import Talisman
 # Import the config dictionary along with the base Config class
 from config import Config, config
 from werkzeug.exceptions import HTTPException
@@ -21,6 +23,8 @@ limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["200 per day", "50 per hour"] # Default limits for all routes
 )
+# Initialize Talisman
+talisman = Talisman()
 
 def create_app(config_name='default'): # Changed argument name for clarity
     """Application factory pattern"""
@@ -49,6 +53,19 @@ def create_app(config_name='default'): # Changed argument name for clarity
     jwt.init_app(app)
     # Initialize Limiter with app context
     limiter.init_app(app)
+    # Initialize Talisman with app context and configuration
+    talisman.init_app(
+        app,
+        content_security_policy=app.config.get('TALISMAN_CSP'),
+        content_security_policy_nonce_in=['script-src'], # Example: enable nonces for scripts
+        force_https=app.config.get('TALISMAN_FORCE_HTTPS', True), # Enforce HTTPS based on config
+        strict_transport_security=app.config.get('TALISMAN_HSTS', True), # Enable HSTS based on config
+        session_cookie_secure=app.config.get('TALISMAN_SESSION_COOKIE_SECURE', True),
+        session_cookie_http_only=app.config.get('TALISMAN_SESSION_COOKIE_HTTP_ONLY', True),
+        frame_options=app.config.get('TALISMAN_FRAME_OPTIONS', 'SAMEORIGIN'),
+        referrer_policy=app.config.get('TALISMAN_REFERRER_POLICY', 'strict-origin-when-cross-origin'),
+        # Add other Talisman options as needed
+    )
 
     # Register blueprints here
     from app.routes.main import bp as main_bp

@@ -1,14 +1,18 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, abort
 from app import db
 from app.models.user import User
 from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt_identity, jwt_required, set_refresh_cookies
 from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 # Import the limiter instance from the app factory
 from app import limiter
 import re # Add re import for regex validation
 import logging
 import hashlib # Add hashlib for SHA-1 hashing
 import requests # Add requests for API calls
+from werkzeug.security import generate_password_hash, check_password_hash
+from app.utils.decorators import handle_api_errors
+from app.schemas.auth_schemas import UserRegistrationSchema, UserLoginSchema, UserSchema
 
 # Define the blueprint: 'auth', prefix: /api/v1/auth
 # Following API spec (prefix /api/v1/)
@@ -68,46 +72,36 @@ def is_password_pwned(password):
 
 @auth_bp.route('/register', methods=['POST'])
 @limiter.limit("10/minute") # Apply rate limit
-def register():
-    data = request.get_json()
-    username = data.get('username')
-    email = data.get('email')
-    password = data.get('password')
+@handle_api_errors(schema=UserRegistrationSchema)
+def register(validated_data):
+    """Registers a new user."""
+    username = validated_data.username
+    email = validated_data.email
+    password = validated_data.password
 
-    if not username or not email or not password:
-        return jsonify({"message": "Missing username, email, or password"}), 400
+    # Check if user already exists (optional, DB constraint handles it too)
+    if User.query.filter((User.username == username) | (User.email == email)).first():
+         abort(409, description="Username or email already exists.")
 
-    # --- Add Password Validation ---
-    is_complex, message = is_password_complex(password)
-    if not is_complex:
-        # Log password validation failure
-        logging.warning(f"Registration failed for username '{username}' due to weak password: {message}. Source IP: {request.remote_addr}")
-        return jsonify({"message": message}), 400
+    hashed_password = generate_password_hash(password)
+    new_user = User(username=username, email=email, password_hash=hashed_password)
 
-    # --- Add Pwned Password Check ---
-    is_pwned, pwned_message = is_password_pwned(password)
-    if is_pwned:
-        # Logging is handled within is_password_pwned
-        return jsonify({"message": pwned_message}), 400
-    # --- End Pwned Password Check ---
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+    except IntegrityError as ie:
+        # This is the expected error for duplicate username/email if the initial check missed a race condition
+        db.session.rollback()
+        logging.warning(f"Database integrity error during registration: {ie}") # Log as warning
+        abort(409, description="Username or email already exists (database constraint). Please try again.")
+    # Rely on global 500 handler for other unexpected errors
+    # except Exception as e:
+    #     db.session.rollback()
+    #     logging.exception(f"Unexpected error during user registration commit: {e}") # Log full traceback
+    #     abort(500, description=f"An unexpected error occurred during registration.")
 
-    existing_user = User.query.filter(
-        or_(User.username == username, User.email == email)
-    ).first()
-    if existing_user:
-        # Log registration conflict
-        logging.warning(f"Registration failed: Username '{username}' or email '{email}' already exists. Source IP: {request.remote_addr}")
-        return jsonify({"message": "Username or email already exists"}), 409
-
-    new_user = User(username=username, email=email)
-    new_user.set_password(password)
-    db.session.add(new_user)
-    db.session.commit()
-
-    # Log successful registration
-    logging.info(f"User registered successfully: Username='{username}', Email='{email}', UserID='{new_user.id}'. Source IP: {request.remote_addr}")
-
-    return jsonify({"message": "User registered successfully"}), 201
+    # Return the created user data (excluding password) using the schema
+    return jsonify(UserSchema.from_orm(new_user).model_dump(exclude={'password_hash'})), 201
 
 @auth_bp.route('/login', methods=['POST'])
 @limiter.limit("10/minute") # Apply rate limit

@@ -4,6 +4,7 @@ from typing import Type, TypeVar, Any
 # Assuming db instance is accessible via app package. Adjust if needed.
 # from app import db
 from app.models import db # Common pattern in Flask apps
+from flask import current_app
 
 # Define a generic type variable for SQLAlchemy models
 # Using Type[Any] for simplicity, could refine further if needed.
@@ -95,5 +96,5 @@ def get_owned_child_or_404(
         abort(500, description=f"Internal configuration error: {e}")
     except Exception as e:
          # Catch other potential DB errors during fallback query
-         print(f"Error in get_owned_child_or_404 fallback query: {e}")
+         current_app.logger.exception(f"Error in get_owned_child_or_404 fallback query for child {child_pk_attr}={child_id}")
          abort(500, description="An error occurred while retrieving the requested item.") 
