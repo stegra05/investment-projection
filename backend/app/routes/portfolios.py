@@ -176,13 +176,10 @@ def update_portfolio(portfolio_id, portfolio, validated_data): # Receive portfol
 @verify_portfolio_ownership
 def delete_portfolio(portfolio_id, portfolio):
     """Deletes a specific portfolio."""
-    try:
-        db.session.delete(portfolio)
-        db.session.commit()
-        return jsonify({"message": "Portfolio deleted successfully"}), 200
-    except Exception as e:
-        db.session.rollback()
-        abort(500, description=f"Error deleting portfolio: {e}")
+    # Error handling (including rollback) is now managed by the global 500 handler
+    db.session.delete(portfolio)
+    db.session.commit()
+    return jsonify({"message": "Portfolio deleted successfully"}), 200
 
 # --- NEW: Allocation Update Route ---
 

@@ -6,6 +6,7 @@ from app.utils.decorators import handle_api_errors
 from app.schemas.portfolio_schemas import ( # Import relevant schemas
     PlannedChangeSchema, PlannedChangeCreateSchema, PlannedChangeUpdateSchema
 )
+from app.utils.helpers import get_owned_child_or_404 # Import the new helper
 
 # Define the blueprint: 'changes'
 changes_bp = Blueprint('changes', __name__)
@@ -51,7 +52,13 @@ def add_planned_change(portfolio_id, portfolio, validated_data):
 @handle_api_errors(schema=PlannedChangeUpdateSchema)
 def update_planned_change(portfolio_id, change_id, portfolio, validated_data):
     """Updates an existing planned change within a portfolio."""
-    change = get_change_or_404(portfolio, change_id)
+    change = get_owned_child_or_404(
+        parent_instance=portfolio,
+        child_relationship_name='planned_changes',
+        child_id=change_id,
+        child_model=PlannedFutureChange,
+        child_pk_attr='change_id'
+    )
     validated_dict = validated_data.dict(exclude_unset=True)
 
     # Update model fields
@@ -76,11 +83,14 @@ def update_planned_change(portfolio_id, change_id, portfolio, validated_data):
 @verify_portfolio_ownership
 def delete_planned_change(portfolio_id, change_id, portfolio):
     """Deletes a planned change from a portfolio."""
-    change = get_change_or_404(portfolio, change_id)
-    try:
-        db.session.delete(change)
-        db.session.commit() # Manual commit/rollback for non-decorated routes
-        return jsonify({"message": "Planned change deleted successfully"}), 200
-    except Exception as e:
-        db.session.rollback()
-        abort(500, description=f"Error deleting planned change: {e}") 
+    change = get_owned_child_or_404(
+        parent_instance=portfolio,
+        child_relationship_name='planned_changes',
+        child_id=change_id,
+        child_model=PlannedFutureChange,
+        child_pk_attr='change_id'
+    )
+    # Error handling (including rollback) is now managed by the global 500 handler
+    db.session.delete(change)
+    db.session.commit()
+    return jsonify({"message": "Planned change deleted successfully"}), 200 

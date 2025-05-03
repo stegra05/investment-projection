@@ -1,8 +1,7 @@
 import datetime
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal, InvalidOperation
-from abc import ABC, abstractmethod # Added for Strategy pattern
-import math # Added for potential future use, though Decimal handles power
+import math # No longer needed here, moved to strategies? Check if still needed. Let's remove for now.
 
 # Import models from app.models
 from app.models import Portfolio, Asset, PlannedFutureChange
@@ -12,6 +11,9 @@ from sqlalchemy.orm import joinedload
 
 # Import the Enums!
 from app.enums import ChangeType, AssetType
+
+# Import the return strategy getter
+from .return_strategies import get_return_strategy as _get_return_strategy # Keep internal alias
 
 # Placeholder for models until actual import path is confirmed
 # class Portfolio:
@@ -37,80 +39,6 @@ from app.enums import ChangeType, AssetType
 # Expressed as Decimal percentages (e.g., 7.0 for 7%)
 # Moved inside the StandardAnnualReturnStrategy where it's used
 # DEFAULT_ANNUAL_RETURNS = { ... }
-
-
-# --- Return Calculation Strategy ---
-
-class AbstractReturnCalculationStrategy(ABC):
-    """Abstract base class for asset return calculation strategies."""
-    @abstractmethod
-    def calculate_monthly_return(self, asset: Asset) -> Decimal:
-        """Calculates the expected monthly return rate for a given asset."""
-        pass
-
-class StandardAnnualReturnStrategy(AbstractReturnCalculationStrategy):
-    """Calculates monthly return based on annual return (manual or default)."""
-
-    DEFAULT_ANNUAL_RETURNS = {
-        AssetType.STOCK: Decimal('8.0'),
-        AssetType.BOND: Decimal('4.0'),
-        AssetType.MUTUAL_FUND: Decimal('7.5'),
-        AssetType.ETF: Decimal('7.8'),
-        AssetType.REAL_ESTATE: Decimal('5.0'),
-        AssetType.CASH: Decimal('1.5'),
-        AssetType.CRYPTOCURRENCY: Decimal('15.0'), # High potential, high risk
-        AssetType.OPTIONS: Decimal('0.0'),       # Require manual input for meaningful projection
-        AssetType.OTHER: Decimal('0.0'),         # Require manual input
-    }
-
-    def calculate_monthly_return(self, asset: Asset) -> Decimal:
-        r_annual_percent = None
-        # Prioritize manual return
-        if asset.manual_expected_return is not None:
-            try:
-                r_annual_percent = Decimal(asset.manual_expected_return)
-            except (InvalidOperation, TypeError):
-                print(f"Warning: Invalid manual_expected_return for asset {asset.asset_id}. Using default.")
-                r_annual_percent = self.DEFAULT_ANNUAL_RETURNS.get(asset.asset_type, Decimal('0.0'))
-        else:
-            r_annual_percent = self.DEFAULT_ANNUAL_RETURNS.get(asset.asset_type, Decimal('0.0'))
-            if asset.asset_type in [AssetType.OPTIONS, AssetType.OTHER] and r_annual_percent == Decimal('0.0'):
-                 print(f"Info: Asset {asset.asset_id} type '{asset.asset_type.name}' has no manual return. Projection assumes 0% growth. Provide 'manual_expected_return' for custom projection.")
-
-        r_annual = r_annual_percent / Decimal('100')
-
-        # Calculate monthly return from annual return: (1 + R_annual)^(1/12) - 1
-        monthly_return = Decimal('0.0')
-        if r_annual > Decimal('-1.0'): # Avoid issues with (1 + r_annual) being negative
-            try:
-                monthly_return = (Decimal('1.0') + r_annual) ** (Decimal('1.0') / Decimal('12.0')) - Decimal('1.0')
-            except InvalidOperation:
-                print(f"Warning: Could not calculate monthly return for asset {asset.asset_id} from annual return {r_annual*100}%. Defaulting monthly return to 0.")
-                monthly_return = Decimal('0.0')
-        else:
-             # Handle extremely negative annual returns (e.g., -100% or less) - monthly equivalent is -100%
-             monthly_return = Decimal('-1.0')
-
-        return monthly_return
-
-# --- Strategy Factory/Registry ---
-
-# Instantiate strategies (can be extended later)
-_standard_strategy = StandardAnnualReturnStrategy()
-
-# Map AssetType to strategy instances
-# For now, all types use the standard strategy. This can be customized.
-_strategy_registry = {
-    asset_type: _standard_strategy for asset_type in AssetType
-}
-
-def _get_return_strategy(asset_type: AssetType) -> AbstractReturnCalculationStrategy:
-    """Gets the appropriate return calculation strategy for the asset type."""
-    strategy = _strategy_registry.get(asset_type)
-    if not strategy:
-        print(f"Warning: No return calculation strategy found for asset type {asset_type}. Using standard strategy as fallback.")
-        return _standard_strategy # Fallback to standard strategy
-    return strategy
 
 
 # --- Helper Functions ---

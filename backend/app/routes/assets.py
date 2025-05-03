@@ -5,26 +5,11 @@ from app.routes.portfolios import verify_portfolio_ownership # Import decorator
 from app.utils.decorators import handle_api_errors # Import error handler
 from app.schemas.portfolio_schemas import AssetSchema, AssetCreateSchema, AssetUpdateSchema
 from decimal import Decimal # Import Decimal
+from app.utils.helpers import get_owned_child_or_404 # Import the new helper
 
 # Define the blueprint: 'assets', mounting handled in app/__init__.py
 # No url_prefix here, it will be defined during registration
 assets_bp = Blueprint('assets', __name__)
-
-# --- Helper Function (Copied from portfolios.py) ---
-
-def get_asset_or_404(portfolio: Portfolio, asset_id: int):
-     """Gets an asset by ID within a portfolio, aborting if not found."""
-     # Check eager loaded assets first (passed via decorator)
-     for asset in portfolio.assets:
-         if asset.asset_id == asset_id:
-             return asset
-     # Fallback query if not found in eager loaded list (shouldn't happen if decorator used correctly)
-     # Note: This might require portfolio_id if portfolio object isn't fully functional here?
-     # Let's assume portfolio object is sufficient from the decorator.
-     asset_fallback = Asset.query.filter_by(portfolio_id=portfolio.portfolio_id, asset_id=asset_id).first()
-     if asset_fallback is None:
-         abort(404, description=f"Asset with id {asset_id} not found within portfolio {portfolio.portfolio_id}.")
-     return asset_fallback
 
 # --- Asset Routes (Moved from portfolios.py, Task 5.4) ---
 
@@ -62,7 +47,13 @@ def add_asset(portfolio_id, portfolio, validated_data): # portfolio injected by 
 @handle_api_errors(schema=AssetUpdateSchema)
 def update_asset(portfolio_id, asset_id, portfolio, validated_data):
     """Updates an existing asset within a portfolio."""
-    asset = get_asset_or_404(portfolio, asset_id)
+    asset = get_owned_child_or_404(
+        parent_instance=portfolio,
+        child_relationship_name='assets',
+        child_id=asset_id,
+        child_model=Asset,
+        child_pk_attr='asset_id'
+    )
     validated_dict = validated_data.dict(exclude_unset=True)
 
     # Update fields
@@ -79,11 +70,14 @@ def update_asset(portfolio_id, asset_id, portfolio, validated_data):
 # No handle_api_errors needed for DELETE unless we add payload validation later
 def delete_asset(portfolio_id, asset_id, portfolio):
     """Deletes an asset from a portfolio."""
-    asset = get_asset_or_404(portfolio, asset_id)
-    try:
-        db.session.delete(asset)
-        db.session.commit() # Need manual commit/rollback for non-decorated routes
-        return jsonify({"message": "Asset deleted successfully"}), 200
-    except Exception as e:
-         db.session.rollback()
-         abort(500, description=f"Error deleting asset: {e}") 
+    asset = get_owned_child_or_404(
+        parent_instance=portfolio,
+        child_relationship_name='assets',
+        child_id=asset_id,
+        child_model=Asset,
+        child_pk_attr='asset_id'
+    )
+    # Error handling (including rollback) is now managed by the global 500 handler
+    db.session.delete(asset)
+    db.session.commit()
+    return jsonify({"message": "Asset deleted successfully"}), 200 

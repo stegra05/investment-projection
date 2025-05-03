@@ -109,6 +109,13 @@ def create_app(config_name='default'): # Changed argument name for clarity
             f"Internal Server Error: {e.description}",
             exc_info=original_exception or e
         )
+        # Ensure the session is rolled back in case of internal errors
+        try:
+            db.session.rollback()
+            app.logger.info("Database session rolled back due to 500 error.")
+        except Exception as rollback_error:
+            app.logger.error(f"Error during database rollback after 500 error: {rollback_error}", exc_info=rollback_error)
+
         return jsonify(error=str(e.description or "Internal Server Error")), 500
     
     @app.errorhandler(400) # Handler for Bad Request
