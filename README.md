@@ -28,8 +28,8 @@ A web application designed for intermediate to advanced users to build investmen
 ## 4. Setup (Local Development)
 
 1.  **Prerequisites:** Ensure Git, Python 3.x, Node.js (npm/yarn), and PostgreSQL are installed.
-2.  **Clone Repository:** `git clone [Your GitHub Repo URL]`
-3.  **Navigate to Project:** `cd [repository-name]`
+2.  **Clone Repository:** `git clone https://github.com/stegra05/investment-projection`
+3.  **Navigate to Project:** `cd investment-projection`
 4.  **Backend Setup:**
     * `cd backend` (adjust directory name if needed)
     * `python -m venv venv`
