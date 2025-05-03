@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from decimal import Decimal, InvalidOperation
 import datetime
+import uuid
 
 from app.services.projection_engine import calculate_projection
 # Import models from app.models
@@ -15,8 +16,9 @@ projections_bp = Blueprint('projections_bp', __name__, url_prefix='/api/v1/portf
 @jwt_required()
 def create_portfolio_projection(portfolio_id):
     """
-    Calculates and returns the projection for a specific portfolio.
+    Initiates a portfolio projection calculation task.
     Requires start_date, end_date, and initial_total_value in JSON body.
+    Returns a task ID for tracking the calculation progress.
     --- 
     parameters:
       - name: portfolio_id
@@ -46,19 +48,17 @@ def create_portfolio_projection(portfolio_id):
               type: string
               description: Initial total value of the portfolio as a decimal string.
     responses:
-      200:
-        description: Projection calculated successfully.
+      202:
+        description: Projection task accepted.
         schema:
-          type: array
-          items:
-            type: object
-            properties:
-              date:
-                type: string
-                format: date
-              value:
-                type: string 
-                description: Projected value as a decimal string.
+          type: object
+          properties:
+            message:
+              type: string
+              description: Status message.
+            task_id:
+              type: string
+              description: Unique identifier for tracking the projection task.
       400:
         description: Invalid input data (e.g., bad date format, missing fields, invalid value).
       401:
@@ -67,8 +67,6 @@ def create_portfolio_projection(portfolio_id):
         description: User does not own this portfolio.
       404:
         description: Portfolio not found.
-      500:
-        description: Internal server error during calculation.
     """
     current_user_id = get_jwt_identity()
     data = request.get_json()
@@ -94,7 +92,6 @@ def create_portfolio_projection(portfolio_id):
         if start_date >= end_date:
             return jsonify({"message": "End date must be after start date"}), 400
         if initial_total_value < 0:
-             # Allowing zero, but not negative initial value? Adjust if needed.
             return jsonify({"message": "Initial total value cannot be negative"}), 400
 
     except (ValueError, TypeError) as e:
@@ -107,39 +104,28 @@ def create_portfolio_projection(portfolio_id):
     if not portfolio:
         # Distinguish between not found and not authorized
         if Portfolio.query.filter_by(portfolio_id=portfolio_id).first():
-             return jsonify({"message": "Forbidden: You do not own this portfolio."}), 403
+            return jsonify({"message": "Forbidden: You do not own this portfolio."}), 403
         else:
-             return jsonify({"message": "Portfolio not found."}), 404
+            return jsonify({"message": "Portfolio not found."}), 404
 
-    # --- Call Projection Service ---
-    try:
-        projection_results = calculate_projection(
-            portfolio_id=portfolio_id,
-            start_date=start_date,
-            end_date=end_date,
-            initial_total_value=initial_total_value
-        )
+    # Generate a unique task ID
+    task_id = uuid.uuid4().hex
 
-        # --- Format Results for JSON ---
-        formatted_results = [
-            {
-                "date": date.strftime('%Y-%m-%d'),
-                "value": str(value) # Convert Decimal to string for precise JSON representation
-            }
-            for date, value in projection_results
-        ]
+    # Log the task initiation (replace with actual task dispatch later)
+    current_app.logger.info(
+        f"Projection task initiated - TaskID: {task_id}, PortfolioID: {portfolio_id}, "
+        f"StartDate: {start_date}, EndDate: {end_date}, InitialValue: {initial_total_value}"
+    )
 
-        return jsonify(formatted_results), 200
+    # TODO: Dispatch to background task
+    # calculate_projection(
+    #     portfolio_id=portfolio_id,
+    #     start_date=start_date,
+    #     end_date=end_date,
+    #     initial_total_value=initial_total_value
+    # )
 
-    except ValueError as e:
-        # This might catch the "Portfolio not found" from the service again, though we check above.
-        # It could also catch other validation errors raised within the service.
-        return jsonify({"message": f"Error calculating projection: {e}"}), 400 
-    except Exception as e:
-        # Catch-all for unexpected errors during calculation
-        current_app.logger.exception(f"Error calculating projection for portfolio {portfolio_id}")
-        # Return exception details for debugging
-        return jsonify({
-            "message": "An internal error occurred during projection calculation.",
-            "error": str(e)
-        }), 500 
+    return jsonify({
+        "message": "Projection task accepted",
+        "task_id": task_id
+    }), 202 

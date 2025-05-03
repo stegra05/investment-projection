@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import portfolioService from '../../../api/portfolioService';
+import analyticsService from '../../../api/analyticsService';
 
 // 1. Create the Context
 const PortfolioContext = createContext();
@@ -14,6 +15,12 @@ export const PortfolioProvider = ({ children }) => {
   const [portfolio, setPortfolio] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // State for analytics data
+  const [riskProfile, setRiskProfile] = useState(null);
+  const [performanceData, setPerformanceData] = useState(null);
+  const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState(null);
 
   // Effect to fetch portfolio data when portfolioId changes
   useEffect(() => {
@@ -30,7 +37,9 @@ export const PortfolioProvider = ({ children }) => {
       setError(null);
       setPortfolio(null); // Clear previous data
       try {
-        const data = await portfolioService.getPortfolioById(portfolioId);
+        // Always fetch full portfolio data for the context to ensure all components have access to complete data
+        // This can be optimized later by implementing data loading strategies based on component needs
+        const data = await portfolioService.getPortfolioById(portfolioId, 'full');
         setPortfolio(data); 
       } catch (err) {
         console.error('Error fetching portfolio:', err);
@@ -43,13 +52,61 @@ export const PortfolioProvider = ({ children }) => {
     fetchPortfolioData();
   }, [portfolioId]); // Dependency array ensures this runs when ID changes
 
+  /**
+   * Fetches the risk profile analysis for the current portfolio.
+   * @returns {Promise<void>}
+   */
+  const fetchRiskProfile = async () => {
+    if (!portfolioId) return;
+
+    setIsAnalyticsLoading(true);
+    setAnalyticsError(null);
+    try {
+      const data = await analyticsService.getRiskProfile(portfolioId);
+      setRiskProfile(data);
+    } catch (err) {
+      console.error('Error fetching risk profile:', err);
+      setAnalyticsError(err.response?.data || err);
+    } finally {
+      setIsAnalyticsLoading(false);
+    }
+  };
+
+  /**
+   * Fetches performance data for the current portfolio within an optional date range.
+   * @param {string|null} [startDate] - Optional start date for the performance period (ISO format).
+   * @param {string|null} [endDate] - Optional end date for the performance period (ISO format).
+   * @returns {Promise<void>}
+   */
+  const fetchPerformanceData = async (startDate = null, endDate = null) => {
+    if (!portfolioId) return;
+
+    setIsAnalyticsLoading(true);
+    setAnalyticsError(null);
+    try {
+      const data = await analyticsService.getPerformanceData(portfolioId, startDate, endDate);
+      setPerformanceData(data);
+    } catch (err) {
+      console.error('Error fetching performance data:', err);
+      setAnalyticsError(err.response?.data || err);
+    } finally {
+      setIsAnalyticsLoading(false);
+    }
+  };
+
   // The value provided to consuming components
   const value = {
     portfolioId,
     portfolio,
     isLoading,
     error,
-    // TODO: Add functions for updates if needed later
+    // Analytics-related state and functions
+    riskProfile,
+    performanceData,
+    isAnalyticsLoading,
+    analyticsError,
+    fetchRiskProfile,
+    fetchPerformanceData,
   };
 
   return (

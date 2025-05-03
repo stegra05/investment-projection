@@ -111,16 +111,48 @@ def create_portfolio(validated_data): # Receive validated_data from decorator
 @portfolios_bp.route('/<int:portfolio_id>', methods=['GET'])
 @verify_portfolio_ownership
 def get_portfolio_details(portfolio_id, portfolio):
-    """Retrieves details for a specific portfolio, including assets and planned changes."""
-    # Portfolio is already eager loaded by the decorator, but refresh to ensure latest state
-    db.session.refresh(portfolio) # Ensure we have the latest committed state for the portfolio object itself
-    # Explicitly expire the relationship collections to force a reload upon access
-    # This ensures the serialization step below gets the latest associated changes/assets
-    db.session.expire(portfolio, ['assets', 'planned_changes'])
-
-    # Serialize using Pydantic schema. Accessing portfolio.planned_changes here
-    # will now trigger a fresh query due to the expire call above.
-    return jsonify(PortfolioSchema.from_orm(portfolio).model_dump(mode='json', by_alias=True)), 200
+    """Retrieves details for a specific portfolio, with configurable data inclusion."""
+    # Get the include parameter from query string, default to 'full'
+    include = request.args.get('include', 'full').lower()
+    
+    # Define valid include options
+    valid_includes = {'summary', 'assets', 'changes', 'full'}
+    
+    # If invalid include value provided, default to 'full'
+    if include not in valid_includes:
+        include = 'full'
+    
+    # Configure query options based on include parameter
+    query_options = []
+    if include in ['assets', 'full']:
+        query_options.append(db.joinedload(Portfolio.assets))
+    if include in ['changes', 'full']:
+        query_options.append(db.joinedload(Portfolio.planned_changes))
+    
+    # Refresh the portfolio with the configured options
+    db.session.refresh(portfolio)
+    if query_options:
+        db.session.expire(portfolio, ['assets', 'planned_changes'])
+        # Re-query with the specified options
+        portfolio = Portfolio.query.options(*query_options).get(portfolio_id)
+    
+    # Serialize using Pydantic schema with conditional field exclusion
+    exclude_fields = set()
+    if include == 'summary':
+        exclude_fields.update(['assets', 'planned_changes'])
+    elif include == 'assets':
+        exclude_fields.add('planned_changes')
+    elif include == 'changes':
+        exclude_fields.add('assets')
+    
+    # Serialize with conditional field exclusion
+    return jsonify(
+        PortfolioSchema.from_orm(portfolio).model_dump(
+            mode='json',
+            by_alias=True,
+            exclude=exclude_fields if exclude_fields else None
+        )
+    ), 200
 
 @portfolios_bp.route('/<int:portfolio_id>', methods=['PUT', 'PATCH'])
 @verify_portfolio_ownership

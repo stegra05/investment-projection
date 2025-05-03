@@ -293,3 +293,86 @@ This document outlines the key API endpoints for the Investment Planning Project
     ]
     ```
 * **Error Responses:** `400 Bad Request` (Invalid parameters), `401 Unauthorized`, `403 Forbidden` (Not owner), `404 Not Found` (Portfolio not found), `500 Internal Server Error` (Calculation error)
+
+## Analytics Endpoints (Nested under Portfolios)
+
+**1. Get Portfolio Risk Profile**
+* **Method:** `GET`
+* **Path:** `/portfolios/{portfolio_id}/analytics/risk-profile`
+* **Description:** Retrieves the risk profile analysis for a specific portfolio. Requires Authentication and authorization.
+* **Request Body:** None
+* **Success Response:** `200 OK`
+    ```json
+    {
+      "risk_score": 0.75,
+      "volatility_estimate": 0.15,
+      "sharpe_ratio": 1.2,
+      "confidence_interval_low_95": -0.05,
+      "confidence_interval_high_95": 0.25,
+      "calculation_date": "2024-03-21"
+    }
+    ```
+* **Error Responses:** `401 Unauthorized`, `403 Forbidden`, `404 Not Found`
+
+**2. Get Portfolio Performance**
+* **Method:** `GET`
+* **Path:** `/portfolios/{portfolio_id}/analytics/performance`
+* **Description:** Retrieves historical performance data for a specific portfolio. Requires Authentication and authorization.
+* **Query Parameters:**
+    - `start_date` (optional): Start date in 'YYYY-MM-DD' format (defaults to 30 days ago)
+    - `end_date` (optional): End date in 'YYYY-MM-DD' format (defaults to today)
+* **Success Response:** `200 OK`
+    ```json
+    [
+      {"date": "2024-01-01", "cumulative_return": 0.0},
+      {"date": "2024-01-02", "cumulative_return": 0.001},
+      {"date": "2024-01-03", "cumulative_return": 0.002}
+    ]
+    ```
+* **Error Responses:** `400 Bad Request` (Invalid date format or range), `401 Unauthorized`, `403 Forbidden`, `404 Not Found`
+
+## Task Endpoints
+
+**1. Get Task Status**
+* **Method:** `GET`
+* **Path:** `/tasks/{task_id}`
+* **Description:** Retrieves the status of a background task. Requires Authentication.
+* **Request Body:** None
+* **Success Response:** `200 OK`
+    ```json
+    {
+      "task_id": "550e8400e29b41d4a716446655440000",
+      "status": "PENDING",
+      "result": null,
+      "error": null
+    }
+    ```
+* **Possible Status Values:**
+    - `PENDING`: Task is queued but not yet started
+    - `PROCESSING`: Task is currently being executed
+    - `COMPLETED`: Task has finished successfully
+    - `FAILED`: Task encountered an error
+* **Error Responses:** `401 Unauthorized`, `404 Not Found`
+
+## Projection Endpoints (Nested under Portfolios)
+
+**1. Create Portfolio Projection**
+* **Method:** `POST`
+* **Path:** `/portfolios/{portfolio_id}/projections`
+* **Description:** Initiates a portfolio projection calculation task. Requires Authentication and authorization.
+* **Request Body:**
+    ```json
+    {
+      "start_date": "2024-01-01",
+      "end_date": "2024-12-31",
+      "initial_total_value": "100000.00"
+    }
+    ```
+* **Success Response:** `202 Accepted`
+    ```json
+    {
+      "message": "Projection task accepted",
+      "task_id": "550e8400e29b41d4a716446655440000"
+    }
+    ```
+* **Error Responses:** `400 Bad Request` (Invalid input), `401 Unauthorized`, `403 Forbidden`, `404 Not Found`

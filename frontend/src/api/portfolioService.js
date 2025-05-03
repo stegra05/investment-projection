@@ -43,12 +43,17 @@ const portfolioService = {
   /**
    * Fetches the details of a specific portfolio by its ID.
    * @param {string|number} portfolioId - The ID of the portfolio to fetch.
+   * @param {string} [includeLevel] - Optional level of detail to include ('summary', 'assets', 'full').
    * @returns {Promise<object>} A promise that resolves to the portfolio object.
    * @throws {Error} Throws an error if the API request fails.
    */
-  getPortfolioById: async (portfolioId) => {
+  getPortfolioById: async (portfolioId, includeLevel) => {
     try {
-      const endpoint = ENDPOINTS.PORTFOLIO.DETAIL(portfolioId);
+      let endpoint = ENDPOINTS.PORTFOLIO.DETAIL(portfolioId);
+      if (includeLevel && ['summary', 'assets', 'full'].includes(includeLevel)) {
+        const params = new URLSearchParams({ include: includeLevel });
+        endpoint = `${endpoint}?${params.toString()}`;
+      }
       const response = await instance.get(endpoint);
       return response.data; // Assuming API returns the portfolio object directly
     } catch (error) {

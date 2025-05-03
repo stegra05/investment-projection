@@ -1,9 +1,34 @@
 import React, { useState } from 'react';
+import RiskProfileDisplay from '../components/RiskProfileDisplay';
 
 // Placeholder components (replace with actual imports later)
 const AssetsView = () => <div>Assets View Placeholder</div>;
 const ChangesView = () => <div>Planned Changes View Placeholder</div>;
-const OverviewSettingsView = () => <div>Overview/Settings Placeholder</div>;
+
+const OverviewSettingsView = () => (
+  <div className="space-y-6">
+    <div className="bg-white p-4 rounded-lg shadow">
+      <h2 className="text-lg font-semibold mb-4">Portfolio Overview</h2>
+      <div className="space-y-4">
+        {/* Placeholder for other overview content */}
+        <div>Portfolio summary and key metrics will go here</div>
+      </div>
+    </div>
+
+    <div className="bg-white p-4 rounded-lg shadow">
+      <h2 className="text-lg font-semibold mb-4">Risk Analysis</h2>
+      <RiskProfileDisplay />
+    </div>
+
+    <div className="bg-white p-4 rounded-lg shadow">
+      <h2 className="text-lg font-semibold mb-4">Portfolio Settings</h2>
+      <div className="space-y-4">
+        {/* Placeholder for settings content */}
+        <div>Portfolio settings and configuration will go here</div>
+      </div>
+    </div>
+  </div>
+);
 
 function MainContentPanel() {
   const [activeView, setActiveView] = useState('assets'); // Default view

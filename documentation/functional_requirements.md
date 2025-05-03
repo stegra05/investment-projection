@@ -72,6 +72,16 @@ Requirements are contextualized within the adopted **hybrid multi-panel and guid
     * *(Planned Changes View)*
 * **SH-GW1 (Guided Projection Workflow):** The system SHOULD use a guided workflow (e.g., modal steps, dedicated workflow panel state) for configuring complex projections like Monte Carlo, breaking down parameter inputs logically. Workflow uses clear, guiding language and smooth animations. *(Reflects accepted idea #3)*
     * ***Frontend Location:*** **Triggered from the 'Projection Panel'.**
+* **SH-AN1 (Risk Profile):** Display portfolio risk metrics including risk score, volatility, and confidence intervals.
+    * *(Analytics Panel or Overview/Settings View)*
+* **SH-AN2 (Performance Tracking):** Track and display historical portfolio performance.
+    * *(Analytics Panel with time-series visualization)*
+* **SH-AN3 (Analytics API):** Backend/API support for risk and performance analytics.
+    * *(Backend requirement)*
+* **SH-TK1 (Task Management):** Support for asynchronous task processing and status tracking.
+    * *(Backend requirement, with frontend status indicators)*
+* **SH-TK2 (Task Status UI):** Display task status and progress in the UI.
+    * *(Projection Panel or dedicated status component)*
 
 ## 4. Could-have Requirements
 

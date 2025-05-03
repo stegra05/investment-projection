@@ -34,7 +34,18 @@ def create_app(config_name='default'): # Changed argument name for clarity
     # Initialize Flask extensions here
     db.init_app(app)
     migrate.init_app(app, db)
-    cors.init_app(app, resources={r"/api/*": {"origins": "*"}}) # Basic CORS setup
+    
+    # Configure CORS with more specific settings
+    cors.init_app(app, resources={
+        r"/api/*": {
+            "origins": ["http://localhost:3000"],  # Frontend development server
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True,
+            "max_age": 3600  # Cache preflight requests for 1 hour
+        }
+    })
+    
     jwt.init_app(app)
     # Initialize Limiter with app context
     limiter.init_app(app)
@@ -62,6 +73,14 @@ def create_app(config_name='default'): # Changed argument name for clarity
     # Register the projections blueprint
     from app.routes.projections import projections_bp
     app.register_blueprint(projections_bp)
+
+    # Register the analytics blueprint
+    from app.routes.analytics import analytics_bp
+    app.register_blueprint(analytics_bp)
+
+    # Register the tasks blueprint
+    from app.routes.tasks import tasks_bp
+    app.register_blueprint(tasks_bp)
 
     # --- Custom JSON Error Handlers ---
     @app.errorhandler(HTTPException)
