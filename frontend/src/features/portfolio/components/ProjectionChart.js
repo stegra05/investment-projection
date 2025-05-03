@@ -26,7 +26,7 @@ const ProjectionChart = ({ data }) => {
   }));
 
   return (
-    <div className="w-full h-64">
+    <div className="w-full h-full">
       <ResponsiveContainer>
         <LineChart
           data={chartData}

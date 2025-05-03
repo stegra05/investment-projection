@@ -6,6 +6,7 @@ import { usePortfolio } from '../state/PortfolioContext';
 import Input from '../../../components/Input/Input'; 
 import Button from '../../../components/Button/Button';
 import ProjectionChart from '../components/ProjectionChart';
+import ProjectionSummaryMetrics from '../components/ProjectionSummaryMetrics';
 
 // Helper function to format date as YYYY-MM-DD
 const formatDate = (date) => {
@@ -201,16 +202,21 @@ function ProjectionPanel() {
         </div>
       )}
 
-      {/* Chart Area */}
-      <div className="flex-grow bg-gray-100 rounded border border-gray-200 mb-4">
-        {projectionStatus === 'completed' && projectionResults && projectionResults.length > 0 ? (
-          <ProjectionChart data={projectionResults} />
-        ) : (
-          <div className="h-64 flex items-center justify-center">
-            <span className="text-gray-500">
-              {isProjectionRunning ? 'Calculating projection...' : 'Run projection to see results'}
-            </span>
-          </div>
+      {/* Chart Area & Summary */}
+      <div className="flex-grow flex flex-col bg-gray-50 rounded border border-gray-200 mb-4 min-h-0">
+        <div className="flex-grow min-h-0">
+          {projectionStatus === 'completed' && projectionResults && projectionResults.length > 0 ? (
+            <ProjectionChart data={projectionResults} />
+          ) : (
+            <div className="h-full flex items-center justify-center">
+              <span className="text-gray-500">
+                {isProjectionRunning ? 'Calculating projection...' : 'Run projection to see results'}
+              </span>
+            </div>
+          )}
+        </div>
+        {projectionStatus === 'completed' && projectionResults && projectionResults.length > 1 && (
+          <ProjectionSummaryMetrics data={projectionResults} />
         )}
       </div>
 
