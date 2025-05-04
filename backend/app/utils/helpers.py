@@ -2,8 +2,8 @@ from flask import abort
 from sqlalchemy.orm import object_mapper, RelationshipProperty
 from typing import Type, TypeVar, Any
 # Assuming db instance is accessible via app package. Adjust if needed.
-# from app import db
-from app.models import db # Common pattern in Flask apps
+from app import db
+# from app.models import db # Common pattern in Flask apps -- THIS IS INCORRECT
 from flask import current_app
 
 # Define a generic type variable for SQLAlchemy models
