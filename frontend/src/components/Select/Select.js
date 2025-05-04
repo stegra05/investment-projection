@@ -25,7 +25,7 @@ function Select({
   required = false, 
   disabled = false,
   className = '',
-  placeholder = ' -- Select an option -- '
+  placeholder = ' -- Select an option -- ',
 }) {
   return (
     <div className={`mb-4 ${className}`}>

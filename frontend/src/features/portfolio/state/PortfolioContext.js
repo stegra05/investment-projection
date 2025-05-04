@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import portfolioService from '../../../api/portfolioService';
@@ -22,35 +22,39 @@ export const PortfolioProvider = ({ children }) => {
   const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(false);
   const [analyticsError, setAnalyticsError] = useState(null);
 
-  // Effect to fetch portfolio data when portfolioId changes
-  useEffect(() => {
+  // Extracted function to fetch portfolio data
+  const fetchPortfolioData = useCallback(async () => {
     if (!portfolioId) {
-      // Handle case where ID might be missing momentarily or invalid route structure
       setError(new Error('Portfolio ID is missing.'));
       setIsLoading(false);
       setPortfolio(null);
       return;
     }
+    
+    setIsLoading(true);
+    setError(null);
+    // Don't set portfolio to null during refresh to avoid temporary missing ID
+    // setPortfolio(null); 
+    try {
+      const data = await portfolioService.getPortfolioById(portfolioId, 'full');
+      setPortfolio(data);
+    } catch (err) {
+      console.error('Error fetching portfolio:', err);
+      setError(err.response?.data || err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [portfolioId]); // useCallback dependency
 
-    const fetchPortfolioData = async () => {
-      setIsLoading(true);
-      setError(null);
-      setPortfolio(null); // Clear previous data
-      try {
-        // Always fetch full portfolio data for the context to ensure all components have access to complete data
-        // This can be optimized later by implementing data loading strategies based on component needs
-        const data = await portfolioService.getPortfolioById(portfolioId, 'full');
-        setPortfolio(data); 
-      } catch (err) {
-        console.error('Error fetching portfolio:', err);
-        setError(err.response?.data || err); // Store the error object or response data
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
+  // Effect to fetch portfolio data initially and when portfolioId changes
+  useEffect(() => {
     fetchPortfolioData();
-  }, [portfolioId]); // Dependency array ensures this runs when ID changes
+  }, [fetchPortfolioData]); // useEffect dependency on the memoized function
+
+  // Function to explicitly refresh portfolio data (Task 10)
+  const refreshPortfolio = useCallback(() => {
+    fetchPortfolioData();
+  }, [fetchPortfolioData]); // Dependency on the memoized fetch function
 
   /**
    * Fetches the risk profile analysis for the current portfolio.
@@ -100,6 +104,7 @@ export const PortfolioProvider = ({ children }) => {
     portfolio,
     isLoading,
     error,
+    refreshPortfolio, // Add the refresh function to the context value
     // Analytics-related state and functions
     riskProfile,
     performanceData,
