@@ -16,6 +16,9 @@ export const PortfolioProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // State for caching portfolio data
+  const [portfolioCache, setPortfolioCache] = useState({});
+
   // State for analytics data
   const [riskProfile, setRiskProfile] = useState(null);
   const [performanceData, setPerformanceData] = useState(null);
@@ -31,6 +34,14 @@ export const PortfolioProvider = ({ children }) => {
       return;
     }
     
+    // Check cache first
+    if (portfolioCache[portfolioId]) {
+      setPortfolio(portfolioCache[portfolioId]);
+      setIsLoading(false);
+      setError(null); // Clear previous error if showing cached data
+      return; // Data found in cache, no need to fetch
+    }
+    
     setIsLoading(true);
     setError(null);
     // Don't set portfolio to null during refresh to avoid temporary missing ID
@@ -38,13 +49,15 @@ export const PortfolioProvider = ({ children }) => {
     try {
       const data = await portfolioService.getPortfolioById(portfolioId, 'full');
       setPortfolio(data);
+      // Store fetched data in cache
+      setPortfolioCache(prevCache => ({ ...prevCache, [portfolioId]: data }));
     } catch (err) {
       console.error('Error fetching portfolio:', err);
       setError(err.response?.data || err);
     } finally {
       setIsLoading(false);
     }
-  }, [portfolioId]); // useCallback dependency
+  }, [portfolioId, portfolioCache]); // Add portfolioCache to dependency array
 
   // Effect to fetch portfolio data initially and when portfolioId changes
   useEffect(() => {
@@ -53,6 +66,8 @@ export const PortfolioProvider = ({ children }) => {
 
   // Function to explicitly refresh portfolio data (Task 10)
   const refreshPortfolio = useCallback(() => {
+    // Optionally clear the specific cache entry before fetching if stale data is a concern:
+    // setPortfolioCache(prevCache => ({ ...prevCache, [portfolioId]: undefined }));
     fetchPortfolioData();
   }, [fetchPortfolioData]); // Dependency on the memoized fetch function
 

@@ -6,6 +6,7 @@ import Button from '../../../components/Button/Button';
 import portfolioService from '../../../api/portfolioService'; // Import the service
 import { FaPencilAlt, FaTrashAlt } from 'react-icons/fa'; // Import icons
 import EditAssetModal from '../components/EditAssetModal'; // Import the modal
+import ConfirmationModal from '../../../components/Modal/ConfirmationModal'; // Import the confirmation modal
 
 // Define options based on AssetType enum - SENDING THE VALUE NOW
 const assetTypeOptions = [
@@ -31,9 +32,13 @@ function AssetsView() {
 
   // Loading state (Task 9)
   const [isAdding, setIsAdding] = useState(false);
-  const [deletingAssetId, setDeletingAssetId] = useState(null); // State for delete loading
+  const [deletingAssetId, setDeletingAssetId] = useState(null); // State for delete loading indicator on the row
   const [editingAsset, setEditingAsset] = useState(null); // State for asset being edited
   
+  // State for confirmation modal
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [assetToDeleteId, setAssetToDeleteId] = useState(null); // State to hold the ID of the asset targeted for deletion
+
   // Refined Error States (Task 11)
   const [addError, setAddError] = useState(null); // For general errors
   const [fieldErrors, setFieldErrors] = useState({}); // For field-specific validation errors
@@ -166,18 +171,25 @@ function AssetsView() {
     }
   };
 
-  // --- Handle Asset Deletion ---
-  const handleDeleteAsset = async (assetIdToDelete) => {
-    // Confirmation Dialog
-    if (!window.confirm('Are you sure you want to delete this asset?')) {
-      return; // Abort if user cancels
-    }
+  // --- Handle Asset Deletion Flow ---
+
+  // Step 1: Request deletion and open confirmation modal
+  const handleDeleteRequest = (assetId) => {
+    setAssetToDeleteId(assetId); // Store the ID of the asset to delete
+    setIsConfirmModalOpen(true); // Open the confirmation modal
+    setAddError(null); // Clear previous errors when initiating delete
+  };
+
+  // Step 2: User confirms deletion in the modal
+  const handleConfirmDelete = async () => {
+    if (!assetToDeleteId) return; // Should not happen, but safeguard
 
     setAddError(null); // Clear previous errors
-    setDeletingAssetId(assetIdToDelete); // Set loading state for this asset
+    setDeletingAssetId(assetToDeleteId); // Set loading indicator specifically for the row being deleted
+    setIsConfirmModalOpen(false); // Close the modal immediately
 
     try {
-      await portfolioService.deleteAssetFromPortfolio(portfolioId, assetIdToDelete);
+      await portfolioService.deleteAssetFromPortfolio(portfolioId, assetToDeleteId);
       // Refresh portfolio data to reflect deletion
       if (refreshPortfolio) {
         refreshPortfolio();
@@ -186,13 +198,19 @@ function AssetsView() {
       }
       // TODO: Add success notification (e.g., toast)
     } catch (error) {
-      // Keep error handling, but remove direct console.error if desired
-      // console.error(`Failed to delete asset ${assetIdToDelete}:`, error);
+      // console.error(`Failed to delete asset ${assetToDeleteId}:`, error);
       setAddError(error.response?.data?.detail || error.message || 'Failed to delete asset.');
       // TODO: Implement more specific error handling/display
     } finally {
-      setDeletingAssetId(null); // Clear loading state regardless of outcome
+      setDeletingAssetId(null); // Clear row loading indicator
+      setAssetToDeleteId(null); // Clear the stored asset ID
     }
+  };
+
+  // Step 3: User cancels deletion in the modal
+  const handleCancelDelete = () => {
+    setIsConfirmModalOpen(false); // Close the modal
+    setAssetToDeleteId(null); // Clear the stored asset ID
   };
 
   // --- Handle Asset Editing ---
@@ -259,7 +277,10 @@ function AssetsView() {
                   {portfolio.assets.map((asset) => {
                     const allocation = parseFloat(asset.allocation_percentage);
                     const displayAllocation = !isNaN(allocation) ? `${allocation.toFixed(2)}%` : 'N/A';
-                    const isDeleting = deletingAssetId === asset.id;
+                    // Use deletingAssetId for the row-specific loading spinner
+                    const isDeletingThisRow = deletingAssetId === asset.id;
+                    // Disable buttons if this row is being deleted OR if the edit modal is open
+                    const isDisabled = isDeletingThisRow || !!editingAsset;
 
                     return (
                       <tr key={asset.id}>
@@ -274,23 +295,24 @@ function AssetsView() {
                         </td>
                         {/* Add cell for action buttons */}
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                          {/* Edit Button - Add onClick */}
-                          <button 
+                          {/* Edit Button */}
+                          <button
                             className="text-indigo-600 hover:text-indigo-900 p-1 disabled:opacity-50 disabled:cursor-not-allowed"
                             aria-label="Edit asset"
-                            onClick={() => handleOpenEditModal(asset)} // Open modal on click
-                            disabled={isDeleting || !!editingAsset} // Disable if deleting or any edit modal is open
+                            onClick={() => handleOpenEditModal(asset)}
+                            disabled={isDisabled} // Updated disabled logic
                           >
                             <FaPencilAlt />
-                          </button> 
-                          {/* Delete Button */}
-                          <button 
+                          </button>
+                          {/* Delete Button - Updated onClick */}
+                          <button
                             className="text-red-600 hover:text-red-900 p-1 disabled:opacity-50 disabled:cursor-not-allowed"
                             aria-label="Delete asset"
-                            onClick={() => handleDeleteAsset(asset.id)} 
-                            disabled={isDeleting || !!editingAsset} // Disable if deleting or any edit modal is open
+                            onClick={() => handleDeleteRequest(asset.id)} // Use handleDeleteRequest
+                            disabled={isDisabled} // Updated disabled logic
                           >
-                            {isDeleting ? (
+                            {/* Show spinner only if this specific row is being deleted */}
+                            {isDeletingThisRow ? (
                               <svg className="animate-spin h-4 w-4 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -419,6 +441,19 @@ function AssetsView() {
         asset={editingAsset}
         onSave={handleSaveEdit}
       />
+
+      {/* Render the Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Confirm Deletion"
+        confirmText="Delete Asset"
+        // Show loading state on confirm button only when the specific asset ID matches
+        isConfirming={deletingAssetId !== null && deletingAssetId === assetToDeleteId}
+      >
+        Are you sure you want to delete this asset? This action cannot be undone.
+      </ConfirmationModal>
     </div>
   );
 }
