@@ -8,6 +8,7 @@ export const ENDPOINTS = {
   PORTFOLIO: {
     LIST: `${API_BASE_URL}/portfolios`,
     DETAIL: (id) => `${API_BASE_URL}/portfolios/${id}`,
+    ADD_ASSET: (portfolioId) => `${API_BASE_URL}/portfolios/${portfolioId}/assets`,
   },
   PROJECTION: {
     RUN: `${API_BASE_URL}/projection/run`,

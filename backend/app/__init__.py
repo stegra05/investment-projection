@@ -97,7 +97,7 @@ def create_app(config_name='default'): # Changed argument name for clarity
 
     # Register the tasks blueprint
     from app.routes.tasks import tasks_bp
-    app.register_blueprint(tasks_bp)
+    app.register_blueprint(tasks_bp, url_prefix='/api/v1/tasks')
 
     # --- Custom JSON Error Handlers ---
     @app.errorhandler(HTTPException)

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import RiskProfileDisplay from '../components/RiskProfileDisplay';
+import AssetsView from '../views/AssetsView'; // Import the actual component
 
-// Placeholder components (replace with actual imports later)
-const AssetsView = () => <div>Assets View Placeholder</div>;
+// Placeholder components (remove AssetsView placeholder)
+// const AssetsView = () => <div>Assets View Placeholder</div>; // Removed placeholder
 const ChangesView = () => <div>Planned Changes View Placeholder</div>;
 
 const OverviewSettingsView = () => (

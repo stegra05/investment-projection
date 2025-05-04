@@ -62,6 +62,30 @@ const portfolioService = {
     }
   },
 
+  /**
+   * Adds a new asset to a specific portfolio.
+   * @param {string|number} portfolioId - The ID of the portfolio to add the asset to.
+   * @param {object} assetData - The data for the new asset.
+   * @param {string} assetData.asset_type - The type of the asset (e.g., 'STOCK', 'BOND').
+   * @param {string} assetData.name_or_ticker - The name or ticker symbol.
+   * @param {number} assetData.allocation_percentage - Allocation percentage (e.g., 50 for 50%).
+   * @param {number} [assetData.manual_expected_return] - Optional manually set expected return.
+   * @returns {Promise<object>} A promise that resolves to the newly added asset object (or the updated portfolio).
+   * @throws {Error} Throws an error if the API request fails.
+   */
+  addAssetToPortfolio: async (portfolioId, assetData) => {
+    try {
+      const endpoint = ENDPOINTS.PORTFOLIO.ADD_ASSET(portfolioId);
+      const response = await instance.post(endpoint, assetData);
+      // Assuming the API returns the newly added asset or updated portfolio data
+      return response.data;
+    } catch (error) {
+      console.error(`Error adding asset to portfolio ${portfolioId}:`, error);
+      // Re-throw for the caller (e.g., AssetsView component) to handle
+      throw error;
+    }
+  },
+
   // Add other portfolio-related API calls here in the future
   // e.g., updatePortfolio, deletePortfolio
 };
