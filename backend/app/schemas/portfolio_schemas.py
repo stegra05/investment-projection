@@ -1,9 +1,9 @@
 from pydantic import BaseModel, Field, validator, condecimal
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import date
 from decimal import Decimal
 
-from app.enums import AssetType, ChangeType # Import Enums
+from app.enums import AssetType, ChangeType, FrequencyType, MonthOrdinalType, OrdinalDayType, EndsOnType
 
 # --- Base Schemas (for common fields/config) ---
 class OrmBaseModel(BaseModel):
@@ -18,6 +18,22 @@ class PlannedChangeBase(OrmBaseModel):
     change_date: date = Field(..., example="2024-08-15")
     amount: Optional[condecimal(max_digits=15, decimal_places=2)] = Field(None, example="500.00")
     description: Optional[str] = Field(None, example="Monthly savings addition")
+    target_allocation_json: Optional[Dict] = Field(None, example={"asset_id_1": 0.5, "asset_id_2": 0.5})
+
+    # Recurrence fields
+    is_recurring: bool = Field(default=False)
+    frequency: FrequencyType = Field(default=FrequencyType.ONE_TIME)
+    interval: int = Field(default=1, ge=1)
+    days_of_week: Optional[List[int]] = Field(default=None, example=[0, 2, 4]) # Mon, Wed, Fri
+    day_of_month: Optional[int] = Field(default=None, ge=1, le=31)
+    month_ordinal: Optional[MonthOrdinalType] = Field(default=None)
+    month_ordinal_day: Optional[OrdinalDayType] = Field(default=None)
+    month_of_year: Optional[int] = Field(default=None, ge=1, le=12)
+    ends_on_type: EndsOnType = Field(default=EndsOnType.NEVER)
+    ends_on_occurrences: Optional[int] = Field(default=None, ge=1)
+    ends_on_date: Optional[date] = Field(default=None)
+
+    # TODO: Add validators for conditional recurrence fields (e.g., days_of_week only if frequency is WEEKLY)
 
 class PlannedChangeCreateSchema(PlannedChangeBase):
     @validator('amount')
@@ -34,6 +50,20 @@ class PlannedChangeUpdateSchema(PlannedChangeBase):
     change_date: Optional[date] = Field(None, example="2024-08-15")
     amount: Optional[condecimal(max_digits=15, decimal_places=2)] = Field(None, example="500.00")
     description: Optional[str] = Field(None, example="Monthly savings addition")
+    target_allocation_json: Optional[Dict] = Field(None, example={"asset_id_1": 0.5, "asset_id_2": 0.5})
+
+    # Recurrence fields (Optional for update)
+    is_recurring: Optional[bool] = Field(None)
+    frequency: Optional[FrequencyType] = Field(None)
+    interval: Optional[int] = Field(None, ge=1)
+    days_of_week: Optional[List[int]] = Field(None, example=[0, 2, 4])
+    day_of_month: Optional[int] = Field(None, ge=1, le=31)
+    month_ordinal: Optional[MonthOrdinalType] = Field(None)
+    month_ordinal_day: Optional[OrdinalDayType] = Field(None)
+    month_of_year: Optional[int] = Field(None, ge=1, le=12)
+    ends_on_type: Optional[EndsOnType] = Field(None)
+    ends_on_occurrences: Optional[int] = Field(None, ge=1)
+    ends_on_date: Optional[date] = Field(None)
 
     @validator('amount')
     def check_amount_consistency(cls, v, values):
@@ -47,6 +77,7 @@ class PlannedChangeUpdateSchema(PlannedChangeBase):
 class PlannedChangeSchema(PlannedChangeBase):
     change_id: int
     portfolio_id: int
+    # Recurrence fields are inherited from PlannedChangeBase, so they will be part of the response schema
 
 # --- Asset Schemas ---
 class AssetBase(OrmBaseModel):
