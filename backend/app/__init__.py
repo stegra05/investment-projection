@@ -40,15 +40,10 @@ def create_app(config_name='default'): # Changed argument name for clarity
     migrate.init_app(app, db)
     
     # Configure CORS with more specific settings
-    cors.init_app(app, resources={
-        r"/api/*": {
-            "origins": ["http://localhost:3000"],  # Frontend development server
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"],
-            "supports_credentials": True,
-            "max_age": 3600  # Cache preflight requests for 1 hour
-        }
-    })
+    cors.init_app(app, origins="http://localhost:3000", 
+                  methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
+                  allow_headers=["Content-Type", "Authorization"], 
+                  supports_credentials=True, max_age=3600)
     
     jwt.init_app(app)
     # Initialize Limiter with app context

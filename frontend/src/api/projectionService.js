@@ -14,16 +14,12 @@ const projectionService = {
   startProjection: async (portfolioId, params) => {
     try {
       console.log('Starting projection with params:', { portfolioId, params });
-      
-      const response = await instance.post(
-        `/portfolios/${portfolioId}/projections`,
-        params,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+
+      const response = await instance.post(`/portfolios/${portfolioId}/projections`, params, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       console.log('Projection response:', {
         status: response.status,
@@ -57,11 +53,11 @@ const projectionService = {
    * @returns {Promise<object>} A promise that resolves to the task status object.
    * @throws {Error} Throws an error if the API request fails.
    */
-  getProjectionTaskStatus: async (taskId) => {
+  getProjectionTaskStatus: async taskId => {
     try {
       const response = await instance.get(`/tasks/${taskId}`, {
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
       });
       return response.data;
@@ -74,6 +70,55 @@ const projectionService = {
       throw error;
     }
   },
+
+  /**
+   * Runs a preview projection for a portfolio with a draft change.
+   * @param {string|number} portfolioId - The ID of the portfolio.
+   * @param {object} params - Projection parameters (start_date, end_date, initial_total_value).
+   * @param {object} draftChange - The draft planned change to include in the preview.
+   * @returns {Promise<object>} A promise that resolves to the preview projection data.
+   * @throws {Error} Throws an error if the API request fails.
+   */
+  runPreviewProjection: async (portfolioId, params, draftChange) => {
+    try {
+      const payload = {
+        projection_params: params,
+        draft_change: draftChange,
+      };
+      console.log('Running preview projection with payload:', { portfolioId, payload });
+
+      // Assuming the preview endpoint is /portfolios/{portfolioId}/projections/preview
+      const response = await instance.post(
+        `/portfolios/${portfolioId}/projections/preview`,
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.status !== 200) {
+        console.error('Preview projection API error:', {
+          status: response.status,
+          data: response.data,
+        });
+        throw new Error(`Error running preview projection: Status ${response.status}`);
+      }
+
+      // ProjectionPanel.js expects resultData.data to be the timeseries.
+      // We assume the API for preview returns an object structured like: { data: { "date1": value1, ... } }
+      console.log('Preview projection response data:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error in runPreviewProjection service call:', {
+        message: error.message,
+        responseStatus: error.response?.status,
+        responseData: error.response?.data,
+      });
+      throw error; // Rethrow the original error to be handled by the caller
+    }
+  },
 };
 
-export default projectionService; 
+export default projectionService;

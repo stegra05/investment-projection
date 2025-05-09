@@ -3,6 +3,7 @@ from app import db
 from app.models import Portfolio, PlannedFutureChange # Keep Portfolio for type hint
 from app.routes.portfolios import verify_portfolio_ownership # Import decorator
 from app.utils.decorators import handle_api_errors
+from flask_jwt_extended import jwt_required # Import jwt_required
 from app.schemas.portfolio_schemas import ( # Import relevant schemas
     PlannedChangeSchema, PlannedChangeCreateSchema, PlannedChangeUpdateSchema
 )
@@ -30,7 +31,15 @@ def get_change_or_404(portfolio: Portfolio, change_id: int):
 # Note: portfolio_id is captured from the URL prefix during blueprint registration
 # The verify_portfolio_ownership decorator injects the 'portfolio' object
 
-@changes_bp.route('', methods=['POST']) # Route relative to '/portfolios/<pid>/changes'
+@changes_bp.route('/', methods=['OPTIONS'])
+def add_planned_change_options(portfolio_id):
+    """Handles OPTIONS preflight requests for adding planned changes."""
+    # Flask-CORS, initialized globally, will add the necessary Access-Control-* headers.
+    # This route just needs to exist and return a successful HTTP response.
+    return jsonify(message="Preflight for planned changes OK"), 200
+
+@changes_bp.route('/', methods=['POST'])
+@jwt_required()
 @verify_portfolio_ownership
 @handle_api_errors(schema=PlannedChangeCreateSchema)
 def add_planned_change(portfolio_id, portfolio, validated_data):
@@ -47,7 +56,13 @@ def add_planned_change(portfolio_id, portfolio, validated_data):
     # The object should now have its ID populated by the flush.
     return jsonify(PlannedChangeSchema.from_orm(new_change).model_dump(mode='json', by_alias=True)), 201
 
-@changes_bp.route('/<int:change_id>', methods=['PUT', 'PATCH']) # Route relative to '/portfolios/<pid>/changes'
+@changes_bp.route('/<int:change_id>', methods=['OPTIONS'])
+def update_planned_change_options(portfolio_id, change_id):
+    """Handles OPTIONS preflight requests for updating/deleting specific planned changes."""
+    return jsonify(message="Preflight for specific planned change OK"), 200
+
+@changes_bp.route('/<int:change_id>', methods=['PUT', 'PATCH'])
+@jwt_required()
 @verify_portfolio_ownership
 @handle_api_errors(schema=PlannedChangeUpdateSchema)
 def update_planned_change(portfolio_id, change_id, portfolio, validated_data):
@@ -80,6 +95,7 @@ def update_planned_change(portfolio_id, change_id, portfolio, validated_data):
     return jsonify(PlannedChangeSchema.from_orm(change).model_dump(mode='json', by_alias=True)), 200
 
 @changes_bp.route('/<int:change_id>', methods=['DELETE'])
+@jwt_required()
 @verify_portfolio_ownership
 def delete_planned_change(portfolio_id, change_id, portfolio):
     """Deletes a planned change from a portfolio."""

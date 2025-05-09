@@ -15,7 +15,7 @@ const RegisterPage = () => {
     setSuccessMessage(null);
   };
 
-  const handleRegister = async (userData) => {
+  const handleRegister = async userData => {
     clearMessages();
     setIsLoading(true);
     try {
@@ -25,7 +25,9 @@ const RegisterPage = () => {
         navigate('/login');
       }, 1500);
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Registration failed. Please check your input and try again.';
+      const errorMessage =
+        err.response?.data?.message ||
+        'Registration failed. Please check your input and try again.';
       setError(errorMessage);
       setIsLoading(false);
     }
@@ -59,4 +61,4 @@ const RegisterPage = () => {
   );
 };
 
-export default RegisterPage; 
+export default RegisterPage;

@@ -10,9 +10,9 @@ const LoginForm = ({ onSubmit, isLoading }) => {
     identifier: '',
     password: '',
   });
-  const clearError = useAuthStore((state) => state.clearError);
+  const clearError = useAuthStore(state => state.clearError);
 
-  const handleChange = (e) => {
+  const handleChange = e => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -21,7 +21,7 @@ const LoginForm = ({ onSubmit, isLoading }) => {
     clearError();
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
     const { identifier, password } = formData;
 
@@ -83,4 +83,4 @@ LoginForm.propTypes = {
   isLoading: PropTypes.bool,
 };
 
-export default LoginForm; 
+export default LoginForm;

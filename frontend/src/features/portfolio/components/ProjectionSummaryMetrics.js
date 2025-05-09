@@ -2,13 +2,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 // Helper function to format currency
-const formatCurrency = (value) => {
+const formatCurrency = value => {
   if (value === null || value === undefined) return '-';
   return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 };
 
 // Helper function to format percentage
-const formatPercentage = (value) => {
+const formatPercentage = value => {
   if (value === null || value === undefined || !Number.isFinite(value)) return '-';
   return `${value.toFixed(2)}%`;
 };
@@ -29,7 +29,7 @@ MetricDisplay.propTypes = {
 const ProjectionSummaryMetrics = ({ data }) => {
   if (!data || data.length < 2) {
     // Need at least two points (start and end) for meaningful comparison
-    return null; 
+    return null;
   }
 
   const startPoint = data[0];
@@ -41,15 +41,20 @@ const ProjectionSummaryMetrics = ({ data }) => {
   let totalGrowth = null;
   let totalGrowthPercent = null;
 
-  if (startValue !== null && startValue !== undefined && endValue !== null && endValue !== undefined) {
+  if (
+    startValue !== null &&
+    startValue !== undefined &&
+    endValue !== null &&
+    endValue !== undefined
+  ) {
     totalGrowth = endValue - startValue;
     if (startValue !== 0) {
-      totalGrowthPercent = ((endValue / startValue) - 1) * 100;
+      totalGrowthPercent = (endValue / startValue - 1) * 100;
     } else if (endValue > 0) {
       totalGrowthPercent = Infinity;
     } // else if endValue is also 0, percent growth is 0 (handled by null default)
   }
-  
+
   // Determine if growth is positive, negative or neutral for styling
   let growthColor = 'text-gray-800'; // Default neutral
   if (totalGrowth > 0) {
@@ -60,22 +65,16 @@ const ProjectionSummaryMetrics = ({ data }) => {
 
   return (
     <div className="mt-4 p-3 border-t border-gray-200 grid grid-cols-2 md:grid-cols-4 gap-4">
-      <MetricDisplay 
-        label="Start Value" 
-        value={formatCurrency(startValue)} 
-      />
-      <MetricDisplay 
-        label="End Value" 
-        value={formatCurrency(endValue)} 
-      />
-      <MetricDisplay 
-        label="Total Growth" 
-        value={formatCurrency(totalGrowth)} 
+      <MetricDisplay label="Start Value" value={formatCurrency(startValue)} />
+      <MetricDisplay label="End Value" value={formatCurrency(endValue)} />
+      <MetricDisplay
+        label="Total Growth"
+        value={formatCurrency(totalGrowth)}
         className={growthColor}
       />
-      <MetricDisplay 
-        label="Growth (%) " 
-        value={formatPercentage(totalGrowthPercent)} 
+      <MetricDisplay
+        label="Growth (%) "
+        value={formatPercentage(totalGrowthPercent)}
         className={growthColor}
       />
       {/* Optionally add Start/End Date display if needed */}
@@ -94,4 +93,4 @@ ProjectionSummaryMetrics.propTypes = {
   ),
 };
 
-export default ProjectionSummaryMetrics; 
+export default ProjectionSummaryMetrics;

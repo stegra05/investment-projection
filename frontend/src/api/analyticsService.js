@@ -7,9 +7,11 @@ const analyticsService = {
    * @returns {Promise<object>} A promise that resolves to the risk profile data.
    * @throws {Error} Throws an error if the API request fails.
    */
-  getRiskProfile: async (portfolioId) => {
+  getRiskProfile: async portfolioId => {
     try {
-      const response = await instance.get(`/api/v1/portfolios/${portfolioId}/analytics/risk-profile`);
+      const response = await instance.get(
+        `/api/v1/portfolios/${portfolioId}/analytics/risk-profile`
+      );
       return response.data;
     } catch (error) {
       console.error(`Error fetching risk profile for portfolio ${portfolioId}:`, error);
@@ -44,4 +46,4 @@ const analyticsService = {
   },
 };
 
-export default analyticsService; 
+export default analyticsService;

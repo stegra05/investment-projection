@@ -29,7 +29,8 @@ const Input = ({
     <div className="mb-4 relative">
       {label && (
         <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-1">
-          {label}{required && <span className="text-red-500 ml-1">*</span>}
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
       <div className="relative">
@@ -57,9 +58,7 @@ const Input = ({
           </button>
         )}
       </div>
-      {helperText && (
-        <p className="mt-1 text-xs text-gray-500">{helperText}</p>
-      )}
+      {helperText && <p className="mt-1 text-xs text-gray-500">{helperText}</p>}
     </div>
   );
 };
@@ -77,4 +76,4 @@ Input.propTypes = {
   helperText: PropTypes.string,
 };
 
-export default Input; 
+export default Input;

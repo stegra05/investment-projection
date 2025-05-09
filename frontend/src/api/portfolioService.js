@@ -28,7 +28,7 @@ const portfolioService = {
    * @returns {Promise<object>} A promise that resolves to the newly created portfolio object.
    * @throws {Error} Throws an error if the API request fails.
    */
-  createPortfolio: async (portfolioData) => {
+  createPortfolio: async portfolioData => {
     try {
       const response = await instance.post(ENDPOINTS.PORTFOLIO.LIST, portfolioData);
       // Assuming the API returns the newly created portfolio object in the data property
@@ -183,7 +183,10 @@ const portfolioService = {
       const response = await instance.put(endpoint, changeData); // Or instance.patch if backend supports it
       return response.data;
     } catch (error) {
-      console.error(`Error updating planned change ${changeId} in portfolio ${portfolioId}:`, error);
+      console.error(
+        `Error updating planned change ${changeId} in portfolio ${portfolioId}:`,
+        error
+      );
       throw error;
     }
   },
@@ -201,7 +204,10 @@ const portfolioService = {
       await instance.delete(endpoint);
       return;
     } catch (error) {
-      console.error(`Error deleting planned change ${changeId} from portfolio ${portfolioId}:`, error);
+      console.error(
+        `Error deleting planned change ${changeId} from portfolio ${portfolioId}:`,
+        error
+      );
       throw error;
     }
   },
@@ -234,4 +240,4 @@ const portfolioService = {
   // e.g., updatePortfolio, deletePortfolio
 };
 
-export default portfolioService; 
+export default portfolioService;

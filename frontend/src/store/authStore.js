@@ -24,17 +24,16 @@ const getInitialState = () => {
   return { user: null, isAuthenticated: false };
 };
 
-
-const useAuthStore = create((set) => ({
+const useAuthStore = create(set => ({
   ...getInitialState(), // Initialize state from localStorage
   isLoading: false,
   error: null,
 
-  login: async (credentials) => {
+  login: async credentials => {
     set({ isLoading: true, error: null });
     try {
       const data = await authService.login(credentials);
-      
+
       // Store token and user data in localStorage
       if (data && data.access_token && data.user) {
         localStorage.setItem('accessToken', data.access_token);
@@ -43,7 +42,7 @@ const useAuthStore = create((set) => ({
         console.error('Login response missing access token or user data.', data);
         localStorage.removeItem('accessToken'); // Ensure clean state if login data is incomplete
         localStorage.removeItem('user');
-        throw new Error('Login failed: Incomplete data received.'); 
+        throw new Error('Login failed: Incomplete data received.');
       }
 
       // Update state on successful login
@@ -52,11 +51,11 @@ const useAuthStore = create((set) => ({
       // Clear token and user on login failure
       localStorage.removeItem('accessToken');
       localStorage.removeItem('user');
-      set({ 
-        error: error.message || 'Login failed', 
-        isLoading: false, 
-        user: null, 
-        isAuthenticated: false, 
+      set({
+        error: error.message || 'Login failed',
+        isLoading: false,
+        user: null,
+        isAuthenticated: false,
       });
     }
   },
@@ -68,7 +67,7 @@ const useAuthStore = create((set) => ({
     // Reset authentication state
     set({ user: null, isAuthenticated: false, error: null, isLoading: false }); // Also reset isLoading
     // Optionally: Could call a backend logout endpoint via authService if one exists
-    // authService.logout(); 
+    // authService.logout();
   },
 
   clearError: () => {
@@ -76,4 +75,4 @@ const useAuthStore = create((set) => ({
   },
 }));
 
-export default useAuthStore; 
+export default useAuthStore;

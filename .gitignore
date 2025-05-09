@@ -194,6 +194,7 @@ cython_debug/
 
 
 # Node.js / Frontend
+.husky/
 package-lock.json
 node_modules/
 dist/

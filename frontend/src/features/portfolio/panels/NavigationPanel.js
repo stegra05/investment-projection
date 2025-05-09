@@ -24,11 +24,11 @@ function NavigationPanel() {
         <p className="text-gray-500">No portfolios found.</p>
       ) : (
         <ul className="space-y-2 overflow-y-auto flex-grow">
-          {portfolios.map((portfolio) => {
+          {portfolios.map(portfolio => {
             const isActive = String(portfolio.portfolio_id) === String(portfolioId);
             return (
               <li key={portfolio.portfolio_id} className="list-none">
-                <button 
+                <button
                   type="button"
                   className={`w-full text-left p-2 rounded text-gray-800 hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-300 ${isActive ? 'bg-primary-100 text-primary-700 font-semibold border-l-4 border-primary-500' : ''}`}
                   onClick={() => navigate(`/portfolio/${portfolio.portfolio_id}`)}
@@ -45,4 +45,4 @@ function NavigationPanel() {
   );
 }
 
-export default NavigationPanel; 
+export default NavigationPanel;

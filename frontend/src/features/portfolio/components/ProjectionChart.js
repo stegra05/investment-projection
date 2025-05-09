@@ -38,16 +38,11 @@ const ProjectionChart = ({ data }) => {
           }}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis 
-            dataKey="date" 
-            tickFormatter={(date) => new Date(date).toLocaleDateString()}
-          />
-          <YAxis 
-            tickFormatter={(value) => `$${value.toLocaleString()}`}
-          />
-          <Tooltip 
-            formatter={(value) => [`$${value.toLocaleString()}`, 'Portfolio Value']}
-            labelFormatter={(date) => new Date(date).toLocaleDateString()}
+          <XAxis dataKey="date" tickFormatter={date => new Date(date).toLocaleDateString()} />
+          <YAxis tickFormatter={value => `$${value.toLocaleString()}`} />
+          <Tooltip
+            formatter={value => [`$${value.toLocaleString()}`, 'Portfolio Value']}
+            labelFormatter={date => new Date(date).toLocaleDateString()}
           />
           <Legend />
           <Line
@@ -73,4 +68,4 @@ ProjectionChart.propTypes = {
   ),
 };
 
-export default ProjectionChart; 
+export default ProjectionChart;

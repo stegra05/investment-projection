@@ -11,7 +11,7 @@ const LoginPage = () => {
   const isAuthenticated = useAuthStore(state => state.isAuthenticated);
   const navigate = useNavigate();
 
-  const handleLogin = async (credentials) => {
+  const handleLogin = async credentials => {
     await login(credentials);
   };
 
@@ -30,7 +30,7 @@ const LoginPage = () => {
       errorMessage = error.message;
     } else {
       // Fallback if error is an object without a standard message
-      errorMessage = 'An unexpected error occurred. Please try again.'; 
+      errorMessage = 'An unexpected error occurred. Please try again.';
       console.error('Unknown error format:', error); // Log for debugging
     }
   }
@@ -38,7 +38,9 @@ const LoginPage = () => {
   return (
     <Layout>
       <div className="max-w-md mx-auto mt-10 p-8 border border-gray-200 rounded-lg shadow-sm bg-white">
-        <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Login to Investment Projection</h1>
+        <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">
+          Login to Investment Projection
+        </h1>
         {/* Display the extracted error message */}
         {errorMessage && (
           <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-md border border-red-200">
@@ -58,4 +60,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage; 
+export default LoginPage;

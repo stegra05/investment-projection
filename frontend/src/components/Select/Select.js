@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 /**
  * Reusable Select component.
- * 
+ *
  * Props:
  * - label (string): The text for the label.
  * - id (string): The id for the select element, used for linking label.
@@ -16,14 +16,14 @@ import PropTypes from 'prop-types';
  * - className (string): Optional additional CSS classes for the wrapper div.
  * - placeholder (string): Optional placeholder text for the default option.
  */
-function Select({ 
-  label, 
-  id, 
-  name, 
-  value, 
-  onChange, 
-  options = [], 
-  required = false, 
+function Select({
+  label,
+  id,
+  name,
+  value,
+  onChange,
+  options = [],
+  required = false,
   disabled = false,
   className = '',
   placeholder = ' -- Select an option -- ',
@@ -31,7 +31,8 @@ function Select({
   return (
     <div className={`mb-4 ${className}`}>
       <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
-        {label}{required && <span className="text-red-500"> *</span>}
+        {label}
+        {required && <span className="text-red-500"> *</span>}
       </label>
       <select
         id={id}
@@ -46,7 +47,7 @@ function Select({
                     ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
       >
         {placeholder && <option value="">{placeholder}</option>}
-        {options.map((option) => (
+        {options.map(option => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
@@ -63,22 +64,16 @@ Select.propTypes = {
   name: PropTypes.string.isRequired,
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   onChange: PropTypes.func.isRequired,
-  options: PropTypes.arrayOf(PropTypes.shape({
-    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    label: PropTypes.string.isRequired,
-  })),
+  options: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      label: PropTypes.string.isRequired,
+    })
+  ),
   required: PropTypes.bool,
   disabled: PropTypes.bool,
   className: PropTypes.string,
   placeholder: PropTypes.string,
 };
 
-Select.defaultProps = {
-  options: [],
-  required: false,
-  disabled: false,
-  className: '',
-  placeholder: ' -- Select an option -- ',
-};
-
-export default Select; 
+export default Select;

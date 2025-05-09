@@ -11,8 +11,13 @@ import CreatePortfolioModal from '../components/CreatePortfolioModal';
 import portfolioService from '../../../api/portfolioService'; // <-- Import portfolio service
 
 function DashboardPage() {
-  const { portfolios, isLoading: isLoadingList, error: listError, fetchPortfolios } = usePortfolioListStore();
-  const logout = useAuthStore((state) => state.logout);
+  const {
+    portfolios,
+    isLoading: isLoadingList,
+    error: listError,
+    fetchPortfolios,
+  } = usePortfolioListStore();
+  const logout = useAuthStore(state => state.logout);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState(null);
@@ -26,7 +31,7 @@ function DashboardPage() {
     // No need to navigate here, ProtectedRoute will handle redirect
   };
 
-  const handleCreatePortfolio = async (portfolioData) => {
+  const handleCreatePortfolio = async portfolioData => {
     setIsCreating(true);
     setCreateError(null);
     try {
@@ -64,7 +69,10 @@ function DashboardPage() {
       )}
 
       {listError && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <div
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+          role="alert"
+        >
           <strong className="font-bold">Error:</strong>
           <span className="block sm:inline"> {listError}</span>
         </div>
@@ -79,11 +87,16 @@ function DashboardPage() {
             </div>
           ) : (
             <ul className="space-y-4">
-              {portfolios.map((portfolio) => (
-                <li key={portfolio.portfolio_id} className="border rounded-lg p-4 hover:bg-gray-50 transition duration-150 ease-in-out">
+              {portfolios.map(portfolio => (
+                <li
+                  key={portfolio.portfolio_id}
+                  className="border rounded-lg p-4 hover:bg-gray-50 transition duration-150 ease-in-out"
+                >
                   {/* Ensure portfolio.portfolio_id is the correct key from your API */}
                   <Link to={`/portfolio/${portfolio.portfolio_id}`} className="block">
-                    <h2 className="text-lg font-medium text-blue-600 hover:text-blue-800">{portfolio.name}</h2>
+                    <h2 className="text-lg font-medium text-blue-600 hover:text-blue-800">
+                      {portfolio.name}
+                    </h2>
                     {/* Add more details if needed, e.g., portfolio.description */}
                   </Link>
                 </li>
@@ -92,19 +105,16 @@ function DashboardPage() {
           )}
 
           <div className="mt-8 flex justify-center">
-            <Button 
-              variant="primary" 
-              onClick={() => setIsModalOpen(true)}
-            >
+            <Button variant="primary" onClick={() => setIsModalOpen(true)}>
               Create New Portfolio
             </Button>
           </div>
         </>
       )}
 
-      <CreatePortfolioModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <CreatePortfolioModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         onSubmit={handleCreatePortfolio}
         isLoading={isCreating}
         error={createError}
@@ -113,4 +123,4 @@ function DashboardPage() {
   );
 }
 
-export default DashboardPage; 
+export default DashboardPage;

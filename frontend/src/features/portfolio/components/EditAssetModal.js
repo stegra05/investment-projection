@@ -54,7 +54,7 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
 
   // Effect to handle Escape key press for closing the modal
   useEffect(() => {
-    const handleEsc = (event) => {
+    const handleEsc = event => {
       if (event.keyCode === 27) {
         onClose();
       }
@@ -69,28 +69,28 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
   }, [isOpen, onClose]);
 
   // Generic change handler
-  const handleInputChange = (e) => {
+  const handleInputChange = e => {
     const { name, value } = e.target;
     switch (name) {
-    case 'assetType':
-      setAssetType(value);
-      break;
-    case 'nameOrTicker':
-      setNameOrTicker(value);
-      break;
-    case 'allocationPercentage':
-      setAllocationPercentage(value);
-      break;
-    case 'manualExpectedReturn':
-      setManualExpectedReturn(value);
-      break;
-    default:
-      break;
+      case 'assetType':
+        setAssetType(value);
+        break;
+      case 'nameOrTicker':
+        setNameOrTicker(value);
+        break;
+      case 'allocationPercentage':
+        setAllocationPercentage(value);
+        break;
+      case 'manualExpectedReturn':
+        setManualExpectedReturn(value);
+        break;
+      default:
+        break;
     }
   };
 
   // Form Submission Logic
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setError(null);
     setFieldErrors({});
@@ -108,14 +108,22 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
       asset_type: assetType,
       name_or_ticker: nameOrTicker, // Sending name_or_ticker
       allocation_percentage: parseFloat(allocationPercentage) || 0,
-      ...(manualExpectedReturn !== '' && manualExpectedReturn !== null && { manual_expected_return: parseFloat(manualExpectedReturn) }), // Handle empty string/null
+      ...(manualExpectedReturn !== '' &&
+        manualExpectedReturn !== null && {
+          manual_expected_return: parseFloat(manualExpectedReturn),
+        }), // Handle empty string/null
     };
 
     // Basic Frontend validation (similar to add form)
     let currentFieldErrors = {};
     if (!updatedAssetData.asset_type) currentFieldErrors.assetType = 'Asset type is required.';
-    if (!updatedAssetData.name_or_ticker) currentFieldErrors.nameOrTicker = 'Name or Ticker is required.';
-    if (isNaN(updatedAssetData.allocation_percentage) || updatedAssetData.allocation_percentage < 0 || updatedAssetData.allocation_percentage > 100) {
+    if (!updatedAssetData.name_or_ticker)
+      currentFieldErrors.nameOrTicker = 'Name or Ticker is required.';
+    if (
+      isNaN(updatedAssetData.allocation_percentage) ||
+      updatedAssetData.allocation_percentage < 0 ||
+      updatedAssetData.allocation_percentage > 100
+    ) {
       // Allow 0 allocation, unlike add form perhaps? Check requirements. Assuming >= 0 now.
       currentFieldErrors.allocationPercentage = 'Allocation must be between 0 and 100.';
     }
@@ -125,9 +133,12 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
       return;
     }
 
-
     try {
-      const savedAsset = await portfolioService.updateAssetInPortfolio(portfolioId, asset.id, updatedAssetData);
+      const savedAsset = await portfolioService.updateAssetInPortfolio(
+        portfolioId,
+        asset.id,
+        updatedAssetData
+      );
       onSave(savedAsset); // Pass updated asset data back if needed
       onClose(); // Close modal on success
     } catch (err) {
@@ -144,8 +155,8 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
           else if (fieldName === 'asset_type') fieldName = 'assetType';
           else if (fieldName === 'allocation_percentage') fieldName = 'allocationPercentage';
           else if (fieldName === 'manual_expected_return') fieldName = 'manualExpectedReturn';
-              
-          if(fieldName) newFieldErrors[fieldName] = valErr.msg;
+
+          if (fieldName) newFieldErrors[fieldName] = valErr.msg;
         });
         setFieldErrors(newFieldErrors);
         setError(null);
@@ -187,14 +198,16 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
 
   return (
     <div style={modalStyle}>
-      <div 
-        style={contentStyle} 
-        role="dialog" 
+      <div
+        style={contentStyle}
+        role="dialog"
         aria-modal="true"
         aria-labelledby="edit-asset-modal-title"
         tabIndex="-1"
       >
-        <h2 id="edit-asset-modal-title" className="text-xl font-semibold mb-4">Edit Asset</h2>
+        <h2 id="edit-asset-modal-title" className="text-xl font-semibold mb-4">
+          Edit Asset
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Asset Type */}
           <div>
@@ -208,8 +221,9 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
               required
               className="mb-0"
             />
-            {(fieldErrors.assetType) &&
-               <p className="mt-1 text-xs text-red-600">{fieldErrors.assetType}</p>}
+            {fieldErrors.assetType && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.assetType}</p>
+            )}
           </div>
 
           {/* Name / Ticker */}
@@ -224,8 +238,9 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
               placeholder="e.g., Apple Inc. or AAPL"
               className="mb-0"
             />
-            {(fieldErrors.nameOrTicker) &&
-               <p className="mt-1 text-xs text-red-600">{fieldErrors.nameOrTicker}</p>}
+            {fieldErrors.nameOrTicker && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.nameOrTicker}</p>
+            )}
           </div>
 
           {/* Allocation Percentage */}
@@ -244,8 +259,9 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
               step="0.01"
               className="mb-0"
             />
-            {(fieldErrors.allocationPercentage) &&
-               <p className="mt-1 text-xs text-red-600">{fieldErrors.allocationPercentage}</p>}
+            {fieldErrors.allocationPercentage && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.allocationPercentage}</p>
+            )}
           </div>
 
           {/* Manual Expected Return */}
@@ -262,8 +278,9 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
               helperText="Leave blank to use default market estimates (if available)."
               className="mb-0"
             />
-            {(fieldErrors.manualExpectedReturn) &&
-               <p className="mt-1 text-xs text-red-600">{fieldErrors.manualExpectedReturn}</p>}
+            {fieldErrors.manualExpectedReturn && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.manualExpectedReturn}</p>
+            )}
           </div>
 
           {/* General error message */}
@@ -298,10 +315,14 @@ EditAssetModal.propTypes = {
     name: PropTypes.string, // From GET request
     name_or_ticker: PropTypes.string, // Potential property if API changes
     allocation_percentage: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    manual_expected_return: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.oneOf([null])]),
+    manual_expected_return: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number,
+      PropTypes.oneOf([null]),
+    ]),
     // Add other expected asset properties if needed
   }), // Allow null if modal can be rendered without an asset initially (though `isOpen` controls it)
   onSave: PropTypes.func.isRequired,
 };
 
-export default EditAssetModal; 
+export default EditAssetModal;

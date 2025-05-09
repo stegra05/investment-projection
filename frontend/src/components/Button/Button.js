@@ -2,7 +2,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styles from './Button.module.css';
 
-const Button = ({ children, onClick, variant = 'primary', disabled = false, fullWidth = false, className = '', ...props }) => {
+const Button = ({
+  children,
+  onClick,
+  variant = 'primary',
+  disabled = false,
+  fullWidth = false,
+  className = '',
+  ...props
+}) => {
   const buttonClasses = `
     ${styles.button} 
     ${styles[variant]} 
@@ -11,12 +19,7 @@ const Button = ({ children, onClick, variant = 'primary', disabled = false, full
   `.trim();
 
   return (
-    <button
-      className={buttonClasses}
-      onClick={onClick}
-      disabled={disabled}
-      {...props}
-    >
+    <button className={buttonClasses} onClick={onClick} disabled={disabled} {...props}>
       {children}
     </button>
   );
@@ -31,4 +34,4 @@ Button.propTypes = {
   className: PropTypes.string,
 };
 
-export default Button; 
+export default Button;

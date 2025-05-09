@@ -15,16 +15,36 @@
 }
 
 /* Password Strength Progress Bar Styles */
-progress.password-strength-0::-webkit-progress-value { @apply bg-red-500; }
-progress.password-strength-0::-moz-progress-bar { @apply bg-red-500; }
-progress.password-strength-1::-webkit-progress-value { @apply bg-orange-500; }
-progress.password-strength-1::-moz-progress-bar { @apply bg-orange-500; }
-progress.password-strength-2::-webkit-progress-value { @apply bg-yellow-500; }
-progress.password-strength-2::-moz-progress-bar { @apply bg-yellow-500; }
-progress.password-strength-3::-webkit-progress-value { @apply bg-lime-500; }
-progress.password-strength-3::-moz-progress-bar { @apply bg-lime-500; }
-progress.password-strength-4::-webkit-progress-value { @apply bg-green-600; }
-progress.password-strength-4::-moz-progress-bar { @apply bg-green-600; }
+progress.password-strength-0::-webkit-progress-value {
+  @apply bg-red-500;
+}
+progress.password-strength-0::-moz-progress-bar {
+  @apply bg-red-500;
+}
+progress.password-strength-1::-webkit-progress-value {
+  @apply bg-orange-500;
+}
+progress.password-strength-1::-moz-progress-bar {
+  @apply bg-orange-500;
+}
+progress.password-strength-2::-webkit-progress-value {
+  @apply bg-yellow-500;
+}
+progress.password-strength-2::-moz-progress-bar {
+  @apply bg-yellow-500;
+}
+progress.password-strength-3::-webkit-progress-value {
+  @apply bg-lime-500;
+}
+progress.password-strength-3::-moz-progress-bar {
+  @apply bg-lime-500;
+}
+progress.password-strength-4::-webkit-progress-value {
+  @apply bg-green-600;
+}
+progress.password-strength-4::-moz-progress-bar {
+  @apply bg-green-600;
+}
 
 /* Optional: Style the progress bar track */
 progress::-webkit-progress-bar {
@@ -34,4 +54,4 @@ progress::-webkit-progress-bar {
 /* Helper text for form inputs */
 .form-helper-text {
   @apply text-xs text-gray-500 block mt-1;
-} 
+}

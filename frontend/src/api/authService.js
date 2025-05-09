@@ -2,7 +2,7 @@ import instance from './axiosInstance'; // Import the configured Axios instance
 import { ENDPOINTS } from '../config/api';
 
 const authService = {
-  login: async (credentials) => {
+  login: async credentials => {
     try {
       const response = await instance.post(ENDPOINTS.AUTH.LOGIN, credentials);
       return response.data;
@@ -11,7 +11,7 @@ const authService = {
     }
   },
 
-  register: async (userData) => {
+  register: async userData => {
     try {
       const response = await instance.post(ENDPOINTS.AUTH.REGISTER, userData);
       return response.data;
@@ -26,4 +26,4 @@ const authService = {
   },
 };
 
-export default authService; 
+export default authService;

@@ -25,15 +25,19 @@ export const PortfolioProvider = ({ children }) => {
   const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(false);
   const [analyticsError, setAnalyticsError] = useState(null);
 
+  // State for projection preview
+  const [draftChangeForPreview, setDraftChangeForPreviewState] = useState(null);
+
   // Extracted function to fetch portfolio data
   const fetchPortfolioData = useCallback(async () => {
+    console.log('PortfolioContext: fetchPortfolioData called with portfolioId:', portfolioId); // Diagnostic log
     if (!portfolioId) {
       setError(new Error('Portfolio ID is missing.'));
       setIsLoading(false);
       setPortfolio(null);
       return;
     }
-    
+
     // Check cache first
     if (portfolioCache[portfolioId]) {
       setPortfolio(portfolioCache[portfolioId]);
@@ -41,11 +45,11 @@ export const PortfolioProvider = ({ children }) => {
       setError(null); // Clear previous error if showing cached data
       return; // Data found in cache, no need to fetch
     }
-    
+
     setIsLoading(true);
     setError(null);
     // Don't set portfolio to null during refresh to avoid temporary missing ID
-    // setPortfolio(null); 
+    // setPortfolio(null);
     try {
       const data = await portfolioService.getPortfolioById(portfolioId, 'full');
       setPortfolio(data);
@@ -61,8 +65,12 @@ export const PortfolioProvider = ({ children }) => {
 
   // Effect to fetch portfolio data initially and when portfolioId changes
   useEffect(() => {
+    console.log(
+      'PortfolioContext: useEffect for fetchPortfolioData - portfolioId from useParams:',
+      portfolioId
+    ); // Diagnostic log
     fetchPortfolioData();
-  }, [fetchPortfolioData]); // useEffect dependency on the memoized function
+  }, [fetchPortfolioData, portfolioId]); // useEffect dependency on the memoized function
 
   // Function to explicitly refresh portfolio data (Task 10)
   const refreshPortfolio = useCallback(() => {
@@ -113,6 +121,18 @@ export const PortfolioProvider = ({ children }) => {
     }
   };
 
+  // Function to set a draft change for projection preview
+  const setDraftChangeForPreview = useCallback(changeData => {
+    console.log('Context: Setting draft change for preview:', changeData);
+    setDraftChangeForPreviewState(changeData);
+  }, []);
+
+  // Function to clear the draft change
+  const clearDraftChangeForPreview = useCallback(() => {
+    console.log('Context: Clearing draft change for preview.');
+    setDraftChangeForPreviewState(null);
+  }, []);
+
   // The value provided to consuming components
   const value = {
     portfolioId,
@@ -127,13 +147,13 @@ export const PortfolioProvider = ({ children }) => {
     analyticsError,
     fetchRiskProfile,
     fetchPerformanceData,
+    // Projection preview related
+    draftChangeForPreview,
+    setDraftChangeForPreview,
+    clearDraftChangeForPreview,
   };
 
-  return (
-    <PortfolioContext.Provider value={value}>
-      {children}
-    </PortfolioContext.Provider>
-  );
+  return <PortfolioContext.Provider value={value}>{children}</PortfolioContext.Provider>;
 };
 
 // Add propTypes validation
@@ -151,4 +171,4 @@ export const usePortfolio = () => {
 };
 
 // Export the context itself if needed elsewhere (less common)
-// export default PortfolioContext; 
+// export default PortfolioContext;

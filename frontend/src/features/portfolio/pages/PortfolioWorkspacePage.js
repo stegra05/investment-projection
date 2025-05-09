@@ -20,7 +20,11 @@ function PortfolioWorkspacePage() {
     if (savedSizes) {
       try {
         const parsedSizes = JSON.parse(savedSizes);
-        if (Array.isArray(parsedSizes) && parsedSizes.length === 3 && parsedSizes.every(n => typeof n === 'number')) {
+        if (
+          Array.isArray(parsedSizes) &&
+          parsedSizes.length === 3 &&
+          parsedSizes.every(n => typeof n === 'number')
+        ) {
           setSizes(parsedSizes);
         } else {
           console.warn('Invalid layout sizes found in localStorage, using defaults.');
@@ -33,9 +37,9 @@ function PortfolioWorkspacePage() {
     }
   }, []);
 
-  const handleDragEnd = (newSizes) => {
+  const handleDragEnd = newSizes => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newSizes));
-    setSizes(newSizes); 
+    setSizes(newSizes);
   };
 
   useEffect(() => {
@@ -44,15 +48,15 @@ function PortfolioWorkspacePage() {
       if (!allotmentElement) return;
 
       const sashes = allotmentElement.querySelectorAll('.allotment-sash');
-      
+
       const handleDoubleClick = () => {
         allotmentRef.current?.reset();
-        setSizes(defaultSizes); 
+        setSizes(defaultSizes);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultSizes));
       };
 
       sashes.forEach(sash => {
-        sash.removeEventListener('dblclick', handleDoubleClick); 
+        sash.removeEventListener('dblclick', handleDoubleClick);
         sash.addEventListener('dblclick', handleDoubleClick);
       });
 
@@ -71,7 +75,11 @@ function PortfolioWorkspacePage() {
   }
 
   if (error) {
-    return <div className="p-4 text-center text-red-600">Error loading portfolio: {error.message || 'Unknown error'}</div>;
+    return (
+      <div className="p-4 text-center text-red-600">
+        Error loading portfolio: {error.message || 'Unknown error'}
+      </div>
+    );
   }
 
   if (!portfolio) {
@@ -121,4 +129,4 @@ function PortfolioWorkspacePage() {
   );
 }
 
-export default PortfolioWorkspacePage; 
+export default PortfolioWorkspacePage;

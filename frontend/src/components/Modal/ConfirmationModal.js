@@ -14,7 +14,7 @@ function ConfirmationModal({
 }) {
   // Effect to handle Escape key press for closing the modal
   useEffect(() => {
-    const handleEsc = (event) => {
+    const handleEsc = event => {
       if (event.keyCode === 27) {
         onClose();
       }
@@ -63,22 +63,22 @@ function ConfirmationModal({
       aria-modal="true"
       aria-labelledby="confirmation-modal-title"
     >
-      <div
-        style={modalContentStyle}
-        role="document"
-      >
+      <div style={modalContentStyle} role="document">
         <h2 id="confirmation-modal-title" className="text-lg font-semibold mb-4">
           {title}
         </h2>
-        <div className="mb-6 text-sm text-gray-700">
-          {children}
-        </div>
+        <div className="mb-6 text-sm text-gray-700">{children}</div>
         {/* Action Buttons */}
         <div className="flex justify-end space-x-3">
           <Button variant="secondary" onClick={onClose} disabled={isConfirming}>
             {cancelText}
           </Button>
-          <Button variant="danger" onClick={onConfirm} disabled={isConfirming} isLoading={isConfirming}>
+          <Button
+            variant="danger"
+            onClick={onConfirm}
+            disabled={isConfirming}
+            isLoading={isConfirming}
+          >
             {confirmText}
           </Button>
         </div>
@@ -98,4 +98,4 @@ ConfirmationModal.propTypes = {
   isConfirming: PropTypes.bool, // To show loading state on confirm button
 };
 
-export default ConfirmationModal; 
+export default ConfirmationModal;

@@ -15,7 +15,7 @@ const RegisterForm = ({ onSubmit, isLoading, error, clearMessages }) => {
   const [passwordFeedback, setPasswordFeedback] = useState('');
   const [passwordMismatchError, setPasswordMismatchError] = useState('');
 
-  const handleChange = (e) => {
+  const handleChange = e => {
     const { name, value } = e.target;
     setFormData(prevState => ({
       ...prevState,
@@ -32,7 +32,9 @@ const RegisterForm = ({ onSubmit, isLoading, error, clearMessages }) => {
     if (formData.password) {
       const result = zxcvbn(formData.password);
       setPasswordScore(result.score);
-      setPasswordFeedback(result.feedback?.warning || result.feedback?.suggestions?.join(' ') || '');
+      setPasswordFeedback(
+        result.feedback?.warning || result.feedback?.suggestions?.join(' ') || ''
+      );
     } else {
       setPasswordScore(0);
       setPasswordFeedback('');
@@ -47,7 +49,7 @@ const RegisterForm = ({ onSubmit, isLoading, error, clearMessages }) => {
     }
   }, [formData.password, formData.confirmPassword]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       setPasswordMismatchError('Passwords do not match.');
@@ -57,7 +59,8 @@ const RegisterForm = ({ onSubmit, isLoading, error, clearMessages }) => {
     onSubmit({ email, password, username });
   };
 
-  const isSubmitDisabled = isLoading || (!!formData.confirmPassword && formData.password !== formData.confirmPassword);
+  const isSubmitDisabled =
+    isLoading || (!!formData.confirmPassword && formData.password !== formData.confirmPassword);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -111,11 +114,7 @@ const RegisterForm = ({ onSubmit, isLoading, error, clearMessages }) => {
             max="4"
             aria-label={`Password strength: ${passwordScore}/4`}
           />
-          {passwordFeedback && (
-            <p className="text-xs text-gray-500 mt-1">
-              {passwordFeedback}
-            </p>
-          )}
+          {passwordFeedback && <p className="text-xs text-gray-500 mt-1">{passwordFeedback}</p>}
         </div>
       )}
       <Input
@@ -149,4 +148,4 @@ RegisterForm.propTypes = {
   clearMessages: PropTypes.func.isRequired,
 };
 
-export default RegisterForm; 
+export default RegisterForm;

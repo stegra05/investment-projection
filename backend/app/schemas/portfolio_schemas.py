@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field, validator, condecimal
+from pydantic.alias_generators import to_camel
 from typing import List, Optional, Dict
 from datetime import date
 from decimal import Decimal
@@ -7,10 +8,11 @@ from app.enums import AssetType, ChangeType, FrequencyType, MonthOrdinalType, Or
 
 # --- Base Schemas (for common fields/config) ---
 class OrmBaseModel(BaseModel):
-    class Config:
-        from_attributes = True  # Enable reading data directly from ORM models (Pydantic V2)
-        populate_by_name = True # Replaces allow_population_by_field_name
-        str_strip_whitespace = True # Replaces anystr_strip_whitespace
+    model_config = {
+        "from_attributes": True,
+        "populate_by_name": True,
+        "str_strip_whitespace": True
+    }
 
 # --- Planned Change Schemas ---
 class PlannedChangeBase(OrmBaseModel):
@@ -32,6 +34,12 @@ class PlannedChangeBase(OrmBaseModel):
     ends_on_type: EndsOnType = Field(default=EndsOnType.NEVER)
     ends_on_occurrences: Optional[int] = Field(default=None, ge=1)
     ends_on_date: Optional[date] = Field(default=None)
+
+    model_config = {
+        "alias_generator": to_camel,
+        "populate_by_name": True,
+        "from_attributes": True
+    }
 
     # TODO: Add validators for conditional recurrence fields (e.g., days_of_week only if frequency is WEEKLY)
 

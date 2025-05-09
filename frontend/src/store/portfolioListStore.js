@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import portfolioService from '../api/portfolioService';
 
-const usePortfolioListStore = create((set) => ({
+const usePortfolioListStore = create(set => ({
   portfolios: [],
   isLoading: false,
   error: null,
@@ -16,7 +16,8 @@ const usePortfolioListStore = create((set) => ({
       set({ portfolios: data, isLoading: false }); // Update portfolios on success
     } catch (error) {
       // Attempt to get a meaningful error message
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch portfolios';
+      const errorMessage =
+        error.response?.data?.message || error.message || 'Failed to fetch portfolios';
       set({ error: errorMessage, isLoading: false }); // Set error message on failure
     }
   },
@@ -24,4 +25,4 @@ const usePortfolioListStore = create((set) => ({
   // Potential future actions: addPortfolio, deletePortfolio, updatePortfolio, etc.
 }));
 
-export default usePortfolioListStore; 
+export default usePortfolioListStore;

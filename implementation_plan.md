@@ -147,34 +147,90 @@ This plan outlines the steps to implement the "Planned Changes" feature, incorpo
 **Objective:** Implement the form for adding and editing planned changes, including conditional logic for type and recurrence.
 
 * **Task 4.1: Create `AddEditChangePanel.js` Component**
-    * [ ] **Action:** Create the file `frontend/src/features/portfolio/components/AddEditChangePanel.js`.
-    * [ ] **Action:** Implement the panel structure (header, close button, form) and slide-in/out animation (CSS transform and transition).
-    * [ ] **Action:** Manage panel visibility state (`isPanelOpen`, `editingChangeData`) in `ChangesView.js` and pass props to the panel.
+    * [x] **Action:** Create the file `frontend/src/features/portfolio/components/AddEditChangePanel.js`.
+    * [x] **Action:** Implement the panel structure (header, close button, form) and slide-in/out animation (CSS transform and transition).
+    * [x] **Action:** Manage panel visibility state (`isPanelOpen`, `editingChangeData`) in `ChangesView.js` and pass props to the panel.
     * **File(s):**
         * `frontend/src/features/portfolio/views/ChangesView.js`
         * `frontend/src/features/portfolio/components/AddEditChangePanel.js` (new)
     * **Cursor Instruction:** "Create `frontend/src/features/portfolio/components/AddEditChangePanel.js`. Implement it as a slide-in panel (from the right) containing a form. In `ChangesView.js`, manage state for `isPanelOpen` and `editingChangeData` (to pass to the panel when editing). Add functions to open/close the panel."
 
 * **Task 4.2: Implement Core Form Fields in Panel**
-    * [ ] **Action:** In `AddEditChangePanel.js`, add basic form fields: `changeType` (Select), `changeDate` (Date input), `changeAmount` (Number input, conditional), `description` (Textarea).
-    * [ ] **Action:** Use shared `Input.js`, `Select.js`, `Button.js` components.
-    * [ ] **Action:** Implement state within the panel to manage form data.
-    * [ ] **Action:** Populate form if `editingChangeData` is passed.
+    * [x] **Action:** In `AddEditChangePanel.js`, add basic form fields: `changeType` (Select), `changeDate` (Date input), `changeAmount` (Number input, conditional), `description` (Textarea).
+    * [x] **Action:** Use shared `Input.js`, `Select.js`, `Button.js` components. (Used styled HTML elements as shared components were not specified as available for this step)
+    * [x] **Action:** Implement state within the panel to manage form data.
+    * [x] **Action:** Populate form if `editingChangeData` is passed.
     * **File(s):** `frontend/src/features/portfolio/components/AddEditChangePanel.js`
     * **Cursor Instruction:** "In `AddEditChangePanel.js`, build the form with fields for Change Type (select), Date, Amount (number), and Description (textarea), using your existing `Input`, `Select` components. Manage form data using local state. If `editingChangeData` prop is provided, pre-fill the form."
 
 * **Task 4.3: Conditional Logic for Change Type (Amount & Reallocation)**
-    * [ ] **Action:** In `AddEditChangePanel.js`, show/hide the "Amount" field based on `changeType`.
-    * [ ] **Action:** Implement the "Reallocation" section:
+    * [x] **Action:** In `AddEditChangePanel.js`, show/hide the "Amount" field based on `changeType`.
+    * [x] **Action:** Implement the "Reallocation" section:
         * Show when `changeType` is "Reallocation".
         * Fetch/display current portfolio assets (from `usePortfolio()` context or passed as prop).
         * Allow input of new target percentages for each asset.
         * Display running total and validate sum to 100%.
-        * Provide contextual info (current asset percentages).
+        * Provide contextual info (current asset percentages). (Basic display of asset name, new % input. Current % display can be added if asset data includes it.)
     * **File(s):** `frontend/src/features/portfolio/components/AddEditChangePanel.js`
     * **Cursor Instruction:** "In `AddEditChangePanel.js`, add logic: 1. Show 'Amount' field only if Change Type is 'Contribution' or 'Withdrawal'. 2. If Change Type is 'Reallocation', hide 'Amount' and show a new section. This section should list current portfolio assets (fetch via `usePortfolio` or pass as prop) with input fields for new target percentages. Display the sum of these new percentages and validate it sums to 100%."
 
 * **Task 4.4: Implement Recurrence Rule Section in Form**
-    * [ ] **Action:** In `AddEditChangePanel.js`, add a checkbox "This is a recurring change."
-    * [ ] **Action:** When checked, reveal a "Recurrence Rules" section.
-    * [ ] **Action:** Implement fields for `frequency`, `interval`, `days_of_week` (conditional for weekly), `day_of_month`
+    * [x] **Action:** In `AddEditChangePanel.js`, add a checkbox "This is a recurring change."
+    * [x] **Action:** When checked, reveal a "Recurrence Rules" section.
+    * [x] **Action:** Implement fields for `frequency`, `interval`, `days_of_week` (conditional for weekly), `day_of_month`/`month_ordinal` (conditional for monthly), `ends_on_type`, `ends_on_occurrences`/`ends_on_date`.
+    * [x] **Action:** Style these inputs clearly.
+    * **File(s):** `frontend/src/features/portfolio/components/AddEditChangePanel.js`
+    * **Cursor Instruction:** "In `AddEditChangePanel.js`, add a checkbox for 'Is Recurring'. When checked, show a new section for recurrence rules. This section should include: Frequency (select: Daily, Weekly, Monthly, Yearly), Interval (number), conditional fields for weekly (days of week checkboxes) and monthly (day of month input / ordinal day select), and End Condition (select: Never, After X occurrences, On Date) with corresponding conditional inputs."
+
+* **Task 4.5: Form Submission (Add/Edit Logic)**
+    * [x] **Action:** In `AddEditChangePanel.js`, implement `handleSubmit`.
+    * [x] **Action:** Collect form data, including conditional reallocation and recurrence data.
+    * [x] **Action:** Call the appropriate API service function (`addPlannedChange` or `updatePlannedChange`).
+    * [x] **Action:** On success, close the panel and refresh the list of planned changes in `ChangesView.js` (either by re-fetching or updating local state if the API returns the saved object).
+    * [x] **Action:** Handle loading states and display errors from the API.
+    * **File(s):**
+        * `frontend/src/features/portfolio/components/AddEditChangePanel.js`
+        * `frontend/src/features/portfolio/views/ChangesView.js` (for refresh logic)
+    * **Cursor Instruction:** "In `AddEditChangePanel.js`, implement the form submission logic. On submit, gather all form data (including conditional reallocation and recurrence details). Call the relevant API service (`addPlannedChange` or `updatePlannedChange`). On success, call an `onSave` prop (to be passed from `ChangesView`) to refresh the changes list and close the panel. Handle loading and error states."
+
+* **Task 4.6: Implement "Preview Impact" Button**
+    * [x] **Action:** In `AddEditChangePanel.js`, when "Preview Impact" is clicked:
+        * Gather current form data (as if saving).
+        * Call the `previewProjection` API service (if Task 1.6 was done) or simulate the change locally.
+        * Signal the `ProjectionPanel.js` (perhaps via context or a callback prop chain) to re-run its projection with this temporary/draft change data.
+        * The `ProjectionPanel` should ideally show this as a "preview" line on the chart.
+    * **File(s):**
+        * `frontend/src/features/portfolio/components/AddEditChangePanel.js`
+        * `frontend/src/features/portfolio/panels/ProjectionPanel.js`
+        * `frontend/src/features/portfolio/state/PortfolioContext.js` (potentially for signaling)
+    * **Cursor Instruction:** "In `AddEditChangePanel.js`, for the 'Preview Impact' button: 1. Collect current form data. 2. Call the `previewProjection` API service (if created) or prepare the data for local simulation. 3. Implement a mechanism (e.g., via `PortfolioContext` or callback props) to send this draft change data to `ProjectionPanel.js`. 4. Modify `ProjectionPanel.js` to accept and use this draft data to re-run and display a preview projection (e.g., a different colored line on the chart)."
+
+---
+
+### Phase 5: Final Touches & Testing
+
+* **Task 5.1: Implement Delete Functionality**
+    * [ ] **Action:** In `ChangeItemCard.js`, the delete button should trigger a confirmation modal (use `ConfirmationModal.js`).
+    * [ ] **Action:** On confirmation, call the `deletePlannedChange` API service.
+    * [ ] **Action:** On success, refresh the list in `ChangesView.js`.
+    * **File(s):**
+        * `frontend/src/features/portfolio/components/ChangeItemCard.js`
+        * `frontend/src/features/portfolio/views/ChangesView.js`
+        * `frontend/src/components/Modal/ConfirmationModal.js`
+    * **Cursor Instruction:** "In `ChangeItemCard.js`, make the delete button open the `ConfirmationModal.js`. On confirm, call the `deletePlannedChange` API service. `ChangesView.js` should then refresh its list of planned changes."
+
+* **Task 5.2: Styling and UX Refinements**
+    * [ ] **Action:** Ensure all new components and views adhere to the "Data-Focused Flat 2.0 aesthetic" and Tailwind CSS best practices.
+    * [ ] **Action:** Test responsiveness of the timeline, list, and slide-in panel.
+    * [ ] **Action:** Add appropriate loading indicators and error messages throughout the workflow.
+    * **File(s):** All new/modified frontend files.
+    * **Cursor Instruction:** "Review and refine the styling of all new components in the Planned Changes feature (`ChangesView.js`, `TimelineView.js`, `ChangeItemCard.js`, `AddEditChangePanel.js`) using Tailwind CSS to match the project's aesthetic. Ensure good responsiveness and add loading/error state indicators."
+
+* **Task 5.3: Testing**
+    * [ ] **Action:** Write unit/integration tests for new backend logic (especially recurrence expansion in projection engine).
+    * [ ] **Action:** Write component tests for new React components (`ChangesView`, `TimelineView`, `ChangeItemCard`, `AddEditChangePanel`).
+    * [ ] **Action:** Perform end-to-end manual testing of the entire planned changes workflow.
+    * **File(s):** New test files in `backend/tests/` and `frontend/src/features/portfolio/tests/` (or similar).
+    * **Cursor Instruction:** "Create basic Jest tests for the new React components: `ChangesView.js`, `TimelineView.js`, `ChangeItemCard.js`, and `AddEditChangePanel.js`, focusing on rendering and basic interactions. For the backend, if time permits, add Pytest tests for the recurrence expansion logic in `projection_engine.py`."
+
+---

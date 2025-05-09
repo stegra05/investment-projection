@@ -9,11 +9,7 @@ import PortfolioWorkspacePage from './features/portfolio/pages/PortfolioWorkspac
 import { PortfolioProvider } from './features/portfolio/state/PortfolioContext';
 
 // Layout Component
-const Layout = ({ children }) => (
-  <div className="min-h-screen bg-gray-50">
-    {children}
-  </div>
-);
+const Layout = ({ children }) => <div className="min-h-screen bg-gray-50">{children}</div>;
 
 // Add propTypes validation for Layout
 Layout.propTypes = {
@@ -45,7 +41,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route 
+        <Route
           path="/portfolio/:portfolioId"
           element={
             <ProtectedRoute>

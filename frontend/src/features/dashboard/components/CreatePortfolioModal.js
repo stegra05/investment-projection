@@ -3,17 +3,17 @@ import PropTypes from 'prop-types';
 import Input from '../../../components/Input/Input'; // Assuming path is correct
 import Button from '../../../components/Button/Button'; // Assuming path is correct
 
-function CreatePortfolioModal({ 
-  isOpen = false, 
-  onClose = () => {}, 
-  onSubmit = () => {}, 
-  isLoading = false, 
-  error = null, 
+function CreatePortfolioModal({
+  isOpen = false,
+  onClose = () => {},
+  onSubmit = () => {},
+  isLoading = false,
+  error = null,
 }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
-  const handleInternalSubmit = (e) => {
+  const handleInternalSubmit = e => {
     e.preventDefault();
     // Basic validation (can be expanded)
     if (!name.trim()) {
@@ -41,7 +41,7 @@ function CreatePortfolioModal({
               id="portfolioName"
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={e => setName(e.target.value)}
               placeholder="e.g., Retirement Savings"
               required
               disabled={isLoading}
@@ -53,7 +53,7 @@ function CreatePortfolioModal({
               id="portfolioDescription"
               type="text" // Or could be textarea if Input supports it
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               placeholder="e.g., Long-term investments"
               disabled={isLoading}
             />
@@ -83,4 +83,4 @@ CreatePortfolioModal.propTypes = {
   error: PropTypes.string,
 };
 
-export default CreatePortfolioModal; 
+export default CreatePortfolioModal;

@@ -43,14 +43,16 @@ const RiskProfileDisplay = () => {
         <strong>Sharpe Ratio:</strong> {riskProfile.sharpe_ratio}
       </div>
       <div>
-        <strong>95% Confidence Interval:</strong> {riskProfile.confidence_interval_low_95} to {riskProfile.confidence_interval_high_95}
+        <strong>95% Confidence Interval:</strong> {riskProfile.confidence_interval_low_95} to{' '}
+        {riskProfile.confidence_interval_high_95}
       </div>
       <div>
-        <strong>Calculation Date:</strong> {new Date(riskProfile.calculation_date).toLocaleDateString()}
+        <strong>Calculation Date:</strong>{' '}
+        {new Date(riskProfile.calculation_date).toLocaleDateString()}
       </div>
       <button onClick={handleLoadRiskProfile}>Refresh Analysis</button>
     </div>
   );
 };
 
-export default RiskProfileDisplay; 
+export default RiskProfileDisplay;
