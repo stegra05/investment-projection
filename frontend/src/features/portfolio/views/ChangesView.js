@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePortfolio } from '../state/PortfolioContext'; // Corrected path
+import TimelineView from '../components/TimelineView'; // Import TimelineView
+import ChangeItemCard from '../components/ChangeItemCard'; // Assuming this exists as per Task 2.5
 
 // TODO: Define these types, perhaps from a shared enum/constants file
 const CHANGE_TYPES = [
@@ -23,6 +25,9 @@ const ChangesView = () => {
     description: '',
   });
   const [selectedChangeId, setSelectedChangeId] = useState(null);
+
+  // Refs for scrolling
+  const itemRefs = useRef({}); // To store refs for each change item
 
   useEffect(() => {
     setIsLoading(isPortfolioLoading);
@@ -60,9 +65,15 @@ const ChangesView = () => {
         );
       }
       setDisplayedChanges(filteredChanges);
+      // Reset refs when displayed changes update
+      itemRefs.current = filteredChanges.reduce((acc, change) => {
+        acc[change.id] = React.createRef();
+        return acc;
+      }, {});
     } else if (!isPortfolioLoading && !portfolioError) {
       // Handle case where portfolio is loaded but has no planned_changes or is null
       setDisplayedChanges([]);
+      itemRefs.current = {};
     }
   }, [portfolio, filters, portfolioError, isPortfolioLoading]); // Added portfolioError and isPortfolioLoading
 
@@ -74,7 +85,19 @@ const ChangesView = () => {
     }));
   };
 
-  // TODO: Implement selection logic based on `selectedChangeId`
+  const handleSelectChange = (changeId) => {
+    setSelectedChangeId(prevId => (prevId === changeId ? null : changeId)); // Toggle selection
+  };
+
+  // Effect to scroll to selected item
+  useEffect(() => {
+    if (selectedChangeId && itemRefs.current[selectedChangeId] && itemRefs.current[selectedChangeId].current) {
+      itemRefs.current[selectedChangeId].current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    }
+  }, [selectedChangeId]);
 
   if (isLoading) {
     return <div className="p-4">Loading planned changes...</div>; // Basic loading state
@@ -153,16 +176,35 @@ const ChangesView = () => {
 
       {/* Main Content Area - Placeholders for Timeline and Details List */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Timeline Placeholder */}
-        <div className="md:col-span-1 bg-white p-4 rounded-lg shadow">
+        {/* Timeline Section */}
+        <div className="md:col-span-1 bg-white p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: 'calc(100vh - 250px)' }}> 
           <h3 className="text-md font-semibold text-gray-700 mb-3">Timeline</h3>
-          <div className="text-sm text-gray-500">Timeline view will be here. ({displayedChanges.length} changes)</div>
+          <TimelineView 
+            plannedChanges={displayedChanges} 
+            selectedChangeId={selectedChangeId} 
+            onSelectChange={handleSelectChange}
+          />
         </div>
 
         {/* Change Details List Placeholder */}
-        <div className="md:col-span-2 bg-white p-4 rounded-lg shadow">
-          <h3 className="text-md font-semibold text-gray-700 mb-3">Change Details</h3>
-          <div className="text-sm text-gray-500">List of planned changes will appear here. ({displayedChanges.length} changes)</div>
+        <div className="md:col-span-2 bg-white p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: 'calc(100vh - 250px)' }}>
+          <h3 className="text-md font-semibold text-gray-700 mb-3">Change Details ({displayedChanges.length})</h3>
+          {displayedChanges.length > 0 ? (
+            <div className="space-y-3">
+              {displayedChanges.map(change => (
+                <div key={change.id} ref={itemRefs.current[change.id]}> 
+                  <ChangeItemCard 
+                    change={change} 
+                    isSelected={selectedChangeId === change.id}
+                    onSelectChange={() => handleSelectChange(change.id)}
+                    // TODO: Pass onEdit and onDelete handlers later
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-sm text-gray-500">No planned changes match the current filters.</div>
+          )}
         </div>
       </div>
     </div>

@@ -16,7 +16,7 @@ const getChangeTypeIcon = (changeType) => {
   }
 };
 
-const ChangeItemCard = ({ change, onEdit, onDelete, onSelect }) => {
+const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected }) => {
   if (!change) return null;
 
   // Basic date formatting, consider using a library like date-fns for more complex needs
@@ -33,22 +33,25 @@ const ChangeItemCard = ({ change, onEdit, onDelete, onSelect }) => {
   
   const handleKeyDown = (event) => {
     if (event.key === 'Enter' || event.key === ' ') {
-      if (onSelect && change && typeof change.id !== 'undefined') {
-        onSelect(change.id);
+      event.preventDefault(); // Prevent default spacebar scroll
+      if (onSelectChange && change && typeof change.id !== 'undefined') {
+        onSelectChange(change.id);
       }
     }
   };
 
-  const cardBaseStyle = 'bg-white shadow-md rounded-lg p-4 mb-4 border border-gray-200 hover:shadow-lg transition-shadow duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-300';
-  // TODO: Add selected style, e.g., `border-primary-500` if selected
+  const cardBaseStyle = 'bg-white shadow-md rounded-lg p-4 mb-4 border hover:shadow-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2';
+  const selectedStyle = 'border-primary-500 ring-1 ring-primary-500 bg-primary-50';
+  const unselectedStyle = 'border-gray-200 focus:ring-primary-300';
 
   return (
     <div 
-      className={`${cardBaseStyle}`}
-      onClick={() => { if (onSelect && change && typeof change.id !== 'undefined') onSelect(change.id); }} // Ensure onSelect is callable and change.id is present
-      onKeyDown={handleKeyDown} // Added onKeyDown handler
-      role="button" // Added role
-      tabIndex={0} // Added tabIndex
+      className={`${cardBaseStyle} ${isSelected ? selectedStyle : unselectedStyle}`}
+      onClick={() => { if (onSelectChange && change && typeof change.id !== 'undefined') onSelectChange(change.id); }}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-pressed={isSelected} // Indicate selected state for accessibility
     >
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center min-w-0"> {/* Added min-w-0 for better truncation */}
@@ -122,7 +125,15 @@ ChangeItemCard.propTypes = {
   }).isRequired,
   onEdit: PropTypes.func,
   onDelete: PropTypes.func,
-  onSelect: PropTypes.func,
+  onSelectChange: PropTypes.func, // Renamed from onSelect
+  isSelected: PropTypes.bool,     // Added isSelected prop
+};
+
+ChangeItemCard.defaultProps = { // Added defaultProps for non-required function/boolean props
+  onEdit: null,
+  onDelete: null,
+  onSelectChange: null,
+  isSelected: false,
 };
 
 export default ChangeItemCard; 
