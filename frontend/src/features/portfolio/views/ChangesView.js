@@ -1,0 +1,172 @@
+import React, { useState, useEffect } from 'react';
+import { usePortfolio } from '../state/PortfolioContext'; // Corrected path
+
+// TODO: Define these types, perhaps from a shared enum/constants file
+const CHANGE_TYPES = [
+  { value: '', label: 'All Types' },
+  { value: 'CONTRIBUTION', label: 'Contribution' },
+  { value: 'WITHDRAWAL', label: 'Withdrawal' },
+  { value: 'REALLOCATION', label: 'Reallocation' },
+  // Add other types as defined in backend enums
+];
+
+const ChangesView = () => {
+  const { portfolio, isLoading: isPortfolioLoading, error: portfolioError } = usePortfolio();
+
+  const [displayedChanges, setDisplayedChanges] = useState([]); // Renamed from plannedChanges for clarity
+  const [isLoading, setIsLoading] = useState(false); // Or initialize based on isPortfolioLoading
+  const [error, setError] = useState(null); // Or initialize based on portfolioError
+  const [filters, setFilters] = useState({
+    type: '', // Default to 'All Types'
+    startDate: '',
+    endDate: '',
+    description: '',
+  });
+  const [selectedChangeId, setSelectedChangeId] = useState(null);
+
+  useEffect(() => {
+    setIsLoading(isPortfolioLoading);
+  }, [isPortfolioLoading]);
+
+  useEffect(() => {
+    setError(portfolioError);
+    if (portfolioError) {
+      setDisplayedChanges([]); // Clear changes on error
+    }
+  }, [portfolioError]);
+
+  useEffect(() => {
+    if (portfolio && portfolio.planned_changes) {
+      let filteredChanges = [...portfolio.planned_changes];
+
+      // Apply type filter
+      if (filters.type) {
+        filteredChanges = filteredChanges.filter(change => change.change_type === filters.type);
+      }
+
+      // Apply date filters (basic string comparison, consider date objects for more robust filtering)
+      if (filters.startDate) {
+        filteredChanges = filteredChanges.filter(change => new Date(change.change_date) >= new Date(filters.startDate));
+      }
+      if (filters.endDate) {
+        filteredChanges = filteredChanges.filter(change => new Date(change.change_date) <= new Date(filters.endDate));
+      }
+
+      // Apply description filter (case-insensitive)
+      if (filters.description) {
+        const searchTerm = filters.description.toLowerCase();
+        filteredChanges = filteredChanges.filter(change => 
+          change.description && change.description.toLowerCase().includes(searchTerm)
+        );
+      }
+      setDisplayedChanges(filteredChanges);
+    } else if (!isPortfolioLoading && !portfolioError) {
+      // Handle case where portfolio is loaded but has no planned_changes or is null
+      setDisplayedChanges([]);
+    }
+  }, [portfolio, filters, portfolioError, isPortfolioLoading]); // Added portfolioError and isPortfolioLoading
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prevFilters => ({
+      ...prevFilters,
+      [name]: value,
+    }));
+  };
+
+  // TODO: Implement selection logic based on `selectedChangeId`
+
+  if (isLoading) {
+    return <div className="p-4">Loading planned changes...</div>; // Basic loading state
+  }
+
+  if (error) {
+    return <div className="p-4 text-red-600">Error loading planned changes: {error.message || 'Unknown error'}</div>; // Basic error state
+  }
+
+  return (
+    <div className="p-4 space-y-4">
+      <header className="flex justify-between items-center">
+        <h1 className="text-xl font-semibold text-gray-800">Planned Changes</h1>
+        <button
+          type="button"
+          className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        >
+          Add New Change
+        </button>
+      </header>
+
+      {/* Filters Section */}
+      <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
+        <h2 className="text-md font-semibold text-gray-700 mb-3">Filters</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <label htmlFor="type-filter" className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+            <select 
+              id="type-filter"
+              name="type"
+              value={filters.type}
+              onChange={handleFilterChange}
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm"
+            >
+              {CHANGE_TYPES.map(typeOpt => (
+                <option key={typeOpt.value} value={typeOpt.value}>{typeOpt.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="start-date-filter" className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+            <input 
+              type="date" 
+              id="start-date-filter" 
+              name="startDate"
+              value={filters.startDate}
+              onChange={handleFilterChange}
+              className="mt-1 block w-full pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="end-date-filter" className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+            <input 
+              type="date" 
+              id="end-date-filter" 
+              name="endDate"
+              value={filters.endDate}
+              onChange={handleFilterChange}
+              className="mt-1 block w-full pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="description-filter" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <input 
+              type="text" 
+              id="description-filter" 
+              name="description"
+              value={filters.description}
+              onChange={handleFilterChange}
+              placeholder="Search description..."
+              className="mt-1 block w-full pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Area - Placeholders for Timeline and Details List */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Timeline Placeholder */}
+        <div className="md:col-span-1 bg-white p-4 rounded-lg shadow">
+          <h3 className="text-md font-semibold text-gray-700 mb-3">Timeline</h3>
+          <div className="text-sm text-gray-500">Timeline view will be here. ({displayedChanges.length} changes)</div>
+        </div>
+
+        {/* Change Details List Placeholder */}
+        <div className="md:col-span-2 bg-white p-4 rounded-lg shadow">
+          <h3 className="text-md font-semibold text-gray-700 mb-3">Change Details</h3>
+          <div className="text-sm text-gray-500">List of planned changes will appear here. ({displayedChanges.length} changes)</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ChangesView; 

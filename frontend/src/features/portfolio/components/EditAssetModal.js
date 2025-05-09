@@ -189,7 +189,6 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
     <div style={modalStyle}>
       <div 
         style={contentStyle} 
-        onClick={(e) => e.stopPropagation()} 
         role="dialog" 
         aria-modal="true"
         aria-labelledby="edit-asset-modal-title"

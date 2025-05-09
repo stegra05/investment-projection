@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import RiskProfileDisplay from '../components/RiskProfileDisplay';
 import AssetsView from '../views/AssetsView'; // Import the actual component
+import ChangesView from '../views/ChangesView'; // Import the new ChangesView
 
 // Placeholder components (remove AssetsView placeholder)
 // const AssetsView = () => <div>Assets View Placeholder</div>; // Removed placeholder
-const ChangesView = () => <div>Planned Changes View Placeholder</div>;
+// const ChangesView = () => <div>Planned Changes View Placeholder</div>; // Removed placeholder
 
 const OverviewSettingsView = () => (
   <div className="space-y-6">

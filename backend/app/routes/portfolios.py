@@ -18,33 +18,40 @@ portfolios_bp = Blueprint('portfolios', __name__, url_prefix='/api/v1/portfolios
 
 # --- Decorators ---
 
+# NEW version of verify_portfolio_ownership
+# This decorator assumes @jwt_required() has already been applied and JWT identity is available.
 def verify_portfolio_ownership(f):
-    """Decorator to fetch portfolio by ID, verify ownership, and inject portfolio."""
+    """Decorator to fetch portfolio by ID, verify ownership, and inject portfolio.
+    Assumes @jwt_required() has already validated the JWT for non-OPTIONS requests.
+    """
     @functools.wraps(f)
-    @jwt_required() # Ensures user is logged in first
     def wrapper(*args, **kwargs):
+        # OPTIONS requests should be handled by Flask-CORS automatic_options
+        # or by @jwt_required() pass-through before this decorator is fully executed
+        # for methods other than OPTIONS.
+
+        # For non-OPTIONS requests, JWT identity should be available via @jwt_required applied earlier.
+        user_id_str = get_jwt_identity()
+        if user_id_str is None:
+            # This should ideally not happen if @jwt_required() is correctly applied before this decorator.
+            abort(401, "Authentication required; user identity not found after JWT check.")
+        try:
+            current_user_id = int(user_id_str)
+        except (ValueError, TypeError):
+            abort(401, "Invalid user identity format in token.")
+
         portfolio_id = kwargs.get('portfolio_id')
         if portfolio_id is None:
             abort(500, "Developer error: portfolio_id missing in route arguments for ownership check.")
 
-        try:
-            user_id_str = get_jwt_identity()
-            current_user_id = int(user_id_str)
-        except (ValueError, TypeError):
-             abort(401, "Invalid user identity in token.")
-
         portfolio = Portfolio.query.options(
-            # Eager load details needed for PortfolioSchema serialization
-            # Update: Eager loading might not be strictly necessary here if we only modify assets
             db.joinedload(Portfolio.assets),
-            # db.joinedload(Portfolio.planned_changes) # Not needed for allocation update
         ).get(portfolio_id)
 
         if portfolio is None:
             abort(404, description=f"Portfolio with id {portfolio_id} not found.")
 
         if portfolio.user_id != current_user_id:
-            # Log access control denial
             logging.warning(f"Access denied: UserID='{current_user_id}' attempted to access PortfolioID='{portfolio_id}' owned by UserID='{portfolio.user_id}'. Source IP: {request.remote_addr}")
             abort(403, description="User does not have permission to access this portfolio.")
 
@@ -68,10 +75,14 @@ def debug_headers():
     current_app.logger.debug(f"Incoming headers: {headers}")
     return jsonify(headers), 200
 
-@portfolios_bp.route('', methods=['GET'])
+@portfolios_bp.route('/', methods=['GET'])
 @jwt_required()
 def get_user_portfolios():
     """Retrieves a list of portfolios belonging to the authenticated user."""
+    # For OPTIONS requests, @jwt_required() lets them pass through, and Flask-CORS
+    # (with automatic_options=True) should handle the response before this view code is run.
+    # This function will only fully execute for GET requests.
+
     # Exceptions are handled by the global 500 handler
     current_user_id = int(get_jwt_identity())
     # Eager load details for serialization
@@ -83,7 +94,7 @@ def get_user_portfolios():
     result = [PortfolioSchema.from_orm(p).model_dump(mode='json', by_alias=True) for p in portfolios]
     return jsonify(result), 200
 
-@portfolios_bp.route('', methods=['POST'])
+@portfolios_bp.route('/', methods=['POST'])
 @jwt_required()
 @handle_api_errors(schema=PortfolioCreateSchema)
 def create_portfolio(validated_data): # Receive validated_data from decorator
@@ -105,10 +116,13 @@ def create_portfolio(validated_data): # Receive validated_data from decorator
     return jsonify(PortfolioSchema.from_orm(new_portfolio).model_dump(mode='json', by_alias=True)), 201
     # Removed try...except block and manual commit/rollback
 
-@portfolios_bp.route('/<int:portfolio_id>', methods=['GET'])
+@portfolios_bp.route('/<int:portfolio_id>/', methods=['GET'])
+@jwt_required()
 @verify_portfolio_ownership
 def get_portfolio_details(portfolio_id, portfolio):
     """Retrieves details for a specific portfolio, with configurable data inclusion."""
+    # OPTIONS requests are now handled by Flask-CORS automatic_options.
+
     # Get the include parameter from query string, default to 'full'
     include = request.args.get('include', 'full').lower()
     
@@ -151,11 +165,13 @@ def get_portfolio_details(portfolio_id, portfolio):
         )
     ), 200
 
-@portfolios_bp.route('/<int:portfolio_id>', methods=['PUT', 'PATCH'])
+@portfolios_bp.route('/<int:portfolio_id>/', methods=['PUT', 'PATCH'])
+@jwt_required()
 @verify_portfolio_ownership
 @handle_api_errors(schema=PortfolioUpdateSchema)
 def update_portfolio(portfolio_id, portfolio, validated_data): # Receive portfolio and validated_data
     """Updates details for a specific portfolio."""
+    # OPTIONS requests are now handled by Flask-CORS automatic_options.
     # Error handling, JSON parsing, and validation are now handled by the decorator
 
     # Update model fields from validated data (only non-None fields)
@@ -169,10 +185,12 @@ def update_portfolio(portfolio_id, portfolio, validated_data): # Receive portfol
     return jsonify(PortfolioSchema.from_orm(portfolio).model_dump(mode='json', by_alias=True)), 200
     # Removed try...except block and manual commit/rollback
 
-@portfolios_bp.route('/<int:portfolio_id>', methods=['DELETE'])
+@portfolios_bp.route('/<int:portfolio_id>/', methods=['DELETE'])
+@jwt_required()
 @verify_portfolio_ownership
 def delete_portfolio(portfolio_id, portfolio):
     """Deletes a specific portfolio."""
+    # OPTIONS requests are now handled by Flask-CORS automatic_options.
     # Error handling (including rollback) is now managed by the global 500 handler
     db.session.delete(portfolio)
     db.session.commit()
@@ -180,7 +198,7 @@ def delete_portfolio(portfolio_id, portfolio):
 
 # --- NEW: Allocation Update Route ---
 
-@portfolios_bp.route('/<int:portfolio_id>/allocations', methods=['PUT'])
+@portfolios_bp.route('/<int:portfolio_id>/allocations/', methods=['PUT'])
 @verify_portfolio_ownership
 @handle_api_errors(schema=BulkAllocationUpdateSchema)
 def update_allocations(portfolio_id, portfolio, validated_data):

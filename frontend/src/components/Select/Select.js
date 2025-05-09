@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 /**
  * Reusable Select component.
@@ -55,5 +56,29 @@ function Select({
     </div>
   );
 }
+
+Select.propTypes = {
+  label: PropTypes.string.isRequired,
+  id: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  onChange: PropTypes.func.isRequired,
+  options: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    label: PropTypes.string.isRequired,
+  })),
+  required: PropTypes.bool,
+  disabled: PropTypes.bool,
+  className: PropTypes.string,
+  placeholder: PropTypes.string,
+};
+
+Select.defaultProps = {
+  options: [],
+  required: false,
+  disabled: false,
+  className: '',
+  placeholder: ' -- Select an option -- ',
+};
 
 export default Select; 

@@ -59,15 +59,13 @@ function ConfirmationModal({
   return (
     <div
       style={modalOverlayStyle}
-      onClick={onClose} // Close modal if overlay is clicked
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirmation-modal-title"
     >
       <div
         style={modalContentStyle}
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside content
-        role="document" // More appropriate role for the content container
+        role="document"
       >
         <h2 id="confirmation-modal-title" className="text-lg font-semibold mb-4">
           {title}

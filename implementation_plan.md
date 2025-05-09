@@ -68,45 +68,45 @@ This plan outlines the steps to implement the "Planned Changes" feature, incorpo
 **Objective:** Set up the main view for planned changes, fetch and display data, and implement the slide-in panel for adding/editing.
 
 * **Task 2.1: Create `ChangesView.js` Component Structure**
-    * [ ] **Action:** Replace the placeholder `ChangesView` in `MainContentPanel.js` with a proper component structure.
-    * [ ] **Action:** Create a new file `frontend/src/features/portfolio/views/ChangesView.js`.
-    * [ ] **Action:** Implement the basic layout as per the HTML concept: header with "Add New Change" button, filter section, and placeholders for timeline and details list.
+    * [x] **Action:** Replace the placeholder `ChangesView` in `MainContentPanel.js` with a proper component structure.
+    * [x] **Action:** Create a new file `frontend/src/features/portfolio/views/ChangesView.js`.
+    * [x] **Action:** Implement the basic layout as per the HTML concept: header with "Add New Change" button, filter section, and placeholders for timeline and details list.
     * **File(s):**
         * `frontend/src/features/portfolio/panels/MainContentPanel.js` (update import)
         * `frontend/src/features/portfolio/views/ChangesView.js` (new)
     * **Cursor Instruction:** "Create the file `frontend/src/features/portfolio/views/ChangesView.js`. Implement the basic component structure with a header, an 'Add New Change' button, a section for filters, and placeholders for the timeline and change details list. Then, update `frontend/src/features/portfolio/panels/MainContentPanel.js` to import and render this new `ChangesView` instead of the placeholder."
 
 * **Task 2.2: API Service for Planned Changes**
-    * [ ] **Action:** Add functions to `portfolioService.js` to:
+    * [x] **Action:** Add functions to `portfolioService.js` to:
         * Fetch planned changes for a portfolio (e.g., `getPlannedChanges(portfolioId, params)` where params could include date range for timeline expansion).
         * Add a new planned change (`addPlannedChange(portfolioId, changeData)`).
         * Update an existing planned change (`updatePlannedChange(portfolioId, changeId, changeData)`).
         * Delete a planned change (`deletePlannedChange(portfolioId, changeId)`).
-    * [ ] **Action:** (If Task 1.6 done) Add a service function for `previewProjection(portfolioId, projectionParams, draftChanges)`.
+    * [x] **Action:** (If Task 1.6 done) Add a service function for `previewProjection(portfolioId, projectionParams, draftChanges)`.
     * **File(s):** `frontend/src/api/portfolioService.js`
     * **Cursor Instruction:** "In `frontend/src/api/portfolioService.js`, add new methods: `getPlannedChanges(portfolioId, queryParams)`, `addPlannedChange(portfolioId, changeData)`, `updatePlannedChange(portfolioId, changeId, changeData)`, and `deletePlannedChange(portfolioId, changeId)`. These should call the corresponding backend API endpoints. If the preview projection endpoint was added to the backend, also add a `previewProjection` service method."
 
 * **Task 2.3: State Management for Planned Changes**
-    * [ ] **Action:** In `ChangesView.js`, use `useState` to manage:
+    * [x] **Action:** In `ChangesView.js`, use `useState` to manage:
         * `plannedChanges` (array)
         * `isLoading`, `error`
         * `filters` (object)
         * `selectedChangeId` (string/null)
-    * [ ] **Action:** Use `useEffect` to fetch planned changes when the component mounts or `portfolioId` (from `usePortfolio` context) changes. Utilize the `refreshPortfolio` from `usePortfolio` context if planned changes are part of the main portfolio object fetched by the context, or fetch them separately.
+    * [x] **Action:** Use `useEffect` to fetch planned changes when the component mounts or `portfolioId` (from `usePortfolio` context) changes. Utilize the `refreshPortfolio` from `usePortfolio` context if planned changes are part of the main portfolio object fetched by the context, or fetch them separately.
         * *Decision Point:* Are planned changes part of the `portfolio` object from `PortfolioContext` (like `portfolio.assets`) or fetched separately? The current `PortfolioSchema` includes `planned_changes` [cite: stegra05/investment-projection/investment-projection-2bd3b107fd781d7ef2806c6f57559beba89614e2/backend/app/schemas/portfolio_schemas.py], so they should be available via `portfolio.planned_changes` from `usePortfolio()`.
     * **File(s):** `frontend/src/features/portfolio/views/ChangesView.js`
     * **Cursor Instruction:** "In `ChangesView.js`, set up state for `plannedChanges`, `isLoading`, `error`, `filters`, and `selectedChangeId`. Use the `usePortfolio` hook to get the current `portfolio` object. The `portfolio.planned_changes` array should contain the data. Implement `useEffect` to update the local `plannedChanges` state when `portfolio.planned_changes` changes. Handle loading and error states."
 
 * **Task 2.4: Implement Basic Filters**
-    * [ ] **Action:** In `ChangesView.js`, create controlled components for filters (Type, Start Date, End Date, Description Search).
-    * [ ] **Action:** Implement logic to filter the displayed `plannedChanges` based on active filter values.
+    * [x] **Action:** In `ChangesView.js`, create controlled components for filters (Type, Start Date, End Date, Description Search).
+    * [x] **Action:** Implement logic to filter the displayed `plannedChanges` based on active filter values.
     * **File(s):** `frontend/src/features/portfolio/views/ChangesView.js`
     * **Cursor Instruction:** "In `ChangesView.js`, implement the filter input fields (Change Type select, Start/End Date inputs, Description text input). Add state and logic to filter the `plannedChanges` array based on the values entered in these filters and re-render the list/timeline accordingly."
 
 * **Task 2.5: Display Planned Changes (Detail List/Cards)**
-    * [ ] **Action:** Create a `ChangeItemCard.js` component (or similar) to render individual planned changes.
-    * [ ] **Action:** In `ChangesView.js`, map over the (filtered) `plannedChanges` and render `ChangeItemCard` for each.
-    * [ ] **Action:** Style the cards according to the HTML concept (type icon, date, amount, description, edit/delete buttons).
+    * [x] **Action:** Create a `ChangeItemCard.js` component (or similar) to render individual planned changes.
+    * [x] **Action:** In `ChangesView.js`, map over the (filtered) `plannedChanges` and render `ChangeItemCard` for each.
+    * [x] **Action:** Style the cards according to the HTML concept (type icon, date, amount, description, edit/delete buttons).
     * **File(s):**
         * `frontend/src/features/portfolio/views/ChangesView.js`
         * `frontend/src/features/portfolio/components/ChangeItemCard.js` (new)
