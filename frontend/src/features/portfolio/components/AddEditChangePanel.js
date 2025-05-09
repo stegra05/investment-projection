@@ -75,47 +75,47 @@ const ENDS_ON_TYPE_OPTIONS = [
   { value: 'ON_DATE', label: 'On a specific date' },
 ];
 
-const getInitialFormState = (initialData = null) => ({
-  id: initialData?.id || null,
-  changeType: initialData?.change_type || 'Contribution',
-  changeDate: initialData?.change_date
-    ? new Date(initialData.change_date).toISOString().split('T')[0]
-    : new Date().toISOString().split('T')[0],
-  changeAmount:
-    initialData?.amount === null ||
-    initialData?.amount === undefined ||
-    initialData?.change_type === 'Reallocation'
-      ? ''
-      : String(initialData.amount),
-  description: initialData?.description || '',
-  targetAllocations: initialData?.target_allocation_json
-    ? JSON.parse(initialData.target_allocation_json)
-    : [],
+const getInitialFormState = (initialData = null) => {
+  const changeType = initialData?.changeType || 'Contribution';
+  const isRecurring = initialData?.isRecurring || false;
+  const changeDate = initialData?.changeDate
+    ? new Date(initialData.changeDate).toISOString().split('T')[0]
+    : new Date().toISOString().split('T')[0];
 
-  // Recurrence fields
-  is_recurring: initialData?.is_recurring || false,
-  // If ONE_TIME is selected from a non-recurring change, frequency might be null/empty.
-  // Default to DAILY if is_recurring is true but frequency is not set (e.g. new recurring change)
-  frequency: initialData?.is_recurring ? initialData?.frequency || 'DAILY' : 'ONE_TIME',
-  interval: initialData?.interval || 1,
-  // days_of_week stored as array of numbers [0-6]
-  days_of_week: initialData?.days_of_week
-    ? typeof initialData.days_of_week === 'string'
-      ? JSON.parse(initialData.days_of_week)
-      : initialData.days_of_week
-    : [],
-  day_of_month: initialData?.day_of_month || '', // Keep as string for input, parse to int on submit
-  // For monthly selection type: 'specific_day' or 'ordinal_day'
-  monthly_type: initialData?.month_ordinal ? 'ordinal_day' : 'specific_day',
-  month_ordinal: initialData?.month_ordinal || '',
-  month_ordinal_day: initialData?.month_ordinal_day || '',
-  month_of_year: initialData?.month_of_year || '', // Keep as string for input
-  ends_on_type: initialData?.ends_on_type || 'NEVER',
-  ends_on_occurrences: initialData?.ends_on_occurrences || '', // Keep as string
-  ends_on_date: initialData?.ends_on_date
-    ? new Date(initialData.ends_on_date).toISOString().split('T')[0]
-    : '',
-});
+  return {
+    id: initialData?.id || null,
+    changeType: changeType,
+    changeDate: changeDate,
+    changeAmount:
+      initialData?.amount === null ||
+      initialData?.amount === undefined ||
+      changeType === 'Reallocation' 
+        ? ''
+        : String(initialData.amount),
+    description: initialData?.description || '',
+    targetAllocations: initialData?.targetAllocationJson
+      ? JSON.parse(initialData.targetAllocationJson)
+      : [],
+    is_recurring: isRecurring,
+    frequency: isRecurring ? initialData?.frequency || 'DAILY' : 'ONE_TIME',
+    interval: initialData?.interval || 1,
+    days_of_week: initialData?.daysOfWeek
+      ? typeof initialData.daysOfWeek === 'string'
+        ? JSON.parse(initialData.daysOfWeek)
+        : initialData.daysOfWeek
+      : [],
+    day_of_month: initialData?.dayOfMonth || '',
+    monthly_type: initialData?.monthOrdinal ? 'ordinal_day' : 'specific_day',
+    month_ordinal: initialData?.monthOrdinal || '',
+    month_ordinal_day: initialData?.monthOrdinalDay || '',
+    month_of_year: initialData?.monthOfYear || '',
+    ends_on_type: initialData?.endsOnType || 'NEVER',
+    ends_on_occurrences: initialData?.endsOnOccurrences || '',
+    ends_on_date: initialData?.endsOnDate
+      ? new Date(initialData.endsOnDate).toISOString().split('T')[0]
+      : '',
+  };
+};
 
 const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewRequest }) => {
   const { portfolio } = usePortfolio(); // Get portfolio for assets AND ID
@@ -135,7 +135,12 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
   const [previewError, setPreviewError] = useState(null);
 
   useEffect(() => {
+    // console.log('[EFFECT RUNS] AddEditChangePanel effect triggered. isOpen:', isOpen, 'initialData:', initialData, 'portfolio ID:', portfolio?.portfolio_id);
+
     if (isOpen) {
+      console.log('[EDIT PANEL OPENING] AddEditChangePanel effect - isOpen=true. initialData (raw):', initialData);
+      console.log('[EDIT PANEL OPENING] AddEditChangePanel effect - isOpen=true. initialData (JSON):', JSON.stringify(initialData, null, 2));
+
       const freshFormState = getInitialFormState(initialData);
       setFormData(freshFormState);
       setSubmitError(null); // Clear previous errors when panel opens/data changes
@@ -165,7 +170,7 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
       setTargetAllocationsDisplay([]);
       setAllocationSum(0);
     }
-  }, [isOpen, initialData, portfolio, formData.changeType]);
+  }, [isOpen, initialData, portfolio]);
 
   const handleFormChange = e => {
     const { name, value, type, checked } = e.target;
@@ -467,8 +472,8 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
             </button>
           </div>
 
-          <form id="addEditChangeForm" onSubmit={handleSubmit} className="flex-1 flex flex-col">
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <form id="addEditChangeForm" onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 min-h-0">
               {/* Change Type */}
               <div>
                 <label

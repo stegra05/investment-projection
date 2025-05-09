@@ -4,6 +4,7 @@ import TimelineView from '../components/TimelineView'; // Import TimelineView
 import ChangeItemCard from '../components/ChangeItemCard'; // Assuming this exists as per Task 2.5
 import AddEditChangePanel from '../components/AddEditChangePanel'; // Import the new panel
 import portfolioService from '../../../api/portfolioService'; // Adjusted path and import type
+import Input from '../../../components/Input/Input'; // Import the shared Input component
 
 // TODO: Define these types, perhaps from a shared enum/constants file
 const CHANGE_TYPES = [
@@ -258,7 +259,7 @@ const ChangesView = () => {
               name="type"
               value={filters.type}
               onChange={handleFilterChange}
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm"
+              className="mt-1 block w-full pl-3 pr-10 py-2 h-10 border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm bg-white"
             >
               {CHANGE_TYPES.map(typeOpt => (
                 <option key={typeOpt.value} value={typeOpt.value}>
@@ -274,13 +275,12 @@ const ChangesView = () => {
             >
               Start Date
             </label>
-            <input
+            <Input
               type="date"
               id="start-date-filter"
               name="startDate"
               value={filters.startDate}
               onChange={handleFilterChange}
-              className="mt-1 block w-full pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm"
             />
           </div>
           <div>
@@ -290,13 +290,12 @@ const ChangesView = () => {
             >
               End Date
             </label>
-            <input
+            <Input
               type="date"
               id="end-date-filter"
               name="endDate"
               value={filters.endDate}
               onChange={handleFilterChange}
-              className="mt-1 block w-full pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm"
             />
           </div>
           <div>
@@ -306,14 +305,13 @@ const ChangesView = () => {
             >
               Description
             </label>
-            <input
+            <Input
               type="text"
               id="description-filter"
               name="description"
               value={filters.description}
               onChange={handleFilterChange}
               placeholder="Search description..."
-              className="mt-1 block w-full pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm"
             />
           </div>
         </div>
@@ -365,6 +363,7 @@ const ChangesView = () => {
       </div>
 
       <AddEditChangePanel
+        key={editingChangeData ? editingChangeData.id : 'new'}
         isOpen={isPanelOpen}
         onClose={handleClosePanel}
         initialData={editingChangeData}

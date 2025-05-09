@@ -16,15 +16,18 @@ const formatDate = date => {
 // Calculate default dates
 const today = new Date();
 const defaultStartDate = formatDate(today);
-const futureDate = new Date(today);
-futureDate.setFullYear(today.getFullYear() + 2);
-const defaultEndDate = formatDate(futureDate);
+const defaultProjectionHorizonYears = 2; // Default to 2 years
 const defaultInitialValue = 1000;
 
 function ProjectionPanel() {
   const { portfolioId } = usePortfolio();
   const [startDate, setStartDate] = useState(defaultStartDate);
-  const [endDate, setEndDate] = useState(defaultEndDate);
+  const [projectionHorizonYears, setProjectionHorizonYears] = useState(defaultProjectionHorizonYears);
+  const [endDate, setEndDate] = useState(() => {
+    const initialEndDate = new Date(defaultStartDate);
+    initialEndDate.setFullYear(initialEndDate.getFullYear() + defaultProjectionHorizonYears);
+    return formatDate(initialEndDate);
+  });
   const [initialValue, setInitialValue] = useState(defaultInitialValue);
 
   // Projection task tracking
@@ -107,6 +110,15 @@ function ProjectionPanel() {
     };
   }, [projectionTaskId]);
 
+  // Effect to update end date when start date or horizon changes
+  useEffect(() => {
+    if (startDate && projectionHorizonYears > 0) {
+      const newEndDate = new Date(startDate);
+      newEndDate.setFullYear(newEndDate.getFullYear() + parseInt(projectionHorizonYears, 10));
+      setEndDate(formatDate(newEndDate));
+    }
+  }, [startDate, projectionHorizonYears]);
+
   const getStatusMessage = () => {
     switch (projectionStatus) {
     case 'pending':
@@ -159,36 +171,87 @@ function ProjectionPanel() {
     <div className="p-4 bg-white rounded shadow h-full flex flex-col">
       <h2 className="text-lg font-semibold mb-4 border-b pb-2">Projection Setup</h2>
 
-      {/* Projection Parameters */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <Input
-          name="startDate"
-          label="Start Date"
-          id="start-date"
-          type="date"
-          value={startDate}
-          onChange={e => setStartDate(e.target.value)}
-          disabled={isProjectionRunning}
-        />
-        <Input
-          name="endDate"
-          label="End Date"
-          id="end-date"
-          type="date"
-          value={endDate}
-          onChange={e => setEndDate(e.target.value)}
-          disabled={isProjectionRunning}
-        />
-        <Input
-          name="initialValue"
-          label="Initial Total Value ($"
-          id="initial-value"
-          type="number"
-          placeholder="e.g., 100000"
-          value={initialValue}
-          onChange={e => setInitialValue(e.target.value)}
-          disabled={isProjectionRunning}
-        />
+      {/* Projection Parameters Section */}
+      <div className="space-y-6"> {/* Increased spacing for visual separation of groups */}
+        
+        {/* Row 1: Start Date, End Date, Horizon Years */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Input
+            name="startDate"
+            label="Start Date"
+            id="start-date"
+            type="date"
+            value={startDate}
+            onChange={e => setStartDate(e.target.value)}
+            disabled={isProjectionRunning}
+          />
+          <Input
+            name="endDate"
+            label="End Date"
+            id="end-date"
+            type="date"
+            value={endDate}
+            // onChange is removed as it's readOnly and derived
+            disabled={isProjectionRunning}
+            readOnly 
+          />
+          <Input
+            name="projectionHorizonYears"
+            label="Projection Horizon (Years)"
+            id="projection-horizon"
+            type="number"
+            placeholder="e.g., 10"
+            value={projectionHorizonYears}
+            onChange={e => {
+              const val = e.target.value;
+              if (val === '' || (parseInt(val, 10) > 0 && !val.includes('.'))) {
+                setProjectionHorizonYears(val === '' ? '' : parseInt(val, 10));
+              } else if (parseInt(val, 10) <= 0 && val !== '') {
+                setProjectionHorizonYears(1); // Default to 1 if invalid non-empty value
+              }
+            }}
+            min="1"
+            disabled={isProjectionRunning}
+          />
+        </div>
+
+        {/* Row 2: Quick Select Buttons & Initial Value Input */}
+        <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+          {/* Group for Quick Select Buttons */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-sm font-medium text-gray-700 mr-2 md:hidden">Set Horizon:</span> {/* Label for small screens */}
+            {[1, 2, 5, 10, 15, 20, 30].map(years => (
+              <Button
+                key={years}
+                onClick={() => setProjectionHorizonYears(years)}
+                disabled={isProjectionRunning}
+                className={`py-1 px-3 border border-gray-300 rounded-md text-sm font-medium 
+                            text-gray-700 hover:bg-gray-100 hover:border-gray-400
+                            focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 
+                            focus:border-primary-500
+                            disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150
+                            ${parseInt(projectionHorizonYears, 10) === years ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white'}`}
+              >
+                {years}Y
+              </Button>
+            ))}
+          </div>
+
+          {/* Group for Initial Value Input */}
+          <div className="w-full md:w-auto md:max-w-xs">
+            <Input
+              name="initialValue"
+              label="Initial Total Value ($)"
+              id="initial-value"
+              type="number"
+              placeholder="e.g., 100000"
+              value={initialValue}
+              onChange={e => setInitialValue(e.target.value)}
+              disabled={isProjectionRunning}
+            />
+          </div>
+        </div>
+
       </div>
 
       {/* Status Message */}
