@@ -12,7 +12,7 @@ const TimelineView = ({ plannedChanges = [], selectedChangeId, onSelectChange })
 
   // Group changes by year
   const changesByYear = plannedChanges.reduce((acc, change) => {
-    const dateObj = parseDateString(change.change_date);
+    const dateObj = parseDateString(change.changeDate);
     if (!dateObj) {
       // Handle invalid or missing dates gracefully
       const unknownYear = acc['Unknown Dates'] || [];
@@ -27,8 +27,8 @@ const TimelineView = ({ plannedChanges = [], selectedChangeId, onSelectChange })
     acc[year].push(change);
     // Sort changes within each year by date, earliest first
     acc[year].sort((a, b) => {
-      const dateA = parseDateString(a.change_date);
-      const dateB = parseDateString(b.change_date);
+      const dateA = parseDateString(a.changeDate);
+      const dateB = parseDateString(b.changeDate);
       if (!dateA && !dateB) return 0;
       if (!dateA) return 1; // Put items with invalid dates last
       if (!dateB) return -1;
@@ -58,7 +58,7 @@ const TimelineView = ({ plannedChanges = [], selectedChangeId, onSelectChange })
           </h4>
           <ul className="space-y-3 ml-2 border-l border-gray-200 pl-4">
             {changesByYear[year].map(change => {
-              const displayDateObj = parseDateString(change.change_date);
+              const displayDateObj = parseDateString(change.changeDate);
               return (
                 <li key={change.id}>
                   <button
@@ -66,26 +66,26 @@ const TimelineView = ({ plannedChanges = [], selectedChangeId, onSelectChange })
                     className={`w-full text-left p-2 rounded-md border text-sm transition-colors duration-150 
                                 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500
                                 ${
-                                  change.id === selectedChangeId
-                                    ? 'border-primary-500 bg-primary-50 text-primary-700 ring-1 ring-primary-500'
-                                    : 'border-gray-200 bg-white text-gray-900 hover:bg-gray-100'
-                                }`}
+                change.id === selectedChangeId
+                  ? 'border-primary-500 bg-primary-50 text-primary-700 ring-1 ring-primary-500'
+                  : 'border-gray-200 bg-white text-gray-900 hover:bg-gray-100'
+                }`}
                     onClick={() => onSelectChange && onSelectChange(change.id)}
                   >
                     <div className="font-medium text-gray-800">
                       {displayDateObj
                         ? displayDateObj.toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                          })
+                          month: 'short',
+                          day: 'numeric',
+                        })
                         : 'Invalid Date'}{' '}
-                      - {change.change_type}
+                      - {change.changeType}
                     </div>
                     {change.description && (
                       <p className="text-xs text-gray-600 truncate">{change.description}</p>
                     )}
                     {/* Basic recurrence info if present */}
-                    {change.is_recurring && (
+                    {change.isRecurring && (
                       <p className="text-xs text-gray-500 italic">
                         Recurring: {change.frequency}
                         {change.interval > 1 ? ` (every ${change.interval})` : ''}
@@ -106,10 +106,10 @@ TimelineView.propTypes = {
   plannedChanges: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-      change_date: PropTypes.string.isRequired,
-      change_type: PropTypes.string.isRequired,
+      changeDate: PropTypes.string.isRequired,
+      changeType: PropTypes.string.isRequired,
       description: PropTypes.string,
-      is_recurring: PropTypes.bool,
+      isRecurring: PropTypes.bool,
       frequency: PropTypes.string,
       interval: PropTypes.number,
       // Add other relevant change properties here if needed for display

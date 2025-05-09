@@ -56,12 +56,12 @@ def add_planned_change(portfolio_id, portfolio, validated_data):
     # The object should now have its ID populated by the flush.
     return jsonify(PlannedChangeSchema.from_orm(new_change).model_dump(mode='json', by_alias=True)), 201
 
-@changes_bp.route('/<int:change_id>', methods=['OPTIONS'])
+@changes_bp.route('/<int:change_id>/', methods=['OPTIONS'])
 def update_planned_change_options(portfolio_id, change_id):
     """Handles OPTIONS preflight requests for updating/deleting specific planned changes."""
     return jsonify(message="Preflight for specific planned change OK"), 200
 
-@changes_bp.route('/<int:change_id>', methods=['PUT', 'PATCH'])
+@changes_bp.route('/<int:change_id>/', methods=['PUT', 'PATCH'])
 @jwt_required()
 @verify_portfolio_ownership
 @handle_api_errors(schema=PlannedChangeUpdateSchema)
@@ -94,7 +94,7 @@ def update_planned_change(portfolio_id, change_id, portfolio, validated_data):
     # Serialize output
     return jsonify(PlannedChangeSchema.from_orm(change).model_dump(mode='json', by_alias=True)), 200
 
-@changes_bp.route('/<int:change_id>', methods=['DELETE'])
+@changes_bp.route('/<int:change_id>/', methods=['DELETE'])
 @jwt_required()
 @verify_portfolio_ownership
 def delete_planned_change(portfolio_id, change_id, portfolio):

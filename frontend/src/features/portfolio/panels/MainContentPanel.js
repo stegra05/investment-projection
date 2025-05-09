@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import RiskProfileDisplay from '../components/RiskProfileDisplay';
 import AssetsView from '../views/AssetsView'; // Import the actual component
 import ChangesView from '../views/ChangesView'; // Import the new ChangesView
+import PropTypes from 'prop-types'; // Import PropTypes
 
 // Placeholder components (remove AssetsView placeholder)
 // const AssetsView = () => <div>Assets View Placeholder</div>; // Removed placeholder
@@ -32,8 +33,8 @@ const OverviewSettingsView = () => (
   </div>
 );
 
-function MainContentPanel() {
-  const [activeView, setActiveView] = useState('assets'); // Default view
+function MainContentPanel({ activeView, setActiveView, portfolioLoaded }) { // Accept props
+  // const [activeView, setActiveView] = useState('assets'); // Remove local state
 
   const views = {
     assets: <AssetsView />,
@@ -59,34 +60,49 @@ function MainContentPanel() {
   return (
     <div className="flex flex-col h-full p-4 bg-white rounded shadow">
       {/* Navigation Buttons (Segmented Control Style) */}
-      <div className="inline-flex rounded-md shadow-sm mb-4" role="group">
-        <button
-          type="button"
-          className={getButtonClass('assets')}
-          onClick={() => setActiveView('assets')}
-        >
-          Assets
-        </button>
-        <button
-          type="button"
-          className={getButtonClass('changes')}
-          onClick={() => setActiveView('changes')}
-        >
-          Planned Changes
-        </button>
-        <button
-          type="button"
-          className={getButtonClass('overview')}
-          onClick={() => setActiveView('overview')}
-        >
-          Overview & Settings
-        </button>
-      </div>
+      {portfolioLoaded && ( // Only show tabs if portfolio is loaded
+        <div className="inline-flex rounded-md shadow-sm mb-4" role="group">
+          <button
+            type="button"
+            className={getButtonClass('assets')}
+            onClick={() => setActiveView('assets')}
+          >
+            Assets
+          </button>
+          <button
+            type="button"
+            className={getButtonClass('changes')}
+            onClick={() => setActiveView('changes')}
+          >
+            Planned Changes
+          </button>
+          <button
+            type="button"
+            className={getButtonClass('overview')}
+            onClick={() => setActiveView('overview')}
+          >
+            Overview & Settings
+          </button>
+        </div>
+      )}
 
       {/* Content Area */}
-      <div className="flex-grow border-t pt-4">{views[activeView]}</div>
+      {portfolioLoaded ? (
+        <div className="flex-grow border-t pt-4">{views[activeView]}</div>
+      ) : (
+        <div className="flex-grow flex items-center justify-center">
+          <p className="text-gray-500">Loading portfolio content...</p> { /* Or handle based on error state */ }
+        </div>
+      )}
     </div>
   );
 }
+
+// Add PropTypes
+MainContentPanel.propTypes = {
+  activeView: PropTypes.string.isRequired,
+  setActiveView: PropTypes.func.isRequired,
+  portfolioLoaded: PropTypes.bool.isRequired,
+};
 
 export default MainContentPanel;

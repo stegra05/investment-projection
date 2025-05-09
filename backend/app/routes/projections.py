@@ -8,13 +8,16 @@ import uuid
 
 from app.services.projection_engine import calculate_projection
 # Import models from app.models
-from app.models import Portfolio, PlannedFutureChange # Added PlannedFutureChange for type hint if needed, though schema is used
+from app.models import Portfolio # Removed PlannedFutureChange as it's not directly used here
 # Import db instance from the app package
 from app import db 
 # Import Pydantic schemas for request/response and draft changes
 from app.schemas.portfolio_schemas import PlannedChangeCreateSchema, OrmBaseModel 
 
 projections_bp = Blueprint('projections_bp', __name__, url_prefix='/api/v1/portfolios')
+
+# TEMPORARY: In-memory storage for task results. Not suitable for production.
+TEMP_TASK_RESULTS = {}
 
 # --- Pydantic Schemas for Projection Requests ---
 class ProjectionRequestBase(OrmBaseModel):
@@ -140,13 +143,35 @@ def create_portfolio_projection(portfolio_id):
         f"StartDate: {start_date}, EndDate: {end_date}, InitialValue: {initial_total_value}"
     )
 
-    # TODO: Dispatch to background task
-    # calculate_projection(
-    #     portfolio_id=portfolio_id,
-    #     start_date=start_date,
-    #     end_date=end_date,
-    #     initial_total_value=initial_total_value
-    # )
+    # --- Actually run the projection (synchronously for now) and store result ---
+    try:
+        projection_data = calculate_projection(
+            portfolio_id=portfolio_id,
+            start_date=start_date,
+            end_date=end_date,
+            initial_total_value=initial_total_value
+            # draft_changes_input is not used in the main projection route
+        )
+        # Format results into an object { "YYYY-MM-DD": "value_str", ... }
+        # This matches what ProjectionPanel.js expects from status.result.data after Object.entries
+        formatted_data_obj = {
+            item_date.isoformat(): str(item_value)
+            for item_date, item_value in projection_data
+        }
+        TEMP_TASK_RESULTS[task_id] = {
+            "status": "COMPLETED",
+            "result": {"data": formatted_data_obj}
+        }
+        current_app.logger.info(f"Projection task {task_id} completed and result stored.")
+    except Exception as e:
+        current_app.logger.error(f"Error during projection calculation for task {task_id}: {e}", exc_info=True)
+        TEMP_TASK_RESULTS[task_id] = {
+            "status": "FAILED",
+            "error": "Projection calculation failed internally."
+        }
+    # -------------------------------------------------------------------------
+
+    # TODO: Dispatch to background task (this synchronous call is temporary)
 
     return jsonify({
         "message": "Projection task accepted",

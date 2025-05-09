@@ -12,14 +12,14 @@ import {
 // TODO: Potentially move to a utils file or constants
 const getChangeTypeIcon = changeType => {
   switch (changeType) {
-    case 'CONTRIBUTION':
-      return <FaMoneyBillWave className="text-green-500 mr-2" />;
-    case 'WITHDRAWAL':
-      return <FaMoneyBillWave className="text-red-500 mr-2" />;
-    case 'REALLOCATION':
-      return <FaRandom className="text-blue-500 mr-2" />;
-    default:
-      return <FaInfoCircle className="text-gray-500 mr-2" />;
+  case 'CONTRIBUTION':
+    return <FaMoneyBillWave className="text-green-500 mr-2" />;
+  case 'WITHDRAWAL':
+    return <FaMoneyBillWave className="text-red-500 mr-2" />;
+  case 'REALLOCATION':
+    return <FaRandom className="text-blue-500 mr-2" />;
+  default:
+    return <FaInfoCircle className="text-gray-500 mr-2" />;
   }
 };
 
@@ -77,7 +77,7 @@ const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected }
         <div className="flex items-center min-w-0">
           {' '}
           {/* Added min-w-0 for better truncation */}
-          {getChangeTypeIcon(change.change_type)}
+          {getChangeTypeIcon(change.changeType)}
           <h4
             className="text-md font-semibold text-gray-800 truncate"
             title={typeof change.description === 'string' ? change.description : undefined}
@@ -114,9 +114,9 @@ const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected }
       <div className="text-sm text-gray-600 space-y-1">
         <div className="flex items-center">
           <FaCalendarAlt className="mr-2 text-gray-400 flex-shrink-0" />
-          <span>Date: {formatDate(change.change_date)}</span>
+          <span>Date: {formatDate(change.changeDate)}</span>
         </div>
-        {change.change_type !== 'REALLOCATION' && (
+        {change.changeType !== 'REALLOCATION' && (
           <div className="flex items-center">
             <FaMoneyBillWave
               className={`mr-2 flex-shrink-0 ${change.amount >= 0 ? 'text-green-400' : 'text-red-400'}`}
@@ -129,7 +129,7 @@ const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected }
             {/* TODO: Use actual currency from portfolio settings if available */}
           </div>
         )}
-        {change.is_recurring && (
+        {change.isRecurring && (
           <div className="flex items-center mt-1">
             <span className="text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
               Recurring: {change.frequency}
@@ -137,13 +137,13 @@ const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected }
             {/* TODO: Add more detailed recurrence info, perhaps in a tooltip or expandable section */}
           </div>
         )}
-        {change.change_type === 'REALLOCATION' && change.target_allocation_json && (
+        {change.changeType === 'REALLOCATION' && change.targetAllocationJson && (
           <div className="mt-2 pt-2 border-t border-gray-200">
             <p className="text-xs font-medium text-gray-500 mb-1">Reallocation Targets:</p>
             <ul className="list-disc list-inside pl-1 text-xs text-gray-600">
-              {(typeof change.target_allocation_json === 'string'
-                ? JSON.parse(change.target_allocation_json)
-                : change.target_allocation_json
+              {(typeof change.targetAllocationJson === 'string'
+                ? JSON.parse(change.targetAllocationJson)
+                : change.targetAllocationJson
               ).map((allocation, index) => (
                 <li key={allocation.assetId || index}>
                   {/* TODO: Fetch asset name based on assetId for better display */}
@@ -162,26 +162,25 @@ const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected }
 ChangeItemCard.propTypes = {
   change: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    change_type: PropTypes.string,
+    changeType: PropTypes.string,
     description: PropTypes.string,
-    change_date: PropTypes.string,
-    amount: PropTypes.number,
-    is_recurring: PropTypes.bool,
+    changeDate: PropTypes.string,
+    amount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    isRecurring: PropTypes.bool,
     frequency: PropTypes.string,
-    target_allocation_json: PropTypes.oneOfType([PropTypes.string, PropTypes.object]), // Can be string (JSON) or parsed object
+    targetAllocationJson: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   }).isRequired,
   onEdit: PropTypes.func,
   onDelete: PropTypes.func,
-  onSelectChange: PropTypes.func, // Renamed from onSelect
-  isSelected: PropTypes.bool, // Added isSelected prop
+  onSelectChange: PropTypes.func,
+  isSelected: PropTypes.bool,
 };
 
-ChangeItemCard.defaultProps = {
-  // Added defaultProps for non-required function/boolean props
-  onEdit: null,
-  onDelete: null,
-  onSelectChange: null,
-  isSelected: false,
-};
+// ChangeItemCard.defaultProps = {
+//   onEdit: null,
+//   onDelete: null,
+//   onSelectChange: null,
+//   isSelected: false,
+// };
 
 export default ChangeItemCard;

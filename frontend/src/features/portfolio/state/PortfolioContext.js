@@ -75,9 +75,9 @@ export const PortfolioProvider = ({ children }) => {
   // Function to explicitly refresh portfolio data (Task 10)
   const refreshPortfolio = useCallback(() => {
     // Optionally clear the specific cache entry before fetching if stale data is a concern:
-    // setPortfolioCache(prevCache => ({ ...prevCache, [portfolioId]: undefined }));
+    setPortfolioCache(prevCache => ({ ...prevCache, [portfolioId]: undefined }));
     fetchPortfolioData();
-  }, [fetchPortfolioData]); // Dependency on the memoized fetch function
+  }, [fetchPortfolioData, portfolioId]); // Dependency on the memoized fetch function
 
   /**
    * Fetches the risk profile analysis for the current portfolio.

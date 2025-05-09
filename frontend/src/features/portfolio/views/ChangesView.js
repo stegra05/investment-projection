@@ -38,6 +38,7 @@ const ChangesView = () => {
   // State for the slide-in panel
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [editingChangeData, setEditingChangeData] = useState(null); // To hold data for editing
+  const [actionError, setActionError] = useState(null); // Generic error state for actions like delete
 
   // Refs for scrolling
   const itemRefs = useRef({}); // To store refs for each change item
@@ -139,9 +140,12 @@ const ChangesView = () => {
 
   const handleSaveChanges = async changeDataFromPanel => {
     console.log('ChangesView (handleSaveChanges): portfolio context:', portfolio); // Diagnostic log
+    setActionError(null); // Clear previous action errors
     if (!portfolio || !portfolio.portfolio_id) {
       console.error('Portfolio ID is missing, cannot save change.');
-      throw new Error('Portfolio not loaded. Cannot save change.');
+      const err = new Error('Portfolio not loaded. Cannot save change.');
+      setActionError(err.message);
+      throw err;
     }
 
     // The changeDataFromPanel is already prepared by AddEditChangePanel's handleSubmit
@@ -168,7 +172,39 @@ const ChangesView = () => {
     } catch (apiError) {
       console.error('API Error saving planned change:', apiError);
       // Re-throw the error so AddEditChangePanel can catch it and display it
+      setActionError(apiError.message || 'Failed to save change.');
       throw apiError;
+    }
+  };
+
+  const handleDeleteChange = async (changeId) => {
+    setActionError(null); // Clear previous action errors
+    if (!portfolio || !portfolio.portfolio_id) {
+      console.error('Portfolio ID is missing, cannot delete change.');
+      setActionError('Portfolio not loaded. Cannot delete change.');
+      return;
+    }
+    if (!changeId) {
+      console.error('Change ID is missing, cannot delete change.');
+      setActionError('Change ID missing. Cannot delete change.');
+      return;
+    }
+
+    // Optional: Add a confirmation dialog here
+    // if (!window.confirm('Are you sure you want to delete this planned change?')) {
+    //   return;
+    // }
+
+    try {
+      await portfolioService.deletePlannedChange(portfolio.portfolio_id, changeId);
+      if (refreshPortfolio) {
+        await refreshPortfolio(); // Refresh portfolio data
+      }
+      // Optionally: Show a success notification (e.g., using a toast library)
+    } catch (apiError) {
+      console.error('API Error deleting planned change:', apiError);
+      setActionError(apiError.message || 'Failed to delete planned change.');
+      // Optionally: Show an error notification
     }
   };
 
@@ -188,10 +224,10 @@ const ChangesView = () => {
     return <div className="p-4">Loading planned changes...</div>; // Basic loading state
   }
 
-  if (error) {
+  if (error || actionError) { // Combined general error and action error display
     return (
       <div className="p-4 text-red-600">
-        Error loading planned changes: {error.message || 'Unknown error'}
+        Error: {error?.message || actionError || 'Unknown error'}
       </div>
     ); // Basic error state
   }
@@ -315,6 +351,7 @@ const ChangesView = () => {
                     isSelected={selectedChangeId === change.id}
                     onSelectChange={() => handleSelectChange(change.id)}
                     onEdit={() => handleOpenEditPanel(change)}
+                    onDelete={() => handleDeleteChange(change.id)}
                   />
                 </div>
               ))}

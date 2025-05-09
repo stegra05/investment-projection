@@ -47,20 +47,20 @@ function AssetsView() {
   const handleInputChange = e => {
     const { name, value } = e.target;
     switch (name) {
-      case 'assetType':
-        setAssetType(value);
-        break;
-      case 'nameOrTicker':
-        setNameOrTicker(value);
-        break;
-      case 'allocationPercentage':
-        setAllocationPercentage(value);
-        break;
-      case 'manualExpectedReturn':
-        setManualExpectedReturn(value);
-        break;
-      default:
-        break;
+    case 'assetType':
+      setAssetType(value);
+      break;
+    case 'nameOrTicker':
+      setNameOrTicker(value);
+      break;
+    case 'allocationPercentage':
+      setAllocationPercentage(value);
+      break;
+    case 'manualExpectedReturn':
+      setManualExpectedReturn(value);
+      break;
+    default:
+      break;
     }
   };
 

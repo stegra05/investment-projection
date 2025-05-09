@@ -83,7 +83,7 @@ class PlannedChangeUpdateSchema(PlannedChangeBase):
         return v
 
 class PlannedChangeSchema(PlannedChangeBase):
-    change_id: int
+    change_id: int = Field(..., alias='id')
     portfolio_id: int
     # Recurrence fields are inherited from PlannedChangeBase, so they will be part of the response schema
 

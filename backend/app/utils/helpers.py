@@ -5,6 +5,7 @@ from typing import Type, TypeVar, Any
 from app import db
 # from app.models import db # Common pattern in Flask apps -- THIS IS INCORRECT
 from flask import current_app
+from werkzeug.exceptions import HTTPException # Import HTTPException
 
 # Define a generic type variable for SQLAlchemy models
 # Using Type[Any] for simplicity, could refine further if needed.
@@ -94,7 +95,10 @@ def get_owned_child_or_404(
         # Raised if relationship inspection fails
         print(f"ValueError in get_owned_child_or_404: {e}")
         abort(500, description=f"Internal configuration error: {e}")
+    except HTTPException as e:
+        # Re-raise HTTPExceptions (like 404 Not Found) so they are handled by Flask
+        raise e
     except Exception as e:
          # Catch other potential DB errors during fallback query
-         current_app.logger.exception(f"Error in get_owned_child_or_404 fallback query for child {child_pk_attr}={child_id}")
-         abort(500, description="An error occurred while retrieving the requested item.") 
+         current_app.logger.exception(f"Unexpected error in get_owned_child_or_404 fallback query for child {child_pk_attr}={child_id}")
+         abort(500, description="An unexpected error occurred while retrieving the requested item.") 

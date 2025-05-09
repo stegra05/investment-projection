@@ -50,36 +50,36 @@ function ProjectionPanel() {
         if (!isMounted) return;
 
         switch (status.status) {
-          case 'COMPLETED':
-            setProjectionStatus('completed');
-            if (status.result?.data) {
-              console.log('Raw projection results:', status.result);
-              const chartData = Object.entries(status.result.data).map(([date, value]) => ({
-                date,
-                value: Number(value),
-              }));
-              console.log('Transformed chart data:', chartData);
-              setProjectionResults(chartData);
-            } else {
-              console.warn('No data in projection results:', status.result);
-              setProjectionResults([]);
-            }
-            break;
-          case 'FAILED':
-            setProjectionStatus('error');
-            setProjectionError(status.error || 'Projection calculation failed');
-            break;
-          case 'PROCESSING':
-            setProjectionStatus('processing');
-            timeoutId = setTimeout(checkStatus, 5000);
-            break;
-          case 'PENDING':
-            setProjectionStatus('pending');
-            timeoutId = setTimeout(checkStatus, 5000);
-            break;
-          default:
-            setProjectionStatus('error');
-            setProjectionError('Unknown task status');
+        case 'COMPLETED':
+          setProjectionStatus('completed');
+          if (status.result?.data) {
+            console.log('Raw projection results:', status.result);
+            const chartData = Object.entries(status.result.data).map(([date, value]) => ({
+              date,
+              value: Number(value),
+            }));
+            console.log('Transformed chart data:', chartData);
+            setProjectionResults(chartData);
+          } else {
+            console.warn('No data in projection results:', status.result);
+            setProjectionResults([]);
+          }
+          break;
+        case 'FAILED':
+          setProjectionStatus('error');
+          setProjectionError(status.error || 'Projection calculation failed');
+          break;
+        case 'PROCESSING':
+          setProjectionStatus('processing');
+          timeoutId = setTimeout(checkStatus, 5000);
+          break;
+        case 'PENDING':
+          setProjectionStatus('pending');
+          timeoutId = setTimeout(checkStatus, 5000);
+          break;
+        default:
+          setProjectionStatus('error');
+          setProjectionError('Unknown task status');
         }
       } catch (error) {
         if (!isMounted) return;
@@ -109,18 +109,18 @@ function ProjectionPanel() {
 
   const getStatusMessage = () => {
     switch (projectionStatus) {
-      case 'pending':
-        return 'Preparing to start projection...';
-      case 'submitted':
-        return 'Projection task submitted...';
-      case 'processing':
-        return 'Calculating projection...';
-      case 'completed':
-        return 'Projection completed successfully!';
-      case 'error':
-        return projectionError || 'An error occurred during projection';
-      default:
-        return null;
+    case 'pending':
+      return 'Preparing to start projection...';
+    case 'submitted':
+      return 'Projection task submitted...';
+    case 'processing':
+      return 'Calculating projection...';
+    case 'completed':
+      return 'Projection completed successfully!';
+    case 'error':
+      return projectionError || 'An error occurred during projection';
+    default:
+      return null;
     }
   };
 

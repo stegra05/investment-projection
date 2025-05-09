@@ -72,20 +72,20 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
   const handleInputChange = e => {
     const { name, value } = e.target;
     switch (name) {
-      case 'assetType':
-        setAssetType(value);
-        break;
-      case 'nameOrTicker':
-        setNameOrTicker(value);
-        break;
-      case 'allocationPercentage':
-        setAllocationPercentage(value);
-        break;
-      case 'manualExpectedReturn':
-        setManualExpectedReturn(value);
-        break;
-      default:
-        break;
+    case 'assetType':
+      setAssetType(value);
+      break;
+    case 'nameOrTicker':
+      setNameOrTicker(value);
+      break;
+    case 'allocationPercentage':
+      setAllocationPercentage(value);
+      break;
+    case 'manualExpectedReturn':
+      setManualExpectedReturn(value);
+      break;
+    default:
+      break;
     }
   };
 
@@ -110,8 +110,8 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
       allocation_percentage: parseFloat(allocationPercentage) || 0,
       ...(manualExpectedReturn !== '' &&
         manualExpectedReturn !== null && {
-          manual_expected_return: parseFloat(manualExpectedReturn),
-        }), // Handle empty string/null
+        manual_expected_return: parseFloat(manualExpectedReturn),
+      }), // Handle empty string/null
     };
 
     // Basic Frontend validation (similar to add form)
