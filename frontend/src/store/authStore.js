@@ -67,7 +67,13 @@ const useAuthStore = create(set => ({
     // Reset authentication state
     set({ user: null, isAuthenticated: false, error: null, isLoading: false }); // Also reset isLoading
     // Optionally: Could call a backend logout endpoint via authService if one exists
-    // authService.logout();
+    authService.logout().catch(error => {
+      // Even if backend logout fails, client-side cleanup has occurred.
+      // Log the error or display a notification to the user if necessary.
+      console.error('Backend logout failed:', error);
+      // You might want to set an error state here if needed for the UI
+      // set({ error: 'Backend logout failed. Please try again or contact support.' });
+    });
   },
 
   clearError: () => {

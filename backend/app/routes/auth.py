@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, abort
 from app import db
 from app.models.user import User
-from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt_identity, jwt_required, set_refresh_cookies
+from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt_identity, jwt_required, set_refresh_cookies, unset_jwt_cookies
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 # Import the limiter instance from the app factory
@@ -25,16 +25,12 @@ def is_password_complex(password):
     """Checks if the password meets complexity requirements."""
     if len(password) < MIN_PASSWORD_LENGTH:
         return False, f"Password must be at least {MIN_PASSWORD_LENGTH} characters long."
-    if not re.search(r"[A-Z]", password):
-        return False, "Password must contain at least one uppercase letter."
-    if not re.search(r"[a-z]", password):
-        return False, "Password must contain at least one lowercase letter."
-    if not re.search(r"[0-9]", password):
-        return False, "Password must contain at least one digit."
-    # Use a simpler, more common regex for special characters
-    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
-        return False, "Password must contain at least one special character."
-    # TODO: Implement breached password check (e.g., using Have I Been Pwned API)
+    # Removed specific character type checks (uppercase, lowercase, digit, special character)
+    # Relying on length and pwned password check as primary measures.
+    # The NIST guidelines suggest moving away from strict composition rules when
+    # other measures like length and breached password checks are implemented.
+    # If desired, some minimal complexity (e.g., not all same character) could be added,
+    # but the focus is shifted.
     return True, ""
 
 def is_password_pwned(password):
@@ -150,7 +146,9 @@ def logout():
     # JWT logout is primarily handled client-side by discarding the token.
     # Server-side blocklisting can be added for more robust security if needed.
     # TODO: Add logic to unset refresh cookie upon logout using unset_jwt_cookies
-    return jsonify({"message": "Logout successful (token needs to be discarded client-side)"}), 200
+    response = jsonify({"message": "Logout successful (token needs to be discarded client-side)"})
+    unset_jwt_cookies(response)
+    return response, 200
 
 @auth_bp.route('/refresh', methods=['POST'])
 @jwt_required(refresh=True) # This decorator now automatically checks the cookie and handles CSRF
