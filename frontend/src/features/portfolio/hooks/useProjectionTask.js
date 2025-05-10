@@ -35,30 +35,30 @@ function useProjectionTask() {
         if (!isMounted) return;
 
         switch (status.status) {
-          case 'COMPLETED':
-            setProjectionStatus('completed');
-            if (status.result?.data) {
-              const chartData = transformProjectionData(status.result.data);
-              setProjectionResults(chartData);
-            } else {
-              setProjectionResults([]);
-            }
-            break;
-          case 'FAILED':
-            setProjectionStatus('error');
-            setProjectionError(status.error || 'Projection calculation failed');
-            break;
-          case 'PROCESSING':
-            setProjectionStatus('processing');
-            timeoutId = setTimeout(checkStatus, 5000);
-            break;
-          case 'PENDING': // Assuming PENDING is a valid status from backend before PROCESSING
-            setProjectionStatus('pending');
-            timeoutId = setTimeout(checkStatus, 5000);
-            break;
-          default:
-            setProjectionStatus('error');
-            setProjectionError('Unknown task status: ' + status.status);
+        case 'COMPLETED':
+          setProjectionStatus('completed');
+          if (status.result?.data) {
+            const chartData = transformProjectionData(status.result.data);
+            setProjectionResults(chartData);
+          } else {
+            setProjectionResults([]);
+          }
+          break;
+        case 'FAILED':
+          setProjectionStatus('error');
+          setProjectionError(status.error || 'Projection calculation failed');
+          break;
+        case 'PROCESSING':
+          setProjectionStatus('processing');
+          timeoutId = setTimeout(checkStatus, 5000);
+          break;
+        case 'PENDING': // Assuming PENDING is a valid status from backend before PROCESSING
+          setProjectionStatus('pending');
+          timeoutId = setTimeout(checkStatus, 5000);
+          break;
+        default:
+          setProjectionStatus('error');
+          setProjectionError('Unknown task status: ' + status.status);
         }
       } catch (error) {
         if (!isMounted) return;
@@ -74,7 +74,7 @@ function useProjectionTask() {
     };
 
     if (projectionStatus === 'submitted' || projectionStatus === 'processing' || projectionStatus === 'pending') {
-        checkStatus(); // Initial check if task was just submitted or is still processing/pending
+      checkStatus(); // Initial check if task was just submitted or is still processing/pending
     }
 
     return () => {

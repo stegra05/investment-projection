@@ -113,8 +113,8 @@ function ProjectionPanel() {
                 {isProjectionRunning
                   ? 'Calculating projection...'
                   : projectionStatus === 'error'
-                  ? 'Failed to retrieve projection.'
-                  : 'Run projection to see results'}
+                    ? 'Failed to retrieve projection.'
+                    : 'Run projection to see results'}
               </span>
             </div>
           )}
