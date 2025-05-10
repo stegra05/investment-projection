@@ -3,6 +3,7 @@ from pydantic.alias_generators import to_camel
 from typing import List, Optional, Dict
 from datetime import date
 from decimal import Decimal
+from pydantic import BaseModel, Field, field_validator, condecimal, ValidationInfo
 
 from app.enums import AssetType, ChangeType, FrequencyType, MonthOrdinalType, OrdinalDayType, EndsOnType
 
@@ -41,10 +42,10 @@ class PlannedChangeBase(OrmBaseModel):
         "from_attributes": True
     }
 
-    @validator('days_of_week', always=True)
-    def check_days_of_week(cls, v, values):
-        is_recurring = values.get('is_recurring')
-        frequency = values.get('frequency')
+    @field_validator('days_of_week', mode='before')
+    def check_days_of_week(cls, v, info: ValidationInfo):
+        is_recurring = info.data.get('is_recurring')
+        frequency = info.data.get('frequency')
         if is_recurring and frequency == FrequencyType.WEEKLY and not v:
             raise ValueError("For weekly recurrence, 'days_of_week' must be specified.")
         if is_recurring and frequency != FrequencyType.WEEKLY and v:
@@ -53,53 +54,48 @@ class PlannedChangeBase(OrmBaseModel):
             raise ValueError("'days_of_week' cannot be specified if 'is_recurring' is false.")
         return v
 
-    @validator('day_of_month', always=True)
-    def check_day_of_month(cls, v, values):
-        is_recurring = values.get('is_recurring')
-        frequency = values.get('frequency')
-        # This field is relevant for MONTHLY and YEARLY if not using ordinal recurrence
-        month_ordinal = values.get('month_ordinal')
+    @field_validator('day_of_month', mode='before')
+    def check_day_of_month(cls, v, info: ValidationInfo):
+        is_recurring = info.data.get('is_recurring')
+        frequency = info.data.get('frequency')
+        month_ordinal = info.data.get('month_ordinal')
 
         if is_recurring and frequency in [FrequencyType.MONTHLY, FrequencyType.YEARLY]:
-            if month_ordinal is None and v is None: # Not using ordinal, so day_of_month is required
+            if month_ordinal is None and v is None:
                  if frequency == FrequencyType.MONTHLY:
                     raise ValueError("For monthly recurrence without ordinal, 'day_of_month' must be specified.")
-                 # For YEARLY, day_of_month is optional if month_of_year is set and no ordinal
             if month_ordinal is not None and v is not None:
                  raise ValueError("'day_of_month' cannot be specified if 'month_ordinal' is used.")
-        elif is_recurring and v is not None: # Not MONTHLY or YEARLY, but day_of_month is set
+        elif is_recurring and v is not None:
             raise ValueError(f"'day_of_month' can only be specified for monthly or yearly recurrence, not {frequency}.")
         elif not is_recurring and v is not None:
              raise ValueError("'day_of_month' cannot be specified if 'is_recurring' is false.")
         return v
 
-    @validator('month_ordinal', 'month_ordinal_day', always=True)
-    def check_month_ordinal_pair(cls, v, values, field):
-        is_recurring = values.get('is_recurring')
-        frequency = values.get('frequency')
-        month_ordinal = values.get('month_ordinal')
-        month_ordinal_day = values.get('month_ordinal_day')
+    @field_validator('month_ordinal', 'month_ordinal_day', mode='before')
+    def check_month_ordinal_pair(cls, v, info: ValidationInfo):
+        is_recurring = info.data.get('is_recurring')
+        frequency = info.data.get('frequency')
+        month_ordinal = info.data.get('month_ordinal')
+        month_ordinal_day = info.data.get('month_ordinal_day')
 
         if is_recurring and frequency in [FrequencyType.MONTHLY, FrequencyType.YEARLY]:
             if month_ordinal and not month_ordinal_day:
                 raise ValueError("'month_ordinal_day' must be specified if 'month_ordinal' is used.")
             if month_ordinal_day and not month_ordinal:
                 raise ValueError("'month_ordinal' must be specified if 'month_ordinal_day' is used.")
-            if (month_ordinal or month_ordinal_day) and values.get('day_of_month') is not None:
+            if (month_ordinal or month_ordinal_day) and info.data.get('day_of_month') is not None:
                 raise ValueError("Cannot use 'month_ordinal'/'month_ordinal_day' with 'day_of_month'.")
-        elif is_recurring and v is not None: # Not MONTHLY or YEARLY but one of these fields is set
-            raise ValueError(f"'{field.name}' can only be specified for monthly or yearly recurrence, not {frequency}.")
+        elif is_recurring and v is not None:
+            raise ValueError(f"'{info.field_name}' can only be specified for monthly or yearly recurrence, not {frequency}.")
         elif not is_recurring and v is not None:
-            raise ValueError(f"'{field.name}' cannot be specified if 'is_recurring' is false.")
-        
-        # Return the original value of the field being validated
+            raise ValueError(f"'{info.field_name}' cannot be specified if 'is_recurring' is false.")
         return v
 
-
-    @validator('month_of_year', always=True)
-    def check_month_of_year(cls, v, values):
-        is_recurring = values.get('is_recurring')
-        frequency = values.get('frequency')
+    @field_validator('month_of_year', mode='before')
+    def check_month_of_year(cls, v, info: ValidationInfo):
+        is_recurring = info.data.get('is_recurring')
+        frequency = info.data.get('frequency')
         if is_recurring and frequency == FrequencyType.YEARLY and v is None:
             raise ValueError("For yearly recurrence, 'month_of_year' must be specified.")
         if is_recurring and frequency != FrequencyType.YEARLY and v:
@@ -111,9 +107,9 @@ class PlannedChangeBase(OrmBaseModel):
     # TODO: Add validators for conditional recurrence fields (e.g., days_of_week only if frequency is WEEKLY)
 
 class PlannedChangeCreateSchema(PlannedChangeBase):
-    @validator('amount')
-    def amount_required_for_contribution_withdrawal(cls, v, values):
-        change_type = values.get('change_type')
+    @field_validator('amount', mode='before')
+    def amount_required_for_contribution_withdrawal(cls, v, info: ValidationInfo):
+        change_type = info.data.get('change_type')
         if change_type in [ChangeType.CONTRIBUTION, ChangeType.WITHDRAWAL] and v is None:
             raise ValueError(f"'{change_type.value}' requires an 'amount'.")
         if change_type == ChangeType.REALLOCATION and v is not None:
@@ -140,9 +136,9 @@ class PlannedChangeUpdateSchema(PlannedChangeBase):
     ends_on_occurrences: Optional[int] = Field(None, ge=1)
     ends_on_date: Optional[date] = Field(None)
 
-    @validator('amount')
-    def check_amount_consistency(cls, v, values):
-        change_type = values.get('change_type')
+    @field_validator('amount', mode='before')
+    def check_amount_consistency(cls, v, info: ValidationInfo):
+        change_type = info.data.get('change_type')
         if change_type in [ChangeType.CONTRIBUTION, ChangeType.WITHDRAWAL] and v is None:
             pass
         elif change_type == ChangeType.REALLOCATION and v is not None:
@@ -192,15 +188,12 @@ class AssetAllocationSchema(OrmBaseModel):
 class BulkAllocationUpdateSchema(OrmBaseModel):
     allocations: List[AssetAllocationSchema]
 
-    @validator('allocations')
+    @field_validator('allocations')
     def check_total_allocation(cls, v):
-        if not v: # Handle empty list case
-            # Depending on requirements, could raise error or allow (if portfolio has no assets)
-            # For now, let's assume an empty list might be valid if the portfolio has 0 assets, route will handle
+        if not v:
             return v
 
         total = sum(item.allocation_percentage for item in v)
-        # Allow for minor floating point inaccuracies
         if not (Decimal('99.99') <= total <= Decimal('100.01')):
             raise ValueError(f"Total allocation percentage must sum to 100%. Current sum: {total:.2f}%")
         return v

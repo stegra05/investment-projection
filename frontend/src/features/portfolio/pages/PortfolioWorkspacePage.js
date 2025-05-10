@@ -12,7 +12,13 @@ const defaultSizes = [1, 2, 1];
 
 function PortfolioWorkspacePage() {
   const { portfolioId } = useParams();
-  const { portfolio, isLoading, error } = usePortfolio();
+  const { 
+    portfolio: rawPortfolioData, 
+    loading: portfolioLoading, 
+    // error: portfolioError,  // Commented out as it's unused
+    fetchPortfolio, 
+    clearPortfolioError, 
+  } = usePortfolio();
   const [sizes, setSizes] = useState(defaultSizes);
   const [activeMainView, setActiveMainView] = useState(() => {
     return localStorage.getItem(STORAGE_KEY_ACTIVE_VIEW) || 'assets';
@@ -78,11 +84,11 @@ function PortfolioWorkspacePage() {
     return () => clearTimeout(timer);
   }, []);
 
-  if (!portfolio && !isLoading) {
+  if (!rawPortfolioData && !portfolioLoading) {
     return <div className="p-4 text-center">Portfolio data not available.</div>;
   }
 
-  if (isLoading && !portfolio) {
+  if (portfolioLoading && !rawPortfolioData) {
     return <div className="p-4 text-center">Loading portfolio data...</div>;
   }
 
@@ -100,7 +106,7 @@ function PortfolioWorkspacePage() {
           </li>
           <li className="flex items-center">
             <span className="font-medium text-gray-800" aria-current="page">
-              {portfolio?.name || `Portfolio ${portfolioId}`}
+              {rawPortfolioData?.name || `Portfolio ${portfolioId}`}
             </span>
           </li>
         </ol>
@@ -110,7 +116,7 @@ function PortfolioWorkspacePage() {
         <Allotment ref={allotmentRef} defaultSizes={sizes} onDragEnd={handleDragEnd}>
           <Allotment.Pane minSize={200} maxSize={600}>
             <div className="h-full bg-white rounded shadow p-4 overflow-auto">
-              <NavigationPanel portfolio={portfolio} isLoading={isLoading} />
+              <NavigationPanel portfolio={rawPortfolioData} isLoading={portfolioLoading} />
             </div>
           </Allotment.Pane>
           <Allotment.Pane minSize={300}>
@@ -118,7 +124,7 @@ function PortfolioWorkspacePage() {
               <MainContentPanel 
                 activeView={activeMainView} 
                 setActiveView={setActiveMainView} 
-                portfolioLoaded={!!portfolio}
+                portfolioLoaded={!!rawPortfolioData}
               />
             </div>
           </Allotment.Pane>

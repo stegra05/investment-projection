@@ -4,6 +4,7 @@ import {
   FaEdit,
   FaTrashAlt,
   FaCalendarAlt,
+  FaMoneyBillWave,
 } from 'react-icons/fa';
 import { getChangeTypeIcon } from '../utils/iconUtils.js';
 
