@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types'; // Import PropTypes
+import PropTypes from 'prop-types';
 import Input from '../../../components/Input/Input';
 import Select from '../../../components/Select/Select';
 import Button from '../../../components/Button/Button';
 import portfolioService from '../../../api/portfolioService';
-import { usePortfolio } from '../state/PortfolioContext'; // To get portfolioId
+import { usePortfolio } from '../state/PortfolioContext';
 
 // Re-using options from AssetsView - consider moving to a shared location later
 const assetTypeOptions = [
@@ -20,39 +20,29 @@ const assetTypeOptions = [
 ];
 
 function EditAssetModal({ isOpen, onClose, asset, onSave }) {
-  const { portfolioId } = usePortfolio(); // Get portfolioId from context
+  const { portfolioId } = usePortfolio();
 
-  // Form State
   const [assetType, setAssetType] = useState('');
   const [nameOrTicker, setNameOrTicker] = useState('');
   const [allocationPercentage, setAllocationPercentage] = useState('');
   const [manualExpectedReturn, setManualExpectedReturn] = useState('');
 
-  // Component State
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
 
-  // Effect to populate form when modal opens or asset changes
   useEffect(() => {
     if (asset) {
       setAssetType(asset.asset_type || '');
-      // Backend provides 'name', frontend uses 'name_or_ticker' for adding,
-      // let's stick to 'name' for display/editing if that's what we get.
-      // Need to be consistent in what the PUT request sends.
-      // Assuming the PUT expects name_or_ticker based on API spec
-      // Assuming the PUT expects name_or_ticker based on API spec
-      setNameOrTicker(asset.name || ''); // Use 'name' from received data
+      setNameOrTicker(asset.name || '');
       setAllocationPercentage(asset.allocation_percentage || '');
       setManualExpectedReturn(asset.manual_expected_return || '');
-      setError(null); // Clear errors when a new asset is loaded
+      setError(null);
       setFieldErrors({});
-      // Focus the first input when modal opens
-      document.getElementById('editAssetType-button')?.focus(); // Assuming Select component renders a button
+      document.getElementById('editAssetType-button')?.focus();
     }
-  }, [asset]); // Re-run effect if the asset object changes
+  }, [asset]);
 
-  // Effect to handle Escape key press for closing the modal
   useEffect(() => {
     const handleEsc = event => {
       if (event.keyCode === 27) {

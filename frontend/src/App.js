@@ -8,21 +8,17 @@ import DashboardPage from './features/dashboard/pages/DashboardPage';
 import PortfolioWorkspacePage from './features/portfolio/pages/PortfolioWorkspacePage';
 import { PortfolioProvider } from './features/portfolio/state/PortfolioContext';
 
-// Layout Component
 const Layout = ({ children }) => <div className="min-h-screen bg-gray-50">{children}</div>;
 
-// Add propTypes validation for Layout
 Layout.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-// Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore(state => state.isAuthenticated);
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
-// Add propTypes validation for ProtectedRoute
 ProtectedRoute.propTypes = {
   children: PropTypes.node.isRequired,
 };

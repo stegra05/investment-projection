@@ -43,7 +43,7 @@ class StandardAnnualReturnStrategy(AbstractReturnCalculationStrategy):
                 # Ensure asset_type is an Enum member before using it as a key
                 if not isinstance(asset_type, AssetType):
                     try:
-                        asset_type = AssetType[str(asset_type)] # Try converting string to Enum
+                        asset_type = AssetType[str(asset_type)]
                     except KeyError:
                          print(f"Error: Unrecognized asset type '{asset_type}' for asset {asset.asset_id} during default return lookup.")
                          return Decimal('0.0') # Cannot determine default
@@ -53,7 +53,7 @@ class StandardAnnualReturnStrategy(AbstractReturnCalculationStrategy):
             # Ensure asset_type is an Enum member before using it as a key
             if not isinstance(asset_type, AssetType):
                 try:
-                    asset_type = AssetType[str(asset_type)] # Try converting string to Enum
+                    asset_type = AssetType[str(asset_type)]
                 except KeyError:
                      print(f"Error: Unrecognized asset type '{asset_type}' for asset {asset.asset_id} during default return lookup.")
                      return Decimal('0.0') # Cannot determine default
@@ -99,10 +99,10 @@ def get_return_strategy(asset_type: AssetType) -> AbstractReturnCalculationStrat
             asset_type = AssetType[str(asset_type)] # Try converting string to Enum
         except KeyError:
              print(f"Error: Unrecognized asset type '{asset_type}' provided to get_return_strategy. Using standard strategy as fallback.")
-             return _standard_strategy # Fallback
+             return _standard_strategy
 
     strategy = _strategy_registry.get(asset_type)
     if not strategy:
         print(f"Warning: No return calculation strategy found for asset type {asset_type.name}. Using standard strategy as fallback.")
-        return _standard_strategy # Fallback to standard strategy
+        return _standard_strategy
     return strategy 

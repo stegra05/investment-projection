@@ -25,7 +25,6 @@ class Config:
     # Set cookies to be Secure (only sent over HTTPS) - IMPORTANT FOR PRODUCTION
     # Set to False ONLY for local HTTP development if necessary
     JWT_COOKIE_SECURE = os.environ.get('FLASK_ENV') == 'production' # True in production, False otherwise
-    # Set SameSite policy for cookies (Lax is a good default)
     JWT_COOKIE_SAMESITE = 'Lax'
     # Define the path for the refresh token cookie
     JWT_REFRESH_COOKIE_PATH = '/api/v1/auth/refresh'
@@ -85,12 +84,10 @@ class Config:
 class DevelopmentConfig(Config):
     """Development configuration."""
     DEBUG = True
-    # Use PostgreSQL for development via Unix socket by default
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or 'postgresql:///investment_projection_dev'
     # Allow HTTP during development (Talisman)
     TALISMAN_FORCE_HTTPS = False
     TALISMAN_SESSION_COOKIE_SECURE = False
-    # Relax CSP for development if needed (e.g., allow 'unsafe-eval' for some tools)
     # TALISMAN_CSP = {
     #     **Config.TALISMAN_CSP, # Inherit base CSP
     #     'script-src': Config.TALISMAN_CSP.get('script-src', []) + ['\'unsafe-eval\''],
@@ -102,6 +99,13 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
         'sqlite:///:memory:' # Use in-memory SQLite for tests
     WTF_CSRF_ENABLED = False # Disable CSRF for tests
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+        'sqlite:///' + os.path.join(basedir, 'app.db')
+    DEBUG = False
+    # Explicitly ensure Talisman security settings are enforced for production
+    TALISMAN_FORCE_HTTPS = True
+    TALISMAN_SESSION_COOKIE_SECURE = True
+    TALISMAN_HSTS_PRELOAD = True
 
 class ProductionConfig(Config):
     """Production configuration."""

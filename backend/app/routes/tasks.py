@@ -6,7 +6,6 @@ from app.services.task_service import get_task_status
 # Remove the import of TEMP_TASK_RESULTS as it's now handled by the service
 # from app import TEMP_TASK_RESULTS
 
-# Define the blueprint: 'tasks', prefix: /api/v1/tasks
 tasks_bp = Blueprint('tasks', __name__)
 
 @tasks_bp.route('/<string:task_id>', methods=['GET'])

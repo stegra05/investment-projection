@@ -9,7 +9,6 @@ const OverviewSettingsView = () => (
     <div className="bg-white p-4 rounded-lg shadow">
       <h2 className="text-lg font-semibold mb-4">Portfolio Overview</h2>
       <div className="space-y-4">
-        {/* Placeholder for other overview content */}
         <div>Portfolio summary and key metrics will go here</div>
       </div>
     </div>
@@ -29,7 +28,7 @@ const OverviewSettingsView = () => (
   </div>
 );
 
-function MainContentPanel({ activeView, setActiveView, portfolioLoaded }) { // Accept props
+function MainContentPanel({ activeView, setActiveView, portfolioLoaded }) {
   // const [activeView, setActiveView] = useState('assets'); // Remove local state
 
   const views = {
@@ -55,7 +54,6 @@ function MainContentPanel({ activeView, setActiveView, portfolioLoaded }) { // A
 
   return (
     <div className="flex flex-col h-full p-4 bg-white rounded shadow">
-      {/* Navigation Buttons (Segmented Control Style) */}
       {portfolioLoaded && ( // Only show tabs if portfolio is loaded
         <div className="inline-flex rounded-md shadow-sm mb-4" role="group">
           <button

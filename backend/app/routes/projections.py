@@ -136,7 +136,6 @@ def create_portfolio_projection(portfolio_id):
         else:
             return jsonify({"message": "Portfolio not found."}), 404
 
-    # Generate a unique task ID
     task_id = uuid.uuid4().hex
 
     # Log the task initiation (replace with actual task dispatch later)
@@ -179,7 +178,6 @@ def preview_portfolio_projection(portfolio_id):
         return jsonify({"message": "Request body must be JSON"}), 415 # Use 415 for wrong media type
 
     try:
-        # Validate the incoming data with Pydantic schema
         preview_request_data = ProjectionPreviewRequestSchema(**data)
     except PydanticValidationError as e:
         return jsonify({"message": "Invalid input data", "errors": e.errors()}), 400
@@ -206,7 +204,6 @@ def preview_portfolio_projection(portfolio_id):
             draft_changes_input=preview_request_data.draft_planned_changes # Pass the list of Pydantic schema objects
         )
         
-        # Format results for JSON response (dates to strings, Decimals to strings)
         formatted_results = [
             {"date": date.isoformat(), "value": str(value)}
             for date, value in projection_results

@@ -10,12 +10,11 @@ const usePortfolioListStore = create(set => ({
    * Fetches the user's portfolios from the API and updates the store state.
    */
   fetchPortfolios: async () => {
-    set({ isLoading: true, error: null }); // Start loading, clear previous errors
+    set({ isLoading: true, error: null });
     try {
       const data = await portfolioService.getUserPortfolios();
       set({ portfolios: data, isLoading: false }); // Update portfolios on success
     } catch (error) {
-      // Attempt to get a meaningful error message
       const errorMessage =
         error.response?.data?.message || error.message || 'Failed to fetch portfolios';
       set({ error: errorMessage, isLoading: false }); // Set error message on failure

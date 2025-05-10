@@ -27,30 +27,24 @@ const ChangesView = () => {
     isLoading: isPortfolioLoading,
     error: portfolioError,
     refreshPortfolio,
-    setDraftChangeForPreview, // New from context
-    clearDraftChangeForPreview, // New from context
+    setDraftChangeForPreview,
+    clearDraftChangeForPreview,
   } = usePortfolio();
 
-  // Removed displayedChanges state, now comes from useFilteredChanges
-  const [isLoading, setIsLoading] = useState(false); // Or initialize based on isPortfolioLoading
-  const [error, setError] = useState(null); // Or initialize based on portfolioError
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
-    type: '', // Default to 'All Types'
+    type: '',
     startDate: '',
     endDate: '',
     description: '',
   });
   const [selectedChangeId, setSelectedChangeId] = useState(null);
 
-  // State for the slide-in panel
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [editingChangeData, setEditingChangeData] = useState(null); // To hold data for editing
-  const [actionError, setActionError] = useState(null); // Generic error state for actions like delete
+  const [editingChangeData, setEditingChangeData] = useState(null);
+  const [actionError, setActionError] = useState(null);
 
-  // Refs for scrolling - now managed by useFilteredChanges
-  // const itemRefs = useRef({}); // To store refs for each change item
-
-  // Use the custom hook for filtering
   const { displayedChanges, itemRefs } = useFilteredChanges(
     portfolio,
     filters,
@@ -58,34 +52,13 @@ const ChangesView = () => {
     portfolioError
   );
 
-
   useEffect(() => {
     setIsLoading(isPortfolioLoading);
   }, [isPortfolioLoading]);
 
   useEffect(() => {
     setError(portfolioError);
-    // if (portfolioError) { // This logic is now in the hook
-    //   setDisplayedChanges([]); // Clear changes on error
-    // }
   }, [portfolioError]);
-
-  // useEffect for filtering is now in useFilteredChanges.js
-  // useEffect(() => {
-  //   if (portfolio && portfolio.planned_changes) {
-  //     let filteredChanges = [...portfolio.planned_changes];
-  //     // ... filtering logic ...
-  //     setDisplayedChanges(filteredChanges);
-  //     // Reset refs when displayed changes update
-  //     itemRefs.current = filteredChanges.reduce((acc, change) => {
-  //       acc[change.id] = React.createRef();
-  //       return acc;
-  //     }, {});
-  //   } else if (!isPortfolioLoading && !portfolioError) {
-  //     setDisplayedChanges([]);
-  //     itemRefs.current = {};
-  //   }
-  // }, [portfolio, filters, portfolioError, isPortfolioLoading]);
 
   const handleFilterChange = e => {
     const { name, value } = e.target;
@@ -96,12 +69,11 @@ const ChangesView = () => {
   };
 
   const handleSelectChange = changeId => {
-    setSelectedChangeId(prevId => (prevId === changeId ? null : changeId)); // Toggle selection
+    setSelectedChangeId(prevId => (prevId === changeId ? null : changeId));
   };
 
-  // Functions to control the panel
   const handleOpenAddPanel = () => {
-    setEditingChangeData(null); // Ensure we are in 'add' mode
+    setEditingChangeData(null);
     setIsPanelOpen(true);
   };
 
@@ -112,8 +84,8 @@ const ChangesView = () => {
 
   const handleClosePanel = () => {
     setIsPanelOpen(false);
-    setEditingChangeData(null); // Clear editing data on close
-    clearDraftChangeForPreview(); // Clear draft on panel close
+    setEditingChangeData(null);
+    clearDraftChangeForPreview();
   };
 
   // Effect to scroll to selected item
@@ -128,11 +100,11 @@ const ChangesView = () => {
         block: 'nearest',
       });
     }
-  }, [selectedChangeId, itemRefs]); // itemRefs is now a dependency
+  }, [selectedChangeId, itemRefs]);
 
   const handleSaveChanges = async changeDataFromPanel => {
-    console.log('ChangesView (handleSaveChanges): portfolio context:', portfolio); // Diagnostic log
-    setActionError(null); // Clear previous action errors
+    console.log('ChangesView (handleSaveChanges): portfolio context:', portfolio);
+    setActionError(null);
     if (!portfolio || !portfolio.portfolio_id) {
       console.error('Portfolio ID is missing, cannot save change.');
       const err = new Error('Portfolio not loaded. Cannot save change.');
@@ -140,30 +112,22 @@ const ChangesView = () => {
       throw err;
     }
 
-    // The changeDataFromPanel is already prepared by AddEditChangePanel's handleSubmit
     const dataToSend = { ...changeDataFromPanel };
-    const isUpdating = !!dataToSend.id; // if id exists, it's an update
+    const isUpdating = !!dataToSend.id;
 
     try {
       if (isUpdating) {
         const changeId = dataToSend.id;
-        // Remove id from dataToSend if backend expects it that way for updates, else keep.
-        // Assuming backend expects ID in URL, not body for update, or handles it if present.
-        // Let's assume dataToSend can keep the id for update service.
         await portfolioService.updatePlannedChange(portfolio.portfolio_id, changeId, dataToSend);
       } else {
-        // For adding, ensure no id is sent if backend auto-generates it
-        const { id, ...addData } = dataToSend; // remove id if present
+        const { id, ...addData } = dataToSend;
         await portfolioService.addPlannedChange(portfolio.portfolio_id, addData);
       }
-      // On successful API call
       if (refreshPortfolio) {
-        await refreshPortfolio(); // Refresh portfolio data to get updated planned_changes
+        await refreshPortfolio();
       }
-      // Panel closing is handled by AddEditChangePanel on successful promise resolution
     } catch (apiError) {
       console.error('API Error saving planned change:', apiError);
-      // Re-throw the error so AddEditChangePanel can catch it and display it
       setActionError(apiError.message || 'Failed to save change.');
       throw apiError;
     }
@@ -212,16 +176,16 @@ const ChangesView = () => {
     // User will then need to switch to ProjectionPanel or it auto-updates
   };
 
-  if (isLoading && !displayedChanges.length) { // Adjusted loading condition
-    return <div className="p-4">Loading planned changes...</div>; // Basic loading state
+  if (isLoading && !displayedChanges.length) {
+    return <div className="p-4">Loading planned changes...</div>;
   }
 
-  if (error || actionError) { // Combined general error and action error display
+  if (error || actionError) {
     return (
       <div className="p-4 text-red-600">
         Error: {error?.message || actionError || 'Unknown error'}
       </div>
-    ); // Basic error state
+    );
   }
 
   return (
@@ -237,32 +201,28 @@ const ChangesView = () => {
         </button>
       </header>
 
-      {/* Filters Section - Now uses ChangeFilters component */}
       <ChangeFilters filters={filters} onFilterChange={handleFilterChange} />
 
-      {/* Main Content Area - Placeholders for Timeline and Details List */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Timeline Section */}
         <div
           className="md:col-span-1 bg-white p-4 rounded-lg shadow overflow-y-auto"
           style={{ maxHeight: 'calc(100vh - 250px)' }}
         >
           <h3 className="text-md font-semibold text-gray-700 mb-3">Timeline</h3>
           <TimelineView
-            plannedChanges={displayedChanges} // Comes from the hook
+            plannedChanges={displayedChanges}
             selectedChangeId={selectedChangeId}
             onSelectChange={handleSelectChange}
           />
         </div>
 
-        {/* Change Details List - Now uses ChangeDetailsList component */}
         <ChangeDetailsList
-          displayedChanges={displayedChanges} // Comes from the hook
+          displayedChanges={displayedChanges}
           selectedChangeId={selectedChangeId}
           onSelectChange={handleSelectChange}
           onEdit={handleOpenEditPanel}
           onDelete={handleDeleteChange}
-          itemRefs={itemRefs} // Comes from the hook
+          itemRefs={itemRefs}
         />
       </div>
 
@@ -273,8 +233,6 @@ const ChangesView = () => {
         initialData={editingChangeData}
         onSave={handleSaveChanges}
         onPreviewRequest={handleRequestPreview}
-        // Pass CHANGE_TYPES if it's used by AddEditChangePanel for its own type dropdown
-        // changeTypes={CHANGE_TYPES}
       />
     </div>
   );

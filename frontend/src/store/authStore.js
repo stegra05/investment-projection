@@ -34,10 +34,9 @@ const useAuthStore = create(set => ({
     try {
       const data = await authService.login(credentials);
 
-      // Store token and user data in localStorage
       if (data && data.access_token && data.user) {
         localStorage.setItem('accessToken', data.access_token);
-        localStorage.setItem('user', JSON.stringify(data.user)); // Store user as JSON string
+        localStorage.setItem('user', JSON.stringify(data.user));
       } else {
         console.error('Login response missing access token or user data.', data);
         localStorage.removeItem('accessToken'); // Ensure clean state if login data is incomplete
@@ -45,10 +44,8 @@ const useAuthStore = create(set => ({
         throw new Error('Login failed: Incomplete data received.');
       }
 
-      // Update state on successful login
       set({ user: data.user, isAuthenticated: true, isLoading: false, error: null });
     } catch (error) {
-      // Clear token and user on login failure
       localStorage.removeItem('accessToken');
       localStorage.removeItem('user');
       set({
@@ -61,12 +58,9 @@ const useAuthStore = create(set => ({
   },
 
   logout: () => {
-    // Remove token and user data from localStorage
     localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
-    // Reset authentication state
-    set({ user: null, isAuthenticated: false, error: null, isLoading: false }); // Also reset isLoading
-    // Optionally: Could call a backend logout endpoint via authService if one exists
+    set({ user: null, isAuthenticated: false, error: null, isLoading: false });
     authService.logout().catch(error => {
       // Even if backend logout fails, client-side cleanup has occurred.
       // Log the error or display a notification to the user if necessary.

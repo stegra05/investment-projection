@@ -22,26 +22,6 @@ from .monthly_calculator import calculate_single_month
 # Import the new projection initializer service
 from .projection_initializer import initialize_projection
 
-# Placeholder for models until actual import path is confirmed
-# class Portfolio:
-#     id = 1
-#     assets = []
-#     planned_future_changes = []
-
-# class Asset:
-#     id = 1
-#     asset_type = 'Stock'
-#     allocation_percentage = None
-#     allocation_value = None
-#     manual_expected_return = None # Annual percentage
-
-# class PlannedFutureChange:
-#     id = 1
-#     portfolio_id = 1
-#     change_date = datetime.date.today()
-#     change_type = 'Contribution' # or 'Withdrawal', 'Reallocation'
-#     amount = Decimal('0.00')
-
 # --- Default Annual Return Assumptions (Placeholder) ---
 # Expressed as Decimal percentages (e.g., 7.0 for 7%)
 # Moved inside the StandardAnnualReturnStrategy where it's used
@@ -168,7 +148,7 @@ def calculate_projection(
 #         portfolio_id_to_project = 1
 #         # Fetch or calculate a sensible initial_total_value
 #         # initial_value = calculate_initial_value(portfolio_id_to_project, start)
-#         initial_value = Decimal('10000.00') # Placeholder
+#         initial_value = Decimal('10000.00') 
 
 #         try:
 #             results = calculate_projection(portfolio_id_to_project, start, end, initial_value)

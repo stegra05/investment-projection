@@ -1,38 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-// import { XMarkIcon } from '@heroicons/react/24/outline'; // Keep this commented for now
-// import { ArrowLeftIcon } from '@heroicons/react/24/outline'; // Keep this commented for now
-import { FaTimes } from 'react-icons/fa'; // Import an icon from react-icons
-import { usePortfolio } from '../state/PortfolioContext'; // For accessing portfolio assets AND ID
+import { FaTimes } from 'react-icons/fa';
+import { usePortfolio } from '../state/PortfolioContext';
 import PropTypes from 'prop-types';
-import RecurrenceSettingsForm from './RecurrenceSettingsForm'; // Import the new component
-import TargetAllocationInput from './TargetAllocationInput'; // Import the new component
-import { usePlannedChangeForm } from '../hooks/usePlannedChangeForm'; // Import the new hook
-import { prepareFinalPlannedChangeData } from '../utils/plannedChangeUtils'; // Import the utility function
+import RecurrenceSettingsForm from './RecurrenceSettingsForm';
+import TargetAllocationInput from './TargetAllocationInput';
+import { usePlannedChangeForm } from '../hooks/usePlannedChangeForm';
+import { prepareFinalPlannedChangeData } from '../utils/plannedChangeUtils';
 
-// Define change type options locally for now, ideally this would come from a shared source
 const CHANGE_TYPE_OPTIONS = [
   { value: 'Contribution', label: 'Contribution' },
   { value: 'Withdrawal', label: 'Withdrawal' },
   { value: 'Reallocation', label: 'Reallocation' },
-  // Add other types as defined in backend enums (e.g., FEE, INTEREST) if applicable
 ];
 
-// Constants for Recurrence - MOVED to RecurrenceSettingsForm.js
-// const FREQUENCY_OPTIONS = [ ... ];
-// const DAYS_OF_WEEK_OPTIONS = [ ... ];
-// const MONTH_ORDINAL_OPTIONS = [ ... ];
-// const ORDINAL_DAY_TYPE_OPTIONS = [ ... ];
-// const MONTH_OF_YEAR_OPTIONS = [ ... ];
-// const ENDS_ON_TYPE_OPTIONS = [ ... ];
-
 const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewRequest }) => {
-  const { portfolio } = usePortfolio(); // Get portfolio for assets AND ID
-  console.log('AddEditChangePanel (render): portfolio context:', portfolio); // Diagnostic log
+  const { portfolio } = usePortfolio();
+  console.log('AddEditChangePanel (render): portfolio context:', portfolio);
   const isEditing = initialData != null;
   const title = isEditing ? 'Edit Planned Change' : 'Add New Planned Change';
 
-  // States and handlers from the custom hook
   const {
     formData,
     targetAllocationsDisplay,
@@ -45,7 +32,6 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
-  // New state for preview action
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [previewError, setPreviewError] = useState(null);
 
@@ -58,14 +44,14 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
 
   const handleSubmit = async e => {
     e.preventDefault();
-    setSubmitError(null); // Clear previous submit error
+    setSubmitError(null);
     const { error, data: dataToSave } = prepareFinalPlannedChangeData(formData, allocationSum, targetAllocationsDisplay);
 
     if (error) {
       setSubmitError(error);
       return;
     }
-    if (!dataToSave) return; // Should be caught by error, but as a safeguard
+    if (!dataToSave) return;
 
     setIsSubmitting(true);
     try {
@@ -80,14 +66,14 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
   };
 
   const handlePreview = async () => {
-    setPreviewError(null); // Clear previous preview error
+    setPreviewError(null);
     const { error, data: dataForPreview } = prepareFinalPlannedChangeData(formData, allocationSum, targetAllocationsDisplay);
 
     if (error) {
       setPreviewError(error);
       return;
     }
-    if (!dataForPreview) return; // Safeguard
+    if (!dataForPreview) return;
     
     setIsPreviewing(true);
     try {
@@ -100,9 +86,8 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
     }
   };
 
-  // Defensive check if formData is not yet populated by the hook (should be rare)
   if (!formData) {
-    return null; // Or a loading indicator
+    return null;
   }
 
   return (
@@ -128,16 +113,12 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
               aria-label="Close panel"
             >
-              {/* <XMarkIcon className="h-6 w-6" /> */}
-              {/* <ArrowLeftIcon className="h-6 w-6" /> */}
-              <FaTimes className="h-6 w-6" /> {/* Use the react-icons icon */}
-              {/* Close */}
+              <FaTimes className="h-6 w-6" />
             </button>
           </div>
 
           <form id="addEditChangeForm" onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
             <div className="flex-1 overflow-y-auto p-6 space-y-6 min-h-0">
-              {/* Change Type */}
               <div>
                 <label
                   htmlFor="changeType"
@@ -161,7 +142,6 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
                 </select>
               </div>
 
-              {/* Change Date */}
               <div>
                 <label
                   htmlFor="changeDate"
@@ -180,7 +160,6 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
                 />
               </div>
 
-              {/* Change Amount - Conditional display handled here */}
               {(formData.changeType === 'Contribution' || formData.changeType === 'Withdrawal') && (
                 <div>
                   <label
@@ -203,7 +182,6 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
                 </div>
               )}
 
-              {/* Reallocation Section - Conditional display */}
               {formData.changeType === 'Reallocation' && (
                 <TargetAllocationInput
                   portfolioAssets={portfolio?.assets}
@@ -213,7 +191,6 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
                 />
               )}
 
-              {/* Description */}
               <div>
                 <label
                   htmlFor="description"
@@ -232,7 +209,6 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
                 />
               </div>
 
-              {/* Recurrence Toggle and Options Section */}
               <div className="pt-6 border-t border-gray-200 mt-6">
                 <h3 className="text-md font-semibold text-gray-700 mb-2">Recurrence</h3>
                 <div className="relative flex items-start mb-4">
@@ -253,7 +229,6 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
                   </div>
                 </div>
 
-                {/* Render RecurrenceSettingsForm if is_recurring is true */}
                 {formData.is_recurring && (
                   <RecurrenceSettingsForm
                     recurrenceData={{
@@ -300,7 +275,7 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
                 <button
                   type="button"
                   onClick={onClose}
-                  disabled={isSubmitting || isPreviewing} // Cancel button can remain active
+                  disabled={isSubmitting || isPreviewing}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
                 >
                   Cancel
@@ -331,7 +306,7 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
 AddEditChangePanel.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  initialData: PropTypes.object, // Can be null if adding new
+  initialData: PropTypes.object,
   onSave: PropTypes.func.isRequired,
   onPreviewRequest: PropTypes.func.isRequired,
 };

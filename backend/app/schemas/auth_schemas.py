@@ -52,13 +52,12 @@ class UserLoginSchema(BaseModel):
 
 
 # --- User Schema (for returning user data) ---
-class UserSchema(OrmBaseModel): # Inherit from OrmBaseModel for ORM compatibility
+class UserSchema(OrmBaseModel): 
     id: int = Field(..., example=1)
     username: str = Field(..., example="newuser")
     email: EmailStr = Field(..., example="user@example.com")
     created_at: datetime = Field(..., example="2023-10-27T10:30:00")
 
-    # Configuration inherited from OrmBaseModel (for from_attributes=True)
 
 # Optional: Schema for Token response if needed separately
 # class TokenSchema(BaseModel):

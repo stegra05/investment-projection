@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './styles/index.css'; // Correct path to global styles
-import 'allotment/dist/style.css'; // Import Allotment styles
+import 'allotment/dist/style.css';
 import App from './App';
 // import reportWebVitals from './reportWebVitals'; // Removed unused import
 

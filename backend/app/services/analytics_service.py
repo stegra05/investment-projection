@@ -1,4 +1,5 @@
-from app import db, current_app
+from flask import current_app
+from app import db
 from app.models import Asset, PlannedFutureChange
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation

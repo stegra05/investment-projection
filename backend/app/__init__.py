@@ -4,12 +4,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
-# Import Flask-Limiter
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-# Import Flask-Talisman
 from flask_talisman import Talisman
-# Import the config dictionary along with the base Config class
 from config import Config, config
 from werkzeug.exceptions import HTTPException
 
@@ -22,12 +19,10 @@ db = SQLAlchemy()
 migrate = Migrate()
 cors = CORS()
 jwt = JWTManager()
-# Initialize Limiter
 limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["200 per day", "50 per hour"] # Default limits for all routes
 )
-# Initialize Talisman
 talisman = Talisman()
 
 # Import the worker function and task results from the new module
@@ -76,35 +71,27 @@ def create_app(config_name='default'): # Changed argument name for clarity
         # Add other Talisman options as needed
     )
 
-    # Register blueprints here
     from app.routes.main import bp as main_bp
     app.register_blueprint(main_bp)
 
-    # Register the auth blueprint
     from app.routes.auth import auth_bp
     app.register_blueprint(auth_bp)
 
-    # Register the portfolio blueprint (base routes)
     from app.routes.portfolios import portfolios_bp
     app.register_blueprint(portfolios_bp)
 
-    # Register the assets blueprint (nested under portfolios)
     from app.routes.assets import assets_bp
     app.register_blueprint(assets_bp, url_prefix='/api/v1/portfolios/<int:portfolio_id>/assets')
 
-    # Register the planned changes blueprint (nested under portfolios)
     from app.routes.changes import changes_bp
     app.register_blueprint(changes_bp, url_prefix='/api/v1/portfolios/<int:portfolio_id>/changes')
 
-    # Register the projections blueprint
     from app.routes.projections import projections_bp
     app.register_blueprint(projections_bp)
 
-    # Register the analytics blueprint
     from app.routes.analytics import analytics_bp
     app.register_blueprint(analytics_bp)
 
-    # Register the tasks blueprint
     from app.routes.tasks import tasks_bp
     app.register_blueprint(tasks_bp, url_prefix='/api/v1/tasks')
 
@@ -129,7 +116,7 @@ def create_app(config_name='default'): # Changed argument name for clarity
 # This makes them known to Flask-Migrate without being inside the factory function,
 # potentially avoiding circular import issues during app discovery by `flask run`.
 try:
-    from . import models # Use relative import
+    from . import models
 except ImportError as e:
     # This might happen during initial setup before models.py exists
     print(f"--- app/__init__.py: Could not import app.models (normal if models don't exist yet): {e} ---")

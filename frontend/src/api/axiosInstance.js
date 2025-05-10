@@ -1,8 +1,8 @@
 import axios from 'axios';
-import API_BASE_URL from '../config/api'; // Import the base URL
+import API_BASE_URL from '../config/api';
 
 const instance = axios.create({
-  baseURL: API_BASE_URL, // Set the base URL for all requests made with this instance
+  baseURL: API_BASE_URL,
 });
 
 // Add request interceptor
@@ -15,7 +15,6 @@ instance.interceptors.request.use(
     return config;
   },
   error => {
-    // Handle request error here
     return Promise.reject(error);
   }
 );

@@ -13,18 +13,10 @@ const projectionService = {
    */
   startProjection: async (portfolioId, params) => {
     try {
-      console.log('Starting projection with params:', { portfolioId, params });
-
       const response = await instance.post(`/portfolios/${portfolioId}/projections`, params, {
         headers: {
           'Content-Type': 'application/json',
         },
-      });
-
-      console.log('Projection response:', {
-        status: response.status,
-        data: response.data,
-        headers: response.headers,
       });
 
       if (response.status !== 200 && response.status !== 202) {
@@ -32,17 +24,11 @@ const projectionService = {
       }
 
       if (!response.data?.task_id) {
-        console.error('Invalid response format:', response.data);
         throw new Error('Task ID not found in response');
       }
 
       return response.data.task_id;
     } catch (error) {
-      console.error('Error starting projection:', {
-        error: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
       throw error;
     }
   },
@@ -62,11 +48,6 @@ const projectionService = {
       });
       return response.data;
     } catch (error) {
-      console.error(`Error checking task status for task ${taskId}:`, {
-        error: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
       throw error;
     }
   },
@@ -85,7 +66,6 @@ const projectionService = {
         projection_params: params,
         draft_change: draftChange,
       };
-      console.log('Running preview projection with payload:', { portfolioId, payload });
 
       // Assuming the preview endpoint is /portfolios/{portfolioId}/projections/preview
       const response = await instance.post(
@@ -99,23 +79,13 @@ const projectionService = {
       );
 
       if (response.status !== 200) {
-        console.error('Preview projection API error:', {
-          status: response.status,
-          data: response.data,
-        });
         throw new Error(`Error running preview projection: Status ${response.status}`);
       }
 
       // ProjectionPanel.js expects resultData.data to be the timeseries.
       // We assume the API for preview returns an object structured like: { data: { "date1": value1, ... } }
-      console.log('Preview projection response data:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error in runPreviewProjection service call:', {
-        message: error.message,
-        responseStatus: error.response?.status,
-        responseData: error.response?.data,
-      });
       throw error; // Rethrow the original error to be handled by the caller
     }
   },

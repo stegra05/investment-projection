@@ -31,7 +31,6 @@ class Asset(db.Model):
             # Optional: Add range validation if not handled elsewhere (e.g., Pydantic/DB constraint)
             # if not (0 <= value <= 100):
             #     raise ValueError("Allocation percentage must be between 0 and 100.")
-        # Allow setting to None
         return value
 
     @validates('allocation_value')
@@ -48,7 +47,6 @@ class Asset(db.Model):
             # Optional: Add non-negative validation if not handled elsewhere
             # if value < 0:
             #     raise ValueError("Allocation value cannot be negative.")
-        # Allow setting to None
         return value
 
     # Relationship

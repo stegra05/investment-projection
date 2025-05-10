@@ -25,7 +25,6 @@ def add_asset(portfolio_id, portfolio, validated_data): # portfolio injected by 
     If neither allocation_percentage nor allocation_value is provided,
     allocation_percentage defaults to 0.
     """
-    # Convert Pydantic model to dict
     asset_data = validated_data.model_dump()
 
     # Default allocation_percentage to 0 if neither is provided
@@ -39,7 +38,6 @@ def add_asset(portfolio_id, portfolio, validated_data): # portfolio injected by 
     db.session.add(new_asset)
     # Commit handled by decorator
     db.session.flush() # Flush session to get the new asset_id before commit
-    # Serialize output using the base AssetSchema
     return jsonify(AssetSchema.from_orm(new_asset).model_dump(mode='json')), 201
 
 @assets_bp.route('/<int:asset_id>', methods=['PUT', 'PATCH']) # Route is relative to '/portfolios/<pid>/assets'
@@ -62,7 +60,6 @@ def update_asset(portfolio_id, asset_id, portfolio, validated_data):
 
     # Commit handled by decorator
     # db.session.refresh(asset) # Removed - unnecessary as commit handles update
-    # Serialize output
     return jsonify(AssetSchema.from_orm(asset).model_dump(mode='json')), 200
 
 @assets_bp.route('/<int:asset_id>', methods=['DELETE'])

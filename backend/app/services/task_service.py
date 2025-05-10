@@ -27,12 +27,11 @@ def get_task_status(task_id):
         # Determine status; default to PENDING if not explicitly set yet by worker
         status = task_info.get("status", "PENDING") 
         
-        # Construct the response, ensuring all fields are present
         response = {
             "task_id": task_id,
             "status": status,
-            "result": task_info.get("result"), # Will be None if not present
-            "error": task_info.get("error"),   # Will be None if not present
+            "result": task_info.get("result"),
+            "error": task_info.get("error"),
             # For now, using current time. Ideally, these would be stored with the task.
             "created_at": datetime.utcnow().isoformat(), 
             "updated_at": datetime.utcnow().isoformat()

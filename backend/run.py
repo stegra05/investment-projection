@@ -9,7 +9,7 @@ except Exception as e:
     logging.exception("Fatal error creating Flask app")
     exit(1)
 
-# from app.models import User # Import models if needed for shell context
+# from app.models import User
 
 # Note: config.py now handles loading .env
 
@@ -19,7 +19,6 @@ app = create_app(os.getenv('FLASK_CONFIG') or 'default')
 def make_shell_context():
     """Makes variables available in the Flask shell context."""
     context = {'db': db}
-    # Add models to context if they exist
     # context['User'] = User
     return context
 

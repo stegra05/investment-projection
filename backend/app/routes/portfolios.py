@@ -127,7 +127,6 @@ def get_user_portfolios():
             db.joinedload(Portfolio.assets),
             db.joinedload(Portfolio.planned_changes)
         ).filter_by(user_id=current_user_id).all()
-    # Use Pydantic schema for serialization, dumping to JSON-compatible types
     result = [PortfolioSchema.from_orm(p).model_dump(mode='json', by_alias=True) for p in portfolios]
     return jsonify(result), 200
 
@@ -145,11 +144,8 @@ def create_portfolio(validated_data): # Receive validated_data from decorator
     )
     db.session.add(new_portfolio)
     db.session.commit() # Explicitly commit *before* refreshing
-    # db.session.commit() # Commit is handled by decorator - (comment kept for context)
     db.session.refresh(new_portfolio) # Refresh to get DB defaults like ID
 
-    # Serialize output using Pydantic schema
-    # Return tuple (response, status_code) for the decorator
     return jsonify(PortfolioSchema.from_orm(new_portfolio).model_dump(mode='json', by_alias=True)), 201
     # Removed try...except block and manual commit/rollback
 
@@ -193,7 +189,6 @@ def get_portfolio_details(portfolio_id, portfolio):
     elif include == 'changes':
         exclude_fields.add('assets')
     
-    # Serialize with conditional field exclusion
     return jsonify(
         PortfolioSchema.from_orm(portfolio).model_dump(
             mode='json',

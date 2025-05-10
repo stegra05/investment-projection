@@ -70,15 +70,13 @@ def get_owned_child_or_404(
         child_fk_attrs = prop.remote_side # Columns on the child side of the relationship
         if not child_fk_attrs or len(child_fk_attrs) != 1:
              raise ValueError(f"Could not determine single foreign key attribute on {child_model.__name__} for relationship '{child_relationship_name}'.")
-        child_fk_attr_name = list(child_fk_attrs)[0].name # Get the string name
+        child_fk_attr_name = list(child_fk_attrs)[0].name
 
-        # Construct filter conditions
         filter_conditions = {
             child_fk_attr_name: parent_pk_value,
             child_pk_attr: child_id
         }
 
-        # Execute fallback query
         child_fallback = child_model.query.filter_by(**filter_conditions).first()
 
         if child_fallback is None:

@@ -67,11 +67,6 @@ const ENDS_ON_TYPE_OPTIONS = [
 const RecurrenceSettingsForm = ({ recurrenceData, onRecurrenceDataChange }) => {
   const { handleRecurrenceChange } = useRecurrenceForm(recurrenceData, onRecurrenceDataChange);
 
-  // The is_recurring check is now implicitly handled by the parent
-  // if (!recurrenceData.is_recurring) {
-  //   return null; 
-  // }
-
   return (
     <div className="p-4 border border-gray-200 rounded-md bg-gray-50 space-y-4">
       {/* Frequency Dropdown */}

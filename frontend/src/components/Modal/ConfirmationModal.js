@@ -68,7 +68,6 @@ function ConfirmationModal({
           {title}
         </h2>
         <div className="mb-6 text-sm text-gray-700">{children}</div>
-        {/* Action Buttons */}
         <div className="flex justify-end space-x-3">
           <Button variant="secondary" onClick={onClose} disabled={isConfirming}>
             {cancelText}

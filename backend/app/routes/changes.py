@@ -9,10 +9,9 @@ from app.schemas.portfolio_schemas import ( # Import relevant schemas
 )
 from app.utils.helpers import get_owned_child_or_404 # Import the new helper
 
-# Define the blueprint: 'changes'
 changes_bp = Blueprint('changes', __name__)
 
-# --- Helper Function (Copied from portfolios.py) ---
+# --- Helper Function ---
 
 def get_change_or_404(portfolio: Portfolio, change_id: int):
      """Gets a planned change by ID within a portfolio, aborting if not found."""
@@ -53,7 +52,6 @@ def add_planned_change(portfolio_id, portfolio, validated_data):
     # Commit handled by decorator
     # db.session.refresh(new_change) # Removed - Refresh needs a flush/commit first. Object state is known.
     # Serialize output
-    # The object should now have its ID populated by the flush.
     return jsonify(PlannedChangeSchema.from_orm(new_change).model_dump(mode='json', by_alias=True)), 201
 
 @changes_bp.route('/<int:change_id>/', methods=['OPTIONS'])

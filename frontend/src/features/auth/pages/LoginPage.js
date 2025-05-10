@@ -21,7 +21,6 @@ const LoginPage = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Determine the error message to display
   let errorMessage = null;
   if (error) {
     if (typeof error === 'string') {
@@ -41,13 +40,11 @@ const LoginPage = () => {
         <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">
           Login to Investment Projection
         </h1>
-        {/* Display the extracted error message */}
         {errorMessage && (
           <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-md border border-red-200">
             {errorMessage}
           </div>
         )}
-        {/* Pass isLoading, but not error, to LoginForm */}
         <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
         <div className="mt-6 text-center text-sm text-gray-600">
           Don&apos;t have an account?{' '}

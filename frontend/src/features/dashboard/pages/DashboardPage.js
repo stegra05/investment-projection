@@ -6,7 +6,6 @@ import useAuthStore from '../../../store/authStore';
 // Assuming a Button component exists relative to frontend/src
 import Button from '../../../components/Button/Button';
 // Assuming a Spinner component exists relative to frontend/src
-// import Spinner from '../../../components/Spinner/Spinner';
 import CreatePortfolioModal from '../components/CreatePortfolioModal';
 import portfolioService from '../../../api/portfolioService'; // <-- Import portfolio service
 
@@ -64,7 +63,6 @@ function DashboardPage() {
         <div className="flex justify-center items-center h-40">
           {/* Replace with Spinner component if available */}
           <p>Loading portfolios...</p>
-          {/* <Spinner /> */}
         </div>
       )}
 

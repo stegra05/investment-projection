@@ -17,7 +17,7 @@ const formatDate = date => {
 // Calculate default dates
 const today = new Date();
 const defaultStartDate = formatDate(today);
-const defaultProjectionHorizonYears = 2; // Default to 2 years
+const defaultProjectionHorizonYears = 2;
 const defaultInitialValue = 1000;
 
 function ProjectionPanel() {
@@ -77,7 +77,6 @@ function ProjectionPanel() {
     <div className="p-4 bg-white rounded shadow h-full flex flex-col">
       <h2 className="text-lg font-semibold mb-4 border-b pb-2">Projection Setup</h2>
 
-      {/* Projection Parameters Section - Replaced with ProjectionParamsForm component */}
       <ProjectionParamsForm
         startDate={startDate}
         setStartDate={setStartDate}
@@ -89,7 +88,6 @@ function ProjectionPanel() {
         isProjectionRunning={isProjectionRunning}
       />
 
-      {/* Status Message */}
       {getStatusMessage() && (
         <div
           className={`my-4 p-3 rounded ${
@@ -124,7 +122,6 @@ function ProjectionPanel() {
         )}
       </div>
 
-      {/* Run Button */}
       <div className="flex justify-end">
         <Button
           onClick={handleRunProjection}

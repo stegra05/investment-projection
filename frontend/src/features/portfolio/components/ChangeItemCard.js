@@ -151,7 +151,6 @@ const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected, 
   );
 };
 
-// Added PropTypes
 ChangeItemCard.propTypes = {
   change: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
@@ -167,15 +166,11 @@ ChangeItemCard.propTypes = {
   onDelete: PropTypes.func,
   onSelectChange: PropTypes.func,
   isSelected: PropTypes.bool,
-  portfolioCurrency: PropTypes.string, // Added prop type for portfolioCurrency
+  portfolioCurrency: PropTypes.string,
 };
 
 ChangeItemCard.defaultProps = {
-  // onEdit: null, // Default props are usually handled by parent or are truly optional
-  // onDelete: null,
-  // onSelectChange: null,
-  // isSelected: false,
-  portfolioCurrency: 'USD', // Default currency if not provided
+  portfolioCurrency: 'USD',
 };
 
 export default ChangeItemCard;

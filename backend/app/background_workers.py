@@ -16,8 +16,8 @@ def projection_worker_function(app_context):
     """
     Simulates a background worker that processes projection tasks.
     """
-    with app_context: # Use the passed application context
-        current_app = app_context.app # Get the actual app object
+    with app_context: 
+        current_app = app_context.app
         while True:
             try:
                 tasks_to_process = []
@@ -59,11 +59,10 @@ def projection_worker_function(app_context):
                         current_app.logger.error(f"Worker: Error processing task {task_id}: {e}", exc_info=True)
                         TEMP_TASK_RESULTS[task_id] = {"status": "FAILED", "error": "Internal worker error during projection calculation."}
                 
-                # Check for new tasks periodically
-                time.sleep(5)  # Poll every 5 seconds
+                time.sleep(5)
             except Exception as e:
                 # Log any unexpected errors in the worker loop itself
-                if current_app: # Check if current_app is available
+                if current_app:
                     current_app.logger.error(f"Worker: Unhandled exception in worker loop: {e}", exc_info=True)
                 else: # Fallback logging if app context is somehow lost (should not happen)
                     print(f"Worker: Unhandled exception in worker loop (no app context): {e}")

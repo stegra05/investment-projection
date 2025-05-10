@@ -222,8 +222,6 @@ class PortfolioSchema(PortfolioBase):
 
     # Config is now inherited correctly from OrmBaseModel
     # class Config(OrmBaseModel.Config):
-    #     # Ensure nested models are also processed from ORM
-    #     # from_attributes = True # Now inherited
     #     pass
 
 # Update Forward Refs if needed (often automatic in newer Pydantic/Python)

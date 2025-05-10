@@ -75,18 +75,10 @@ def initialize_projection(assets: list[Asset], initial_total_value: Decimal | No
     if initial_total_value is not None and abs(actual_calculated_total - initial_total_value) > tolerance:
         print(f"Warning: Final calculated initial asset values sum ({actual_calculated_total:.2f}) "
               f"differs significantly from provided initial_total_value ({initial_total_value:.2f}). Check allocations. Using calculated total for projection start.")
-        start_total_value = actual_calculated_total # Use the sum of calculated values as the starting point
+        start_total_value = actual_calculated_total 
     elif initial_total_value is not None:
-         start_total_value = initial_total_value # Use provided value if it matches calculated total closely
+         start_total_value = initial_total_value 
     else:
-        # Use calculated total if no initial_total_value provided.
         start_total_value = actual_calculated_total
-
-
-    # Debugging: Print initial state
-    # print(f"Initialized projection. Start Total: {start_total_value:.2f}")
-    # for asset_id, val in current_asset_values.items():
-    #     print(f"  Asset {asset_id}: Value={val:.2f}, MonthlyReturn={monthly_asset_returns[asset_id]:.5f}")
-
 
     return current_asset_values, monthly_asset_returns, start_total_value 

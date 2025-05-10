@@ -118,7 +118,7 @@ def _expand_single_recurring_change(
                 MonthOrdinalType.LAST: -1
             }
             if change.month_ordinal_day == OrdinalDayType.DAY: # Nth day of the specific month
-                 month_ordinal_map_monthday = { MonthOrdinalType.FIRST: 1, MonthOrdinalType.LAST: -1} # simplified
+                 month_ordinal_map_monthday = { MonthOrdinalType.FIRST: 1, MonthOrdinalType.LAST: -1}
                  if change.month_ordinal in month_ordinal_map_monthday:
                     rrule_params['bymonthday'] = month_ordinal_map_monthday[change.month_ordinal]
             else:
@@ -139,8 +139,7 @@ def _expand_single_recurring_change(
         for occ_datetime in rule.between(proj_start_dt, rrule_params['until'], inc=True):
             occurrence_date = occ_datetime.date()
             if occurrence_date >= projection_start_date and occurrence_date <= projection_end_date:
-                # Create a new non-persistent PlannedFutureChange instance for this occurrence
-                # Important: mark this instance as NOT recurring itself
+                # Create a non-recurring instance for this specific occurrence
                 new_occurrence = PlannedFutureChange(
                     portfolio_id=change.portfolio_id, # Keep original portfolio_id
                     change_type=change.change_type,
@@ -148,8 +147,8 @@ def _expand_single_recurring_change(
                     amount=change.amount,
                     target_allocation_json=change.target_allocation_json,
                     description=f"{change.description} (Recurring Instance)" if change.description else "Recurring Instance",
-                    is_recurring=False, # This instance is a single event
-                    frequency=FrequencyType.ONE_TIME, # Mark as one_time
+                    is_recurring=False,
+                    frequency=FrequencyType.ONE_TIME,
                     interval=1,
                     # Other recurrence fields are not relevant for this single instance
                     days_of_week=None,
@@ -157,7 +156,7 @@ def _expand_single_recurring_change(
                     month_ordinal=None,
                     month_ordinal_day=None,
                     month_of_year=None,
-                    ends_on_type=EndsOnType.NEVER, # Or appropriate default for one-time
+                    ends_on_type=EndsOnType.NEVER,
                     ends_on_occurrences=None,
                     ends_on_date=None,
                     # original change_id is not copied, this is a new conceptual instance

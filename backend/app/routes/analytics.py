@@ -7,13 +7,9 @@ from datetime import date, datetime, timedelta
 import logging
 from decimal import Decimal, InvalidOperation
 import json
-
-# Import the new schema
 from app.schemas.analytics_schemas import RiskProfileSchema
-# Import the new service function
 from app.services.analytics_service import calculate_historical_performance
 
-# Define the blueprint: 'analytics', prefix: /api/v1/portfolios/<int:portfolio_id>/analytics
 analytics_bp = Blueprint('analytics', __name__, url_prefix='/api/v1/portfolios/<int:portfolio_id>/analytics')
 
 # --- Decorators ---
@@ -89,7 +85,6 @@ def get_performance(portfolio_id, portfolio):
     except ValueError:
         abort(400, description="Invalid date format. Use YYYY-MM-DD")
 
-    # Call the service function to calculate performance data
     performance_data = calculate_historical_performance(portfolio, start_date, end_date, portfolio_id)
     
     return jsonify(performance_data), 200 
