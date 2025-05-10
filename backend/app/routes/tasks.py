@@ -3,8 +3,8 @@ from flask_jwt_extended import jwt_required
 # Remove the original task_service import, as we'll use the temp dictionary for now
 # from app.services.task_service import get_task_status 
 
-# Import the temporary dictionary from projections.py
-from app.routes.projections import TEMP_TASK_RESULTS
+# Import the temporary dictionary from the app package where it's now defined
+from app import TEMP_TASK_RESULTS
 
 # Define the blueprint: 'tasks', prefix: /api/v1/tasks
 tasks_bp = Blueprint('tasks', __name__)
