@@ -62,6 +62,43 @@ def verify_portfolio_ownership(f):
 
 # --- Helper Functions ---
 
+def _validate_bulk_allocation_data(portfolio, allocation_data, current_app):
+    """Helper function to validate bulk allocation data."""
+    # --- Logging Incoming Data --- 
+    # Already logged by caller or can be logged here if needed
+    # current_app.logger.debug(f"Validation - Parsed allocation list: {allocation_data}")
+
+    # --- Additional Validation --- 
+    portfolio_asset_ids = {asset.asset_id for asset in portfolio.assets}
+    payload_asset_ids = {item.asset_id for item in allocation_data}
+
+    # Log IDs for comparison
+    current_app.logger.debug(f"Validation - Portfolio Asset IDs: {portfolio_asset_ids}")
+    current_app.logger.debug(f"Validation - Payload Asset IDs: {payload_asset_ids}")
+
+    # 1. Check if the number of assets in payload matches the portfolio
+    if len(portfolio_asset_ids) != len(payload_asset_ids):
+        error_msg = "Payload must include allocation for all assets currently in the portfolio."
+        current_app.logger.warning(f"Validation Error: {error_msg} (Payload: {len(payload_asset_ids)}, Portfolio: {len(portfolio_asset_ids)}) ")
+        abort(400, description=error_msg)
+
+    # 2. Check if all asset IDs in the payload belong to the portfolio (Set comparison)
+    if payload_asset_ids != portfolio_asset_ids:
+        missing_from_payload = portfolio_asset_ids - payload_asset_ids
+        extra_in_payload = payload_asset_ids - portfolio_asset_ids
+        error_msg = "Asset IDs in payload do not exactly match assets in portfolio."
+        current_app.logger.warning(f"Validation Error: {error_msg} Missing: {missing_from_payload}, Extra: {extra_in_payload}")
+        abort(400, description=f"{error_msg} Missing: {list(missing_from_payload)}, Extra: {list(extra_in_payload)}")
+
+    # 3. Double check sum (already done by schema, but belt and braces)
+    total_percentage = sum(item.allocation_percentage for item in allocation_data)
+    current_app.logger.debug(f"Validation - Calculated total percentage: {total_percentage}")
+    if not (Decimal('99.99') <= total_percentage <= Decimal('100.01')):
+         # This case should ideally be caught by the schema validator
+         error_msg = f"Internal check failed: Total allocation must be 100%. Received: {total_percentage:.2f}%"
+         current_app.logger.error(f"Validation Error: {error_msg}") # Log as error if schema missed it
+         abort(400, description=error_msg)
+
 
 # --- Portfolio Routes (Task 5.3) ---
 
@@ -210,36 +247,9 @@ def update_allocations(portfolio_id, portfolio, validated_data):
     # Log the extracted list for clarity
     current_app.logger.debug(f"Parsed allocation list: {allocation_data}")
 
-    # --- Additional Validation --- 
-    portfolio_asset_ids = {asset.asset_id for asset in portfolio.assets}
-    payload_asset_ids = {item.asset_id for item in allocation_data}
+    # --- Perform Validation ---
+    _validate_bulk_allocation_data(portfolio, allocation_data, current_app)
 
-    # Log IDs for comparison
-    current_app.logger.debug(f"Portfolio Asset IDs: {portfolio_asset_ids}")
-    current_app.logger.debug(f"Payload Asset IDs: {payload_asset_ids}")
-
-    # 1. Check if the number of assets in payload matches the portfolio
-    if len(portfolio_asset_ids) != len(payload_asset_ids):
-        error_msg = "Payload must include allocation for all assets currently in the portfolio."
-        current_app.logger.warning(f"Validation Error: {error_msg} (Payload: {len(payload_asset_ids)}, Portfolio: {len(portfolio_asset_ids)}) ")
-        abort(400, description=error_msg)
-
-    # 2. Check if all asset IDs in the payload belong to the portfolio (Set comparison)
-    if payload_asset_ids != portfolio_asset_ids:
-        missing_from_payload = portfolio_asset_ids - payload_asset_ids
-        extra_in_payload = payload_asset_ids - portfolio_asset_ids
-        error_msg = "Asset IDs in payload do not exactly match assets in portfolio."
-        current_app.logger.warning(f"Validation Error: {error_msg} Missing: {missing_from_payload}, Extra: {extra_in_payload}")
-        abort(400, description=f"{error_msg} Missing: {list(missing_from_payload)}, Extra: {list(extra_in_payload)}")
-
-    # 3. Double check sum (already done by schema, but belt and braces)
-    total_percentage = sum(item.allocation_percentage for item in allocation_data)
-    current_app.logger.debug(f"Calculated total percentage: {total_percentage}")
-    if not (Decimal('99.99') <= total_percentage <= Decimal('100.01')):
-         # This case should ideally be caught by the schema validator
-         error_msg = f"Internal check failed: Total allocation must be 100%. Received: {total_percentage:.2f}%"
-         current_app.logger.error(error_msg) # Log as error if schema missed it
-         abort(400, description=error_msg)
 
     # --- Database Update ---
     try:
