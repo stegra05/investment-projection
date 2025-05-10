@@ -41,6 +41,73 @@ class PlannedChangeBase(OrmBaseModel):
         "from_attributes": True
     }
 
+    @validator('days_of_week', always=True)
+    def check_days_of_week(cls, v, values):
+        is_recurring = values.get('is_recurring')
+        frequency = values.get('frequency')
+        if is_recurring and frequency == FrequencyType.WEEKLY and not v:
+            raise ValueError("For weekly recurrence, 'days_of_week' must be specified.")
+        if is_recurring and frequency != FrequencyType.WEEKLY and v:
+            raise ValueError("'days_of_week' can only be specified for weekly recurrence.")
+        if not is_recurring and v:
+            raise ValueError("'days_of_week' cannot be specified if 'is_recurring' is false.")
+        return v
+
+    @validator('day_of_month', always=True)
+    def check_day_of_month(cls, v, values):
+        is_recurring = values.get('is_recurring')
+        frequency = values.get('frequency')
+        # This field is relevant for MONTHLY and YEARLY if not using ordinal recurrence
+        month_ordinal = values.get('month_ordinal')
+
+        if is_recurring and frequency in [FrequencyType.MONTHLY, FrequencyType.YEARLY]:
+            if month_ordinal is None and v is None: # Not using ordinal, so day_of_month is required
+                 if frequency == FrequencyType.MONTHLY:
+                    raise ValueError("For monthly recurrence without ordinal, 'day_of_month' must be specified.")
+                 # For YEARLY, day_of_month is optional if month_of_year is set and no ordinal
+            if month_ordinal is not None and v is not None:
+                 raise ValueError("'day_of_month' cannot be specified if 'month_ordinal' is used.")
+        elif is_recurring and v is not None: # Not MONTHLY or YEARLY, but day_of_month is set
+            raise ValueError(f"'day_of_month' can only be specified for monthly or yearly recurrence, not {frequency}.")
+        elif not is_recurring and v is not None:
+             raise ValueError("'day_of_month' cannot be specified if 'is_recurring' is false.")
+        return v
+
+    @validator('month_ordinal', 'month_ordinal_day', always=True)
+    def check_month_ordinal_pair(cls, v, values, field):
+        is_recurring = values.get('is_recurring')
+        frequency = values.get('frequency')
+        month_ordinal = values.get('month_ordinal')
+        month_ordinal_day = values.get('month_ordinal_day')
+
+        if is_recurring and frequency in [FrequencyType.MONTHLY, FrequencyType.YEARLY]:
+            if month_ordinal and not month_ordinal_day:
+                raise ValueError("'month_ordinal_day' must be specified if 'month_ordinal' is used.")
+            if month_ordinal_day and not month_ordinal:
+                raise ValueError("'month_ordinal' must be specified if 'month_ordinal_day' is used.")
+            if (month_ordinal or month_ordinal_day) and values.get('day_of_month') is not None:
+                raise ValueError("Cannot use 'month_ordinal'/'month_ordinal_day' with 'day_of_month'.")
+        elif is_recurring and v is not None: # Not MONTHLY or YEARLY but one of these fields is set
+            raise ValueError(f"'{field.name}' can only be specified for monthly or yearly recurrence, not {frequency}.")
+        elif not is_recurring and v is not None:
+            raise ValueError(f"'{field.name}' cannot be specified if 'is_recurring' is false.")
+        
+        # Return the original value of the field being validated
+        return v
+
+
+    @validator('month_of_year', always=True)
+    def check_month_of_year(cls, v, values):
+        is_recurring = values.get('is_recurring')
+        frequency = values.get('frequency')
+        if is_recurring and frequency == FrequencyType.YEARLY and v is None:
+            raise ValueError("For yearly recurrence, 'month_of_year' must be specified.")
+        if is_recurring and frequency != FrequencyType.YEARLY and v:
+            raise ValueError("'month_of_year' can only be specified for yearly recurrence.")
+        if not is_recurring and v:
+            raise ValueError("'month_of_year' cannot be specified if 'is_recurring' is false.")
+        return v
+
     # TODO: Add validators for conditional recurrence fields (e.g., days_of_week only if frequency is WEEKLY)
 
 class PlannedChangeCreateSchema(PlannedChangeBase):

@@ -42,6 +42,7 @@ function AssetsView() {
   // Refined Error States (Task 11)
   const [addError, setAddError] = useState(null); // For general errors
   const [fieldErrors, setFieldErrors] = useState({}); // For field-specific validation errors
+  const [addSuccessMessage, setAddSuccessMessage] = useState(null); // For success messages
 
   // Generic change handler
   const handleInputChange = e => {
@@ -118,7 +119,10 @@ function AssetsView() {
       } else {
         console.warn('refreshPortfolio function not available from context.'); // Keep this warn
       }
-      // TODO: Add success notification
+      setAddSuccessMessage('Asset added successfully!');
+      setTimeout(() => {
+        setAddSuccessMessage(null);
+      }, 3000); // Clear message after 3 seconds
     } catch (error) {
       // Keep error handling, but remove direct console.error if desired
       // console.error('Failed to add asset:', error);
@@ -203,11 +207,13 @@ function AssetsView() {
       } else {
         console.warn('refreshPortfolio function not available from context.');
       }
-      // TODO: Add success notification (e.g., toast)
+      setAddSuccessMessage('Asset deleted successfully!');
     } catch (error) {
       // console.error(`Failed to delete asset ${assetToDeleteId}:`, error);
-      setAddError(error.response?.data?.detail || error.message || 'Failed to delete asset.');
-      // TODO: Implement more specific error handling/display
+      const detailMessage = error.response?.data?.detail;
+      const generalApiMessage = error.response?.data?.message;
+      const fallbackMessage = 'Failed to delete asset. Please try again.';
+      setAddError(detailMessage || generalApiMessage || error.message || fallbackMessage);
     } finally {
       setDeletingAssetId(null); // Clear row loading indicator
       setAssetToDeleteId(null); // Clear the stored asset ID
@@ -239,7 +245,7 @@ function AssetsView() {
       console.warn('refreshPortfolio function not available from context.');
     }
     handleCloseEditModal(); // Close the modal
-    // TODO: Add success notification (e.g., toast)
+    setAddSuccessMessage('Asset updated successfully!');
   };
 
   if (!portfolio) {
@@ -463,6 +469,12 @@ function AssetsView() {
           {addError && (
             <div className="text-red-600 text-sm p-3 my-2 bg-red-100 border border-red-400 rounded">
               {addError}
+            </div>
+          )}
+          {/* Success Message Display */}
+          {addSuccessMessage && (
+            <div className="text-green-600 text-sm p-3 my-2 bg-green-100 border border-green-400 rounded">
+              {addSuccessMessage}
             </div>
           )}
           {/* Submit Button - give it some top margin */}

@@ -1,5 +1,7 @@
 from flask import current_app
 from datetime import datetime
+# Import TEMP_TASK_RESULTS from the app package
+from app import TEMP_TASK_RESULTS
 
 def get_task_status(task_id):
     """
@@ -16,40 +18,49 @@ def get_task_status(task_id):
             - error: Error message if failed
             - created_at: When the task was created
             - updated_at: When the task was last updated
+    Raises:
+        KeyError: if the task_id is not found.
     """
-    # TODO: Replace with actual task status lookup from your task queue/DB
-    # This is a mock implementation for now
-    
-    # Simulate different statuses based on task_id
-    status = "PENDING"
-    if len(task_id) % 4 == 0:
-        status = "COMPLETED"
-    elif len(task_id) % 4 == 1:
-        status = "PROCESSING"
-    elif len(task_id) % 4 == 2:
-        status = "FAILED"
-    
-    response = {
-        "task_id": task_id,
-        "status": status,
-        "result": None,
-        "error": None,
-        "created_at": datetime.utcnow().isoformat(),
-        "updated_at": datetime.utcnow().isoformat()
-    }
-    
-    # Add mock results or errors based on status
-    if status == "COMPLETED":
-        response["result"] = {
-            "data": {
-                "2024-01-01": 1000,
-                "2024-02-01": 1050,
-                "2024-03-01": 1102.5,
-                "2024-04-01": 1157.63,
-                "2024-05-01": 1215.51
-            }
+    if task_id in TEMP_TASK_RESULTS:
+        task_info = TEMP_TASK_RESULTS[task_id]
+        
+        # Determine status; default to PENDING if not explicitly set yet by worker
+        status = task_info.get("status", "PENDING") 
+        
+        # Construct the response, ensuring all fields are present
+        response = {
+            "task_id": task_id,
+            "status": status,
+            "result": task_info.get("result"), # Will be None if not present
+            "error": task_info.get("error"),   # Will be None if not present
+            # For now, using current time. Ideally, these would be stored with the task.
+            "created_at": datetime.utcnow().isoformat(), 
+            "updated_at": datetime.utcnow().isoformat()
         }
-    elif status == "FAILED":
-        response["error"] = "Simulated task failure"
-    
-    return response 
+        
+        # If the worker set a message, it could be useful, but it's not in the defined schema.
+        # We could log it or add it to a 'details' field if the schema were extended.
+        # For now, we'll stick to the defined schema.
+        # current_app.logger.info(f"Task {task_id} details: {task_info.get('message')}")
+
+        return response
+    else:
+        # If task_id is not in TEMP_TASK_RESULTS, it's considered not found.
+        # The route handler in tasks.py will catch this KeyError and return a 404.
+        raise KeyError(f"Task with id {task_id} not found in TEMP_TASK_RESULTS.")
+
+# Example of how the worker might update TEMP_TASK_RESULTS (for reference, not part of this service)
+# TEMP_TASK_RESULTS["some_task_id"] = {
+#     "status": "PENDING", 
+#     "start_date": "2024-01-01", 
+#     # ... other parameters for the worker
+# }
+# TEMP_TASK_RESULTS["completed_task_id"] = {
+#     "status": "COMPLETED", 
+#     "result": {"data": {"key": "value"}},
+#     "message": "Task done"
+# }
+# TEMP_TASK_RESULTS["failed_task_id"] = {
+#     "status": "FAILED", 
+#     "error": "Something went wrong"
+# } 

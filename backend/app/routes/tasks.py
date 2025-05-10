@@ -1,10 +1,10 @@
 from flask import Blueprint, jsonify, current_app, abort
 from flask_jwt_extended import jwt_required
-# Remove the original task_service import, as we'll use the temp dictionary for now
-# from app.services.task_service import get_task_status 
+# Re-enable the original task_service import
+from app.services.task_service import get_task_status 
 
-# Import the temporary dictionary from the app package where it's now defined
-from app import TEMP_TASK_RESULTS
+# Remove the import of TEMP_TASK_RESULTS as it's now handled by the service
+# from app import TEMP_TASK_RESULTS
 
 # Define the blueprint: 'tasks', prefix: /api/v1/tasks
 tasks_bp = Blueprint('tasks', __name__)
@@ -14,7 +14,7 @@ tasks_bp = Blueprint('tasks', __name__)
 def get_task_status_route(task_id):
     """
     Returns the status of a background task.
-    Checks the temporary in-memory store first for projection tasks.
+    Uses the task_service to fetch task status.
     ---
     parameters:
       - name: task_id
@@ -42,31 +42,25 @@ def get_task_status_route(task_id):
               type: string
               nullable: true
               description: Error message if task failed, null otherwise.
+            # Consider adding created_at and updated_at to the schema if they are consistently returned
+            # created_at:
+            #   type: string
+            #   format: date-time
+            #   description: Timestamp of when the task was created.
+            # updated_at:
+            #   type: string
+            #   format: date-time
+            #   description: Timestamp of when the task was last updated.
       404:
         description: Task not found.
     """
-    # Check our temporary in-memory store first
-    if task_id in TEMP_TASK_RESULTS:
-        task_info = TEMP_TASK_RESULTS[task_id]
-        # Ensure the response has a task_id field as per the schema
-        response_data = {
-            "task_id": task_id,
-            "status": task_info.get("status", "UNKNOWN"),
-            "result": task_info.get("result"), # Will be None if not present
-            "error": task_info.get("error")    # Will be None if not present
-        }
-        return jsonify(response_data)
-    else:
-        # If not in our temp store, assume it's not found (for this temporary setup)
-        # In a real system, you might fall back to another task service here.
-        current_app.logger.info(f"Task {task_id} not found in TEMP_TASK_RESULTS.")
+    try:
+        status_data = get_task_status(task_id)
+        # The get_task_status function now returns a schema-compliant dict,
+        # including task_id, created_at, and updated_at.
+        return jsonify(status_data)
+    except KeyError:
+        # This is the expected error if the task_id doesn't exist in the service layer
+        current_app.logger.info(f"Task {task_id} not found via task_service.")
         abort(404, description=f"Task with id {task_id} not found.")
-
-    # Original implementation (can be restored if combining with a real task service):
-    # try:
-    #     status = get_task_status(task_id)
-    #     return jsonify(status)
-    # except KeyError:
-    #     # This is the expected error if the task_id doesn't exist
-    #     abort(404, description=f"Task with id {task_id} not found.")
-    # # Rely on global 500 handler for other unexpected errors 
+    # Rely on global 500 handler for other unexpected errors 

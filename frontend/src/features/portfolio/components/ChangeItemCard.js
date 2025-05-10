@@ -4,26 +4,10 @@ import {
   FaEdit,
   FaTrashAlt,
   FaCalendarAlt,
-  FaMoneyBillWave,
-  FaRandom,
-  FaInfoCircle,
-} from 'react-icons/fa'; // Example icons
+} from 'react-icons/fa';
+import { getChangeTypeIcon } from '../utils/iconUtils.js';
 
-// TODO: Potentially move to a utils file or constants
-const getChangeTypeIcon = changeType => {
-  switch (changeType) {
-  case 'CONTRIBUTION':
-    return <FaMoneyBillWave className="text-green-500 mr-2" />;
-  case 'WITHDRAWAL':
-    return <FaMoneyBillWave className="text-red-500 mr-2" />;
-  case 'REALLOCATION':
-    return <FaRandom className="text-blue-500 mr-2" />;
-  default:
-    return <FaInfoCircle className="text-gray-500 mr-2" />;
-  }
-};
-
-const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected }) => {
+const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected, portfolioCurrency }) => {
   if (!change) return null;
 
   // Basic date formatting, consider using a library like date-fns for more complex needs
@@ -123,18 +107,25 @@ const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected }
             />
             <span>
               Amount:{' '}
-              {change.amount?.toLocaleString(undefined, { style: 'currency', currency: 'USD' }) ||
+              {change.amount?.toLocaleString(undefined, { style: 'currency', currency: portfolioCurrency || 'USD' }) ||
                 'N/A'}
             </span>
-            {/* TODO: Use actual currency from portfolio settings if available */}
+            {/* TODO: Use actual currency from portfolio settings. Consider passing portfolioCurrency as a prop or fetching from a global state/context. */}
           </div>
         )}
         {change.isRecurring && (
           <div className="flex items-center mt-1">
-            <span className="text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
-              Recurring: {change.frequency}
+            <span
+              className="text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full cursor-help"
+              title={
+                change.frequency
+                  ? `This change repeats ${change.frequency}. More specific details (e.g., end date, exact day) can be displayed here when available.`
+                  : 'This is a recurring change. Specific frequency details are not provided in the summary.'
+              }
+            >
+              Recurring: {change.frequency || 'Enabled'}
             </span>
-            {/* TODO: Add more detailed recurrence info, perhaps in a tooltip or expandable section */}
+            {/* Future Consideration: For highly detailed recurrence patterns (e.g., custom intervals, end conditions), an expandable section or a details modal could be implemented. The current tooltip provides basic recurrence information. */}
           </div>
         )}
         {change.changeType === 'REALLOCATION' && change.targetAllocationJson && (
@@ -146,11 +137,12 @@ const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected }
                 : change.targetAllocationJson
               ).map((allocation, index) => (
                 <li key={allocation.assetId || index}>
-                  {/* TODO: Fetch asset name based on assetId for better display */}
-                  Asset ID {allocation.assetId}: {Number(allocation.percentage).toFixed(2)}%
+                  {/* Placeholder: Asset name would be looked up here */}
+                  Asset {allocation.assetId || 'Unknown ID'}: {Number(allocation.percentage).toFixed(2)}%
                 </li>
               ))}
             </ul>
+            {/* TODO: Replace assetId with fetched asset name. Consider passing an assetIdToNameMap prop or a getAssetName(assetId) function. */}
           </div>
         )}
       </div>
@@ -174,13 +166,15 @@ ChangeItemCard.propTypes = {
   onDelete: PropTypes.func,
   onSelectChange: PropTypes.func,
   isSelected: PropTypes.bool,
+  portfolioCurrency: PropTypes.string, // Added prop type for portfolioCurrency
 };
 
-// ChangeItemCard.defaultProps = {
-//   onEdit: null,
-//   onDelete: null,
-//   onSelectChange: null,
-//   isSelected: false,
-// };
+ChangeItemCard.defaultProps = {
+  // onEdit: null, // Default props are usually handled by parent or are truly optional
+  // onDelete: null,
+  // onSelectChange: null,
+  // isSelected: false,
+  portfolioCurrency: 'USD', // Default currency if not provided
+};
 
 export default ChangeItemCard;

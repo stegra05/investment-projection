@@ -15,6 +15,7 @@ import PropTypes from 'prop-types';
  * - disabled (boolean): Whether the select is disabled.
  * - className (string): Optional additional CSS classes for the wrapper div.
  * - placeholder (string): Optional placeholder text for the default option.
+ * - error (string): Optional error message to display below the select input.
  */
 function Select({
   label,
@@ -27,6 +28,7 @@ function Select({
   disabled = false,
   className = '',
   placeholder = ' -- Select an option -- ',
+  error = '',
 }) {
   return (
     <div className={`mb-4 ${className}`}>
@@ -54,6 +56,7 @@ function Select({
         ))}
       </select>
       {/* TODO: Add space for potential error messages if needed */}
+      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>
   );
 }
@@ -74,6 +77,7 @@ Select.propTypes = {
   disabled: PropTypes.bool,
   className: PropTypes.string,
   placeholder: PropTypes.string,
+  error: PropTypes.string,
 };
 
 export default Select;
