@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { usePortfolio } from '../state/PortfolioContext'; // Corrected path
 import TimelineView from '../components/TimelineView'; // Import TimelineView
-import ChangeItemCard from '../components/ChangeItemCard'; // Assuming this exists as per Task 2.5
+// import ChangeItemCard from '../components/ChangeItemCard'; // No longer directly used here
 import AddEditChangePanel from '../components/AddEditChangePanel'; // Import the new panel
 import portfolioService from '../../../api/portfolioService'; // Adjusted path and import type
-import Input from '../../../components/Input/Input'; // Import the shared Input component
-import { CHANGE_TYPES } from '../../../constants/portfolioConstants'; // Import from new location
+// import Input from '../../../components/Input/Input'; // No longer directly used here
+import { CHANGE_TYPES } from '../../../constants/portfolioConstants'; // Still needed for AddEditChangePanel or other logic if any remains
+
+// Import new components and hook
+import ChangeFilters from '../components/ChangeFilters';
+import ChangeDetailsList from '../components/ChangeDetailsList';
+import useFilteredChanges from '../hooks/useFilteredChanges';
 
 // TODO: Define these types, perhaps from a shared enum/constants file
 // const CHANGE_TYPES = [
@@ -26,7 +31,7 @@ const ChangesView = () => {
     clearDraftChangeForPreview, // New from context
   } = usePortfolio();
 
-  const [displayedChanges, setDisplayedChanges] = useState([]); // Renamed from plannedChanges for clarity
+  // Removed displayedChanges state, now comes from useFilteredChanges
   const [isLoading, setIsLoading] = useState(false); // Or initialize based on isPortfolioLoading
   const [error, setError] = useState(null); // Or initialize based on portfolioError
   const [filters, setFilters] = useState({
@@ -42,8 +47,17 @@ const ChangesView = () => {
   const [editingChangeData, setEditingChangeData] = useState(null); // To hold data for editing
   const [actionError, setActionError] = useState(null); // Generic error state for actions like delete
 
-  // Refs for scrolling
-  const itemRefs = useRef({}); // To store refs for each change item
+  // Refs for scrolling - now managed by useFilteredChanges
+  // const itemRefs = useRef({}); // To store refs for each change item
+
+  // Use the custom hook for filtering
+  const { displayedChanges, itemRefs } = useFilteredChanges(
+    portfolio,
+    filters,
+    isPortfolioLoading,
+    portfolioError
+  );
+
 
   useEffect(() => {
     setIsLoading(isPortfolioLoading);
@@ -51,51 +65,27 @@ const ChangesView = () => {
 
   useEffect(() => {
     setError(portfolioError);
-    if (portfolioError) {
-      setDisplayedChanges([]); // Clear changes on error
-    }
+    // if (portfolioError) { // This logic is now in the hook
+    //   setDisplayedChanges([]); // Clear changes on error
+    // }
   }, [portfolioError]);
 
-  useEffect(() => {
-    if (portfolio && portfolio.planned_changes) {
-      let filteredChanges = [...portfolio.planned_changes];
-
-      // Apply type filter
-      if (filters.type) {
-        filteredChanges = filteredChanges.filter(change => change.change_type === filters.type);
-      }
-
-      // Apply date filters (basic string comparison, consider date objects for more robust filtering)
-      if (filters.startDate) {
-        filteredChanges = filteredChanges.filter(
-          change => new Date(change.change_date) >= new Date(filters.startDate)
-        );
-      }
-      if (filters.endDate) {
-        filteredChanges = filteredChanges.filter(
-          change => new Date(change.change_date) <= new Date(filters.endDate)
-        );
-      }
-
-      // Apply description filter (case-insensitive)
-      if (filters.description) {
-        const searchTerm = filters.description.toLowerCase();
-        filteredChanges = filteredChanges.filter(
-          change => change.description && change.description.toLowerCase().includes(searchTerm)
-        );
-      }
-      setDisplayedChanges(filteredChanges);
-      // Reset refs when displayed changes update
-      itemRefs.current = filteredChanges.reduce((acc, change) => {
-        acc[change.id] = React.createRef();
-        return acc;
-      }, {});
-    } else if (!isPortfolioLoading && !portfolioError) {
-      // Handle case where portfolio is loaded but has no planned_changes or is null
-      setDisplayedChanges([]);
-      itemRefs.current = {};
-    }
-  }, [portfolio, filters, portfolioError, isPortfolioLoading]); // Added portfolioError and isPortfolioLoading
+  // useEffect for filtering is now in useFilteredChanges.js
+  // useEffect(() => {
+  //   if (portfolio && portfolio.planned_changes) {
+  //     let filteredChanges = [...portfolio.planned_changes];
+  //     // ... filtering logic ...
+  //     setDisplayedChanges(filteredChanges);
+  //     // Reset refs when displayed changes update
+  //     itemRefs.current = filteredChanges.reduce((acc, change) => {
+  //       acc[change.id] = React.createRef();
+  //       return acc;
+  //     }, {});
+  //   } else if (!isPortfolioLoading && !portfolioError) {
+  //     setDisplayedChanges([]);
+  //     itemRefs.current = {};
+  //   }
+  // }, [portfolio, filters, portfolioError, isPortfolioLoading]);
 
   const handleFilterChange = e => {
     const { name, value } = e.target;
@@ -138,7 +128,7 @@ const ChangesView = () => {
         block: 'nearest',
       });
     }
-  }, [selectedChangeId]);
+  }, [selectedChangeId, itemRefs]); // itemRefs is now a dependency
 
   const handleSaveChanges = async changeDataFromPanel => {
     console.log('ChangesView (handleSaveChanges): portfolio context:', portfolio); // Diagnostic log
@@ -163,7 +153,7 @@ const ChangesView = () => {
         await portfolioService.updatePlannedChange(portfolio.portfolio_id, changeId, dataToSend);
       } else {
         // For adding, ensure no id is sent if backend auto-generates it
-        const { ...addData } = dataToSend; // remove id if present
+        const { id, ...addData } = dataToSend; // remove id if present
         await portfolioService.addPlannedChange(portfolio.portfolio_id, addData);
       }
       // On successful API call
@@ -222,7 +212,7 @@ const ChangesView = () => {
     // User will then need to switch to ProjectionPanel or it auto-updates
   };
 
-  if (isLoading) {
+  if (isLoading && !displayedChanges.length) { // Adjusted loading condition
     return <div className="p-4">Loading planned changes...</div>; // Basic loading state
   }
 
@@ -247,76 +237,8 @@ const ChangesView = () => {
         </button>
       </header>
 
-      {/* Filters Section */}
-      <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
-        <h2 className="text-md font-semibold text-gray-700 mb-3">Filters</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <label htmlFor="type-filter" className="block text-sm font-medium text-gray-700 mb-1">
-              Type
-            </label>
-            <select
-              id="type-filter"
-              name="type"
-              value={filters.type}
-              onChange={handleFilterChange}
-              className="mt-1 block w-full pl-3 pr-10 py-2 h-10 border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm bg-white"
-            >
-              {CHANGE_TYPES.map(typeOpt => (
-                <option key={typeOpt.value} value={typeOpt.value}>
-                  {typeOpt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label
-              htmlFor="start-date-filter"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Start Date
-            </label>
-            <Input
-              type="date"
-              id="start-date-filter"
-              name="startDate"
-              value={filters.startDate}
-              onChange={handleFilterChange}
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="end-date-filter"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              End Date
-            </label>
-            <Input
-              type="date"
-              id="end-date-filter"
-              name="endDate"
-              value={filters.endDate}
-              onChange={handleFilterChange}
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="description-filter"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Description
-            </label>
-            <Input
-              type="text"
-              id="description-filter"
-              name="description"
-              value={filters.description}
-              onChange={handleFilterChange}
-              placeholder="Search description..."
-            />
-          </div>
-        </div>
-      </div>
+      {/* Filters Section - Now uses ChangeFilters component */}
+      <ChangeFilters filters={filters} onFilterChange={handleFilterChange} />
 
       {/* Main Content Area - Placeholders for Timeline and Details List */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -327,40 +249,21 @@ const ChangesView = () => {
         >
           <h3 className="text-md font-semibold text-gray-700 mb-3">Timeline</h3>
           <TimelineView
-            plannedChanges={displayedChanges}
+            plannedChanges={displayedChanges} // Comes from the hook
             selectedChangeId={selectedChangeId}
             onSelectChange={handleSelectChange}
           />
         </div>
 
-        {/* Change Details List Placeholder */}
-        <div
-          className="md:col-span-2 bg-white p-4 rounded-lg shadow overflow-y-auto"
-          style={{ maxHeight: 'calc(100vh - 250px)' }}
-        >
-          <h3 className="text-md font-semibold text-gray-700 mb-3">
-            Change Details ({displayedChanges.length})
-          </h3>
-          {displayedChanges.length > 0 ? (
-            <div className="space-y-3">
-              {displayedChanges.map(change => (
-                <div key={change.id} ref={itemRefs.current[change.id]}>
-                  <ChangeItemCard
-                    change={change}
-                    isSelected={selectedChangeId === change.id}
-                    onSelectChange={() => handleSelectChange(change.id)}
-                    onEdit={() => handleOpenEditPanel(change)}
-                    onDelete={() => handleDeleteChange(change.id)}
-                  />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-sm text-gray-500">
-              No planned changes match the current filters.
-            </div>
-          )}
-        </div>
+        {/* Change Details List - Now uses ChangeDetailsList component */}
+        <ChangeDetailsList
+          displayedChanges={displayedChanges} // Comes from the hook
+          selectedChangeId={selectedChangeId}
+          onSelectChange={handleSelectChange}
+          onEdit={handleOpenEditPanel}
+          onDelete={handleDeleteChange}
+          itemRefs={itemRefs} // Comes from the hook
+        />
       </div>
 
       <AddEditChangePanel
@@ -370,6 +273,8 @@ const ChangesView = () => {
         initialData={editingChangeData}
         onSave={handleSaveChanges}
         onPreviewRequest={handleRequestPreview}
+        // Pass CHANGE_TYPES if it's used by AddEditChangePanel for its own type dropdown
+        // changeTypes={CHANGE_TYPES}
       />
     </div>
   );
