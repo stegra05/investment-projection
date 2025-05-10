@@ -5,15 +5,16 @@ import ChangeItemCard from '../components/ChangeItemCard'; // Assuming this exis
 import AddEditChangePanel from '../components/AddEditChangePanel'; // Import the new panel
 import portfolioService from '../../../api/portfolioService'; // Adjusted path and import type
 import Input from '../../../components/Input/Input'; // Import the shared Input component
+import { CHANGE_TYPES } from '../../../constants/portfolioConstants'; // Import from new location
 
 // TODO: Define these types, perhaps from a shared enum/constants file
-const CHANGE_TYPES = [
-  { value: '', label: 'All Types' },
-  { value: 'CONTRIBUTION', label: 'Contribution' },
-  { value: 'WITHDRAWAL', label: 'Withdrawal' },
-  { value: 'REALLOCATION', label: 'Reallocation' },
-  // Add other types as defined in backend enums
-];
+// const CHANGE_TYPES = [
+//   { value: '', label: 'All Types' },
+//   { value: 'CONTRIBUTION', label: 'Contribution' },
+//   { value: 'WITHDRAWAL', label: 'Withdrawal' },
+//   { value: 'REALLOCATION', label: 'Reallocation' },
+//   // Add other types as defined in backend enums
+// ];
 
 const ChangesView = () => {
   const {
