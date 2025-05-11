@@ -19,7 +19,7 @@ A web application designed for intermediate to advanced users to build investmen
 * **Frontend:** React
 * **Backend:** Flask (Python)
 * **Database:** PostgreSQL
-* **Database Interaction:** SQLAlchemy (with Flask-SQLAlchemy/Flask-Migrate likely)
+* **Database Interaction:** SQLAlchemy (with Flask-SQLAlchemy/Flask-Migrate)
 * **Task Queue:** Celery (with Redis as broker/backend)
 * **Version Control:** Git / GitHub
 * **Task Tracking:** Trello

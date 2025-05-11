@@ -1,90 +1,171 @@
-frontend/
-├── public/
-│   ├── index.html
-│   └── ... (other static assets like favicons)
-├── src/
-│   ├── App.js                # Root component, routing setup (React Router)
-│   ├── index.js              # App entry point
-│
-│   ├── assets/               # Static assets (images, fonts, svgs)
-│   │   └── ...
-│
-│   ├── components/           # SHARED, Reusable UI Components (Presentational)
-│   │   ├── Button/           # Atomic component example
-│   │   │   ├── Button.js
-│   │   │   ├── Button.module.css # Optional styling
-│   │   │   ├── Button.test.js    # Co-located test
-│   │   │   └── Button.stories.js # Optional Storybook file
-│   │   ├── Input/
-│   │   ├── Modal/
-│   │   ├── Spinner/
-│   │   ├── ChartWrapper/     # Wrapper around Recharts if customization needed
-│   │   └── ... (other shared elements like Card, Tooltip)
-│
-│   ├── config/               # App-wide configuration
-│   │   └── api.js            # API base URL, endpoints constants
-│   │   └── constants.js      # Other app-wide constants
-│
-│   ├── features/             # CORE: Feature-based modules
-│   │   ├── auth/             # Authentication feature
-│   │   │   ├── components/   # Components specific to auth (LoginForm, RegisterForm)
-│   │   │   ├── hooks/        # Custom hooks for auth logic (useLogin, useRegister)
-│   │   │   ├── pages/        # Auth pages/views + tests co-located
-│   │   │   │   ├── LoginPage.js
-│   │   │   │   └── LoginPage.test.js
-│   │   │   └── index.js      # Barrel file to export feature elements
-│   │   ├── dashboard/        # Dashboard feature
-│   │   │   └── ...           # Similar structure (components, hooks, pages, index)
-│   │   └── portfolio/        # Portfolio Workspace feature (Multi-Panel)
-│   │       ├── components/   # Shared components ONLY within portfolio workspace (PanelWrapper, AssetRow)
-│   │       ├── hooks/        # Hooks specific to portfolio workspace (useSelectedPortfolio, useProjectionRunner)
-│   │       ├── panels/       # Components representing the main panels + tests
-│   │       │   ├── NavigationPanel.js
-│   │       │   ├── MainContentPanel.js
-│   │       │   └── ProjectionPanel.js
-│   │       ├── views/        # Views/Tabs potentially within MainContentPanel + tests
-│   │       │   ├── AssetsView.js
-│   │       │   ├── ChangesView.js
-│   │       │   └── OverviewSettingsView.js
-│   │       ├── workflows/    # Components for guided workflows + tests
-│   │       │   ├── OnboardingWorkflow.js
-│   │       │   └── ProjectionSetupWorkflow.js
-│   │       ├── state/        # Workspace-specific Context/State logic
-│   │       │   └── PortfolioContext.js # Example for selected portfolio
-│   │       ├── pages/        # The main PortfolioWorkspacePage component orchestrating panels + tests
-│   │       └── index.js
-│
-│   ├── hooks/                # GLOBAL Custom Hooks (used across features)
-│   │   ├── useAuth.js        # Example hook interacting with auth state/context
-│   │   └── useApi.js         # Optional hook abstracting Axios calls
-│
-│   ├── utils/                # Utility functions (date formatting, validation) + tests
-│   │   └── formatDate.js
-│   │   └── validators.js
-│
-│   ├── routes/               # Route definitions (centralized or co-located in features)
-│   │   └── index.js
-│
-│   ├── api/                  # API layer (Axios instances, request functions)
-│   │   ├── authService.js
-│   │   ├── portfolioService.js
-│   │   └── projectionService.js
-│
-│   ├── store/                # GLOBAL State Management (Zustand stores)
-│   │   ├── authStore.js
-│   │   └── portfolioListStore.js
-│
-│   ├── styles/               # Global styles, Tailwind config
-│   │   ├── index.css         # Main CSS entry point, Tailwind directives
-│   │   └── tailwind.config.js
-│
-│   └── types/                # Optional: For shared TypeScript interfaces/types
-│       └── index.d.ts
-│
-├── tests/                    # Optional: Alternative top-level test dir (e.g., for e2e tests)
-├── .eslintrc.js              # ESLint config
-├── .prettierrc.js            # Prettier config
-├── babel.config.js or .babelrc # Babel config
-├── jsconfig.json or tsconfig.json # Setup path aliases here (e.g., @components/*, @features/*)
-├── package.json
-└── tailwind.config.js        # Can be here or in src/styles
+Directory structure:
+└── stegra05-investment-projection/
+    ├── README.md
+    ├── LICENSE
+    ├── start_dev_env.sh
+    ├── stop_dev_env.sh
+    ├── backend/
+    │   ├── celery_worker.py
+    │   ├── config.py
+    │   ├── dev-app.db
+    │   ├── pytest.ini
+    │   ├── requirements.txt
+    │   ├── run.py
+    │   ├── setup.py
+    │   ├── .env.example
+    │   └── app/
+    │       ├── __init__.py
+    │       ├── background_workers.py
+    │       ├── enums.py
+    │       ├── error_handlers.py
+    │       ├── models/
+    │       │   ├── __init__.py
+    │       │   ├── asset.py
+    │       │   ├── planned_future_change.py
+    │       │   ├── portfolio.py
+    │       │   └── user.py
+    │       ├── routes/
+    │       │   ├── analytics.py
+    │       │   ├── assets.py
+    │       │   ├── auth.py
+    │       │   ├── changes.py
+    │       │   ├── main.py
+    │       │   ├── portfolios.py
+    │       │   ├── projections.py
+    │       │   └── tasks.py
+    │       ├── schemas/
+    │       │   ├── analytics_schemas.py
+    │       │   ├── auth_schemas.py
+    │       │   └── portfolio_schemas.py
+    │       ├── services/
+    │       │   ├── analytics_service.py
+    │       │   ├── historical_data_preparation.py
+    │       │   ├── monthly_calculator.py
+    │       │   ├── projection_engine.py
+    │       │   ├── projection_initializer.py
+    │       │   ├── recurrence_service.py
+    │       │   ├── return_strategies.py
+    │       │   └── task_service.py
+    │       └── utils/
+    │           ├── __init__.py
+    │           ├── decorators.py
+    │           ├── exceptions.py
+    │           └── helpers.py
+    ├── documentation/
+    │   ├── api_specification.md
+    │   ├── architecture.md
+    │   ├── database_scheme.md
+    │   ├── frontend_plan.md
+    │   ├── functional_requirements.md
+    │   ├── non_functional_requirements.md
+    │   ├── structure.md
+    │   └── technology_stack.md
+    └── frontend/
+        ├── package.json
+        ├── postcss.config.js
+        ├── tailwind.config.js
+        ├── .babelrc
+        ├── .editorconfig
+        ├── .eslintrc.js
+        ├── .prettierrc.js
+        ├── public/
+        │   ├── index.html
+        │   └── manifest.json
+        └── src/
+            ├── App.js
+            ├── index.js
+            ├── api/
+            │   ├── analyticsService.js
+            │   ├── assetService.js
+            │   ├── authService.js
+            │   ├── axiosInstance.js
+            │   ├── plannedChangeService.js
+            │   ├── portfolioService.js
+            │   └── projectionService.js
+            ├── components/
+            │   ├── AlertMessage/
+            │   │   └── AlertMessage.js
+            │   ├── Button/
+            │   │   ├── Button.js
+            │   │   └── Button.module.css
+            │   ├── Input/
+            │   │   └── Input.js
+            │   ├── Layout/
+            │   │   └── Layout.js
+            │   ├── Modal/
+            │   │   ├── ConfirmationModal.js
+            │   │   └── Modal.module.css
+            │   ├── Notification/
+            │   │   ├── NotificationContainer.js
+            │   │   ├── NotificationContainer.module.css
+            │   │   ├── ToastMessage.js
+            │   │   └── ToastMessage.module.css
+            │   ├── Select/
+            │   │   └── Select.js
+            │   └── Spinner/
+            │       └── Spinner.js
+            ├── config/
+            │   └── api.js
+            ├── constants/
+            │   ├── portfolioConstants.js
+            │   └── textConstants.js
+            ├── features/
+            │   ├── auth/
+            │   │   ├── components/
+            │   │   │   ├── LoginForm.js
+            │   │   │   ├── LoginForm.module.css
+            │   │   │   └── RegisterForm.js
+            │   │   └── pages/
+            │   │       ├── LoginPage.js
+            │   │       └── RegisterPage.js
+            │   ├── dashboard/
+            │   │   ├── components/
+            │   │   │   └── CreatePortfolioModal.js
+            │   │   └── pages/
+            │   │       └── DashboardPage.js
+            │   └── portfolio/
+            │       ├── components/
+            │       │   ├── AddAssetForm.js
+            │       │   ├── AddEditChangePanel.js
+            │       │   ├── AssetList.js
+            │       │   ├── ChangeDetailsList.js
+            │       │   ├── ChangeFilters.js
+            │       │   ├── ChangeItemCard.js
+            │       │   ├── EditAssetModal.js
+            │       │   ├── ProjectionChart.js
+            │       │   ├── ProjectionParamsForm.js
+            │       │   ├── ProjectionSummaryMetrics.js
+            │       │   ├── RecurrenceSettingsForm.js
+            │       │   ├── RiskProfileDisplay.js
+            │       │   ├── TargetAllocationInput.js
+            │       │   └── TimelineView.js
+            │       ├── hooks/
+            │       │   ├── useAssetCRUD.js
+            │       │   ├── useChangePanelActions.js
+            │       │   ├── useFilteredChanges.js
+            │       │   ├── usePlannedChangeCRUD.js
+            │       │   ├── usePlannedChangeForm.js
+            │       │   ├── useProjectionTask.js
+            │       │   └── useRecurrenceForm.js
+            │       ├── pages/
+            │       │   └── PortfolioWorkspacePage.js
+            │       ├── panels/
+            │       │   ├── MainContentPanel.js
+            │       │   ├── NavigationPanel.js
+            │       │   └── ProjectionPanel.js
+            │       ├── state/
+            │       │   └── PortfolioContext.js
+            │       ├── utils/
+            │       │   ├── iconUtils.js
+            │       │   └── plannedChangeUtils.js
+            │       └── views/
+            │           ├── AssetsView.js
+            │           └── ChangesView.js
+            ├── hooks/
+            │   └── useNotification.js
+            ├── store/
+            │   ├── authStore.js
+            │   ├── notificationStore.js
+            │   └── portfolioListStore.js
+            └── styles/
+                └── index.css
