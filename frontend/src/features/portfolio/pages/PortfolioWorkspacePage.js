@@ -5,6 +5,12 @@ import { usePortfolio } from '../state/PortfolioContext';
 import NavigationPanel from '../panels/NavigationPanel';
 import MainContentPanel from '../panels/MainContentPanel';
 import ProjectionPanel from '../panels/ProjectionPanel';
+import {
+  BREADCRUMB_DASHBOARD,
+  BREADCRUMB_PORTFOLIO_PREFIX,
+  INFO_PORTFOLIO_DATA_UNAVAILABLE,
+  INFO_LOADING_PORTFOLIO_DATA,
+} from '../../../constants/textConstants';
 
 const STORAGE_KEY_LAYOUT = 'portfolioWorkspaceLayoutSizes';
 const STORAGE_KEY_ACTIVE_VIEW = 'portfolioWorkspaceActiveView';
@@ -15,7 +21,6 @@ function PortfolioWorkspacePage() {
   const { 
     portfolio: rawPortfolioData, 
     loading: portfolioLoading, 
-    // error: portfolioError,  // Commented out as it's unused
     fetchPortfolio, 
     clearPortfolioError, 
   } = usePortfolio();
@@ -85,11 +90,11 @@ function PortfolioWorkspacePage() {
   }, []);
 
   if (!rawPortfolioData && !portfolioLoading) {
-    return <div className="p-4 text-center">Portfolio data not available.</div>;
+    return <div className="p-4 text-center">{INFO_PORTFOLIO_DATA_UNAVAILABLE}</div>;
   }
 
   if (portfolioLoading && !rawPortfolioData) {
-    return <div className="p-4 text-center">Loading portfolio data...</div>;
+    return <div className="p-4 text-center">{INFO_LOADING_PORTFOLIO_DATA}</div>;
   }
 
   return (
@@ -98,7 +103,7 @@ function PortfolioWorkspacePage() {
         <ol className="list-none p-0 inline-flex">
           <li className="flex items-center">
             <Link to="/dashboard" className="hover:text-blue-700 hover:underline">
-              Dashboard
+              {BREADCRUMB_DASHBOARD}
             </Link>
           </li>
           <li className="flex items-center mx-2">
@@ -106,7 +111,7 @@ function PortfolioWorkspacePage() {
           </li>
           <li className="flex items-center">
             <span className="font-medium text-gray-800" aria-current="page">
-              {rawPortfolioData?.name || `Portfolio ${portfolioId}`}
+              {rawPortfolioData?.name || `${BREADCRUMB_PORTFOLIO_PREFIX} ${portfolioId}`}
             </span>
           </li>
         </ol>
@@ -116,7 +121,7 @@ function PortfolioWorkspacePage() {
         <Allotment ref={allotmentRef} defaultSizes={sizes} onDragEnd={handleDragEnd}>
           <Allotment.Pane minSize={200} maxSize={600}>
             <div className="h-full bg-white rounded shadow p-4 overflow-auto">
-              <NavigationPanel portfolio={rawPortfolioData} isLoading={portfolioLoading} />
+              <NavigationPanel />
             </div>
           </Allotment.Pane>
           <Allotment.Pane minSize={300}>

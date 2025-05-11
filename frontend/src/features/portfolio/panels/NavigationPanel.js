@@ -2,6 +2,12 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import usePortfolioListStore from '../../../store/portfolioListStore';
 import { usePortfolio } from '../state/PortfolioContext';
+import {
+  HEADING_PORTFOLIOS,
+  LOADING_PORTFOLIOS_LIST,
+  ERROR_LOADING_PORTFOLIOS_LIST_PREFIX,
+  EMPTY_PORTFOLIOS_LIST,
+} from '../../../constants/textConstants';
 
 function NavigationPanel() {
   const { portfolios, fetchPortfolios, isLoading, error } = usePortfolioListStore();
@@ -14,14 +20,14 @@ function NavigationPanel() {
     }
   }, [fetchPortfolios, portfolios.length]);
 
-  if (isLoading) return <div>Loading portfolios...</div>;
-  if (error) return <div className="text-red-600">Error loading portfolios: {error}</div>;
+  if (isLoading) return <div>{LOADING_PORTFOLIOS_LIST}</div>;
+  if (error) return <div className="text-red-600">{ERROR_LOADING_PORTFOLIOS_LIST_PREFIX} {error}</div>;
 
   return (
     <div className="flex flex-col h-full">
-      <h2 className="text-lg font-semibold mb-4 border-b pb-2">Portfolios</h2>
+      <h2 className="text-lg font-semibold mb-4 border-b pb-2">{HEADING_PORTFOLIOS}</h2>
       {portfolios.length === 0 ? (
-        <p className="text-gray-500">No portfolios found.</p>
+        <p className="text-gray-500">{EMPTY_PORTFOLIOS_LIST}</p>
       ) : (
         <ul className="space-y-2 overflow-y-auto flex-grow">
           {portfolios.map(portfolio => {
@@ -40,7 +46,6 @@ function NavigationPanel() {
           })}
         </ul>
       )}
-      {/* TODO: Add button/link to go back to Dashboard? */}
     </div>
   );
 }

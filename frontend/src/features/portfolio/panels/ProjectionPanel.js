@@ -1,13 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { usePortfolio } from '../state/PortfolioContext';
 import useProjectionTask from '../hooks/useProjectionTask';
-
-// Placeholder imports - Replace with actual paths if different
 import Input from '../../../components/Input/Input';
 import Button from '../../../components/Button/Button';
 import ProjectionChart from '../components/ProjectionChart';
 import ProjectionSummaryMetrics from '../components/ProjectionSummaryMetrics';
 import ProjectionParamsForm from '../components/ProjectionParamsForm';
+import {
+  DEFAULT_PROJECTION_HORIZON_YEARS,
+  DEFAULT_INITIAL_VALUE,
+} from '../../../constants/portfolioConstants';
+import {
+  HEADING_PROJECTION_SETUP,
+  STATUS_PROJECTION_PENDING,
+  STATUS_PROJECTION_SUBMITTED,
+  STATUS_PROJECTION_PROCESSING,
+  STATUS_PROJECTION_COMPLETED,
+  ERROR_PROJECTION_FALLBACK,
+  CHART_EMPTY_FAILED,
+  CHART_EMPTY_PENDING_RUN,
+  BUTTON_RUN_PROJECTION,
+  BUTTON_PROCESSING_PROJECTION,
+} from '../../../constants/textConstants';
 
 // Helper function to format date as YYYY-MM-DD
 const formatDate = date => {
@@ -17,19 +31,21 @@ const formatDate = date => {
 // Calculate default dates
 const today = new Date();
 const defaultStartDate = formatDate(today);
-const defaultProjectionHorizonYears = 2;
-const defaultInitialValue = 1000;
 
 function ProjectionPanel() {
   const { portfolioId } = usePortfolio();
   const [startDate, setStartDate] = useState(defaultStartDate);
-  const [projectionHorizonYears, setProjectionHorizonYears] = useState(defaultProjectionHorizonYears);
+  const [projectionHorizonYears, setProjectionHorizonYears] = useState(
+    DEFAULT_PROJECTION_HORIZON_YEARS
+  );
   const [endDate, setEndDate] = useState(() => {
     const initialEndDate = new Date(defaultStartDate);
-    initialEndDate.setFullYear(initialEndDate.getFullYear() + defaultProjectionHorizonYears);
+    initialEndDate.setFullYear(
+      initialEndDate.getFullYear() + DEFAULT_PROJECTION_HORIZON_YEARS
+    );
     return formatDate(initialEndDate);
   });
-  const [initialValue, setInitialValue] = useState(defaultInitialValue);
+  const [initialValue, setInitialValue] = useState(DEFAULT_INITIAL_VALUE);
 
   const {
     projectionStatus,
@@ -51,15 +67,15 @@ function ProjectionPanel() {
   const getStatusMessage = () => {
     switch (projectionStatus) {
     case 'pending':
-      return 'Preparing to start projection...';
+      return STATUS_PROJECTION_PENDING;
     case 'submitted':
-      return 'Projection task submitted, waiting for processing...';
+      return STATUS_PROJECTION_SUBMITTED;
     case 'processing':
-      return 'Calculating projection...';
+      return STATUS_PROJECTION_PROCESSING;
     case 'completed':
-      return 'Projection completed successfully!';
+      return STATUS_PROJECTION_COMPLETED;
     case 'error':
-      return projectionError || 'An error occurred during projection.';
+      return projectionError || ERROR_PROJECTION_FALLBACK;
     default:
       return null;
     }
@@ -75,7 +91,7 @@ function ProjectionPanel() {
 
   return (
     <div className="p-4 bg-white rounded shadow h-full flex flex-col">
-      <h2 className="text-lg font-semibold mb-4 border-b pb-2">Projection Setup</h2>
+      <h2 className="text-lg font-semibold mb-4 border-b pb-2">{HEADING_PROJECTION_SETUP}</h2>
 
       <ProjectionParamsForm
         startDate={startDate}
@@ -109,10 +125,10 @@ function ProjectionPanel() {
             <div className="h-full flex items-center justify-center">
               <span className="text-gray-500">
                 {isProjectionRunning
-                  ? 'Calculating projection...'
+                  ? STATUS_PROJECTION_PROCESSING
                   : projectionStatus === 'error'
-                    ? 'Failed to retrieve projection.'
-                    : 'Run projection to see results'}
+                    ? CHART_EMPTY_FAILED
+                    : CHART_EMPTY_PENDING_RUN}
               </span>
             </div>
           )}
@@ -128,7 +144,7 @@ function ProjectionPanel() {
           disabled={isProjectionRunning}
           className="bg-blue-600 hover:bg-blue-700 text-white"
         >
-          {isProjectionRunning ? 'Processing...' : 'Run Projection'}
+          {isProjectionRunning ? BUTTON_PROCESSING_PROJECTION : BUTTON_RUN_PROJECTION}
         </Button>
       </div>
     </div>

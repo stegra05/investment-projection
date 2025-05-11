@@ -1,24 +1,21 @@
 import React, { useState } from 'react';
 import { usePortfolio } from '../state/PortfolioContext';
 import portfolioService from '../../../api/portfolioService'; // Import the service
-// import { FaPencilAlt, FaTrashAlt } from 'react-icons/fa'; // No longer needed here
 import EditAssetModal from '../components/EditAssetModal'; // Import the modal
 import ConfirmationModal from '../../../components/Modal/ConfirmationModal'; // Import the confirmation modal
 import AddAssetForm from '../components/AddAssetForm'; // Import the new form component
 import AssetList from '../components/AssetList'; // Import the new list component
-
-// Define options based on AssetType enum - SENDING THE VALUE NOW
-const assetTypeOptions = [
-  { value: 'Stock', label: 'Stock' },
-  { value: 'Bond', label: 'Bond' },
-  { value: 'Mutual Fund', label: 'Mutual Fund' },
-  { value: 'ETF', label: 'ETF' },
-  { value: 'Real Estate', label: 'Real Estate' },
-  { value: 'Cash', label: 'Cash' },
-  { value: 'Cryptocurrency', label: 'Cryptocurrency' },
-  { value: 'Options', label: 'Options' },
-  { value: 'Other', label: 'Other' },
-];
+import { ASSET_TYPE_OPTIONS } from '../../../constants/portfolioConstants';
+import {
+  SUCCESS_ASSET_DELETED,
+  SUCCESS_ASSET_UPDATED,
+  CONFIRM_DELETE_ASSET_TITLE,
+  CONFIRM_DELETE_ASSET_BUTTON,
+  CONFIRM_DELETE_ASSET_MESSAGE,
+  ERROR_ASSET_DELETE_FALLBACK,
+  LOADING_PORTFOLIO_DATA,
+  HEADING_EXISTING_ASSETS,
+} from '../../../constants/textConstants';
 
 function AssetsView() {
   const { portfolio, refreshPortfolio, portfolioId } = usePortfolio();
@@ -56,13 +53,12 @@ function AssetsView() {
       } else {
         console.warn('refreshPortfolio function not available from context.');
       }
-      setGlobalSuccessMessage('Asset deleted successfully!');
+      setGlobalSuccessMessage(SUCCESS_ASSET_DELETED);
       setTimeout(() => setGlobalSuccessMessage(null), 3000);
     } catch (error) {
       const detailMessage = error.response?.data?.detail;
       const generalApiMessage = error.response?.data?.message;
-      const fallbackMessage = 'Failed to delete asset. Please try again.';
-      setDeleteError(detailMessage || generalApiMessage || error.message || fallbackMessage);
+      setDeleteError(detailMessage || generalApiMessage || error.message || ERROR_ASSET_DELETE_FALLBACK);
     } finally {
       setDeletingAssetId(null);
       setAssetToDeleteId(null);
@@ -92,14 +88,14 @@ function AssetsView() {
       console.warn('refreshPortfolio function not available from context.');
     }
     handleCloseEditModal();
-    setGlobalSuccessMessage('Asset updated successfully!');
+    setGlobalSuccessMessage(SUCCESS_ASSET_UPDATED);
     setTimeout(() => setGlobalSuccessMessage(null), 3000);
   };
 
   if (!portfolio) {
     return (
       <div className="p-4 text-center text-gray-500">
-        Loading portfolio data or portfolio not selected...
+        {LOADING_PORTFOLIO_DATA}
       </div>
     );
   }
@@ -126,7 +122,7 @@ function AssetsView() {
         )}
 
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3">Existing Assets</h3>
+          <h3 className="text-lg font-semibold mb-3">{HEADING_EXISTING_ASSETS}</h3>
           <AssetList
             assets={portfolio.assets}
             editingAsset={editingAsset} /* Pass editingAsset to disable buttons on other rows */
@@ -140,7 +136,7 @@ function AssetsView() {
       <AddAssetForm
         portfolioId={portfolioId}
         refreshPortfolio={refreshPortfolio} /* This will also show add success/error messages */
-        assetTypeOptions={assetTypeOptions}
+        assetTypeOptions={ASSET_TYPE_OPTIONS}
       />
 
       <EditAssetModal
@@ -155,11 +151,11 @@ function AssetsView() {
         isOpen={isConfirmModalOpen}
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
-        title="Confirm Deletion"
-        confirmText="Delete Asset"
+        title={CONFIRM_DELETE_ASSET_TITLE}
+        confirmText={CONFIRM_DELETE_ASSET_BUTTON}
         isConfirming={deletingAssetId !== null && deletingAssetId === assetToDeleteId}
       >
-        Are you sure you want to delete this asset? This action cannot be undone.
+        {CONFIRM_DELETE_ASSET_MESSAGE}
       </ConfirmationModal>
     </div>
   );

@@ -1,11 +1,21 @@
 import React from 'react';
 import { FaPencilAlt, FaTrashAlt } from 'react-icons/fa';
+import {
+  EMPTY_ASSETS_LIST,
+  TABLE_HEADER_NAME_TICKER,
+  TABLE_HEADER_TYPE,
+  TABLE_HEADER_ALLOCATION,
+  TABLE_HEADER_ACTIONS,
+  TEXT_NA,
+  ARIA_LABEL_EDIT_ASSET,
+  ARIA_LABEL_DELETE_ASSET,
+} from '../../../constants/textConstants';
 
 function AssetList({ assets, editingAsset, deletingAssetId, onEdit, onDelete }) {
   if (!assets || assets.length === 0) {
     return (
       <div className="bg-gray-50 border border-dashed border-gray-300 rounded-md p-6 min-h-[100px] flex items-center justify-center">
-        <p className="text-gray-500 italic">No assets added yet. Add one below.</p>
+        <p className="text-gray-500 italic">{EMPTY_ASSETS_LIST}</p>
       </div>
     );
   }
@@ -19,25 +29,25 @@ function AssetList({ assets, editingAsset, deletingAssetId, onEdit, onDelete }) 
               scope="col"
               className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
-              Name / Ticker
+              {TABLE_HEADER_NAME_TICKER}
             </th>
             <th
               scope="col"
               className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
-              Type
+              {TABLE_HEADER_TYPE}
             </th>
             <th
               scope="col"
               className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
-              Allocation
+              {TABLE_HEADER_ALLOCATION}
             </th>
             <th
               scope="col"
               className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
-              Actions
+              {TABLE_HEADER_ACTIONS}
             </th>
           </tr>
         </thead>
@@ -46,7 +56,7 @@ function AssetList({ assets, editingAsset, deletingAssetId, onEdit, onDelete }) 
             const allocation = parseFloat(asset.allocation_percentage);
             const displayAllocation = !isNaN(allocation)
               ? `${allocation.toFixed(2)}%`
-              : 'N/A';
+              : TEXT_NA;
             const isDeletingThisRow = deletingAssetId === asset.id;
             const isDisabled = isDeletingThisRow || !!editingAsset;
 
@@ -64,7 +74,7 @@ function AssetList({ assets, editingAsset, deletingAssetId, onEdit, onDelete }) 
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                   <button
                     className="text-indigo-600 hover:text-indigo-900 p-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                    aria-label="Edit asset"
+                    aria-label={ARIA_LABEL_EDIT_ASSET}
                     onClick={() => onEdit(asset)}
                     disabled={isDisabled}
                   >
@@ -72,7 +82,7 @@ function AssetList({ assets, editingAsset, deletingAssetId, onEdit, onDelete }) 
                   </button>
                   <button
                     className="text-red-600 hover:text-red-900 p-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                    aria-label="Delete asset"
+                    aria-label={ARIA_LABEL_DELETE_ASSET}
                     onClick={() => onDelete(asset.id)}
                     disabled={isDisabled}
                   >

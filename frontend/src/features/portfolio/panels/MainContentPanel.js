@@ -3,33 +3,43 @@ import RiskProfileDisplay from '../components/RiskProfileDisplay';
 import AssetsView from '../views/AssetsView'; // Import the actual component
 import ChangesView from '../views/ChangesView'; // Import the new ChangesView
 import PropTypes from 'prop-types'; // Import PropTypes
+import {
+  HEADING_PORTFOLIO_OVERVIEW,
+  PLACEHOLDER_PORTFOLIO_SUMMARY,
+  HEADING_RISK_ANALYSIS,
+  HEADING_PORTFOLIO_SETTINGS,
+  PLACEHOLDER_PORTFOLIO_SETTINGS,
+  BUTTON_ASSETS,
+  BUTTON_PLANNED_CHANGES,
+  BUTTON_OVERVIEW_SETTINGS,
+  LOADING_PORTFOLIO_CONTENT,
+} from '../../../constants/textConstants';
 
 const OverviewSettingsView = () => (
   <div className="space-y-6">
     <div className="bg-white p-4 rounded-lg shadow">
-      <h2 className="text-lg font-semibold mb-4">Portfolio Overview</h2>
+      <h2 className="text-lg font-semibold mb-4">{HEADING_PORTFOLIO_OVERVIEW}</h2>
       <div className="space-y-4">
-        <div>Portfolio summary and key metrics will go here</div>
+        <div>{PLACEHOLDER_PORTFOLIO_SUMMARY}</div>
       </div>
     </div>
 
     <div className="bg-white p-4 rounded-lg shadow">
-      <h2 className="text-lg font-semibold mb-4">Risk Analysis</h2>
+      <h2 className="text-lg font-semibold mb-4">{HEADING_RISK_ANALYSIS}</h2>
       <RiskProfileDisplay />
     </div>
 
     <div className="bg-white p-4 rounded-lg shadow">
-      <h2 className="text-lg font-semibold mb-4">Portfolio Settings</h2>
+      <h2 className="text-lg font-semibold mb-4">{HEADING_PORTFOLIO_SETTINGS}</h2>
       <div className="space-y-4">
         {/* Placeholder for settings content */}
-        <div>Portfolio settings and configuration will go here</div>
+        <div>{PLACEHOLDER_PORTFOLIO_SETTINGS}</div>
       </div>
     </div>
   </div>
 );
 
 function MainContentPanel({ activeView, setActiveView, portfolioLoaded }) {
-  // const [activeView, setActiveView] = useState('assets'); // Remove local state
 
   const views = {
     assets: <AssetsView />,
@@ -61,21 +71,21 @@ function MainContentPanel({ activeView, setActiveView, portfolioLoaded }) {
             className={getButtonClass('assets')}
             onClick={() => setActiveView('assets')}
           >
-            Assets
+            {BUTTON_ASSETS}
           </button>
           <button
             type="button"
             className={getButtonClass('changes')}
             onClick={() => setActiveView('changes')}
           >
-            Planned Changes
+            {BUTTON_PLANNED_CHANGES}
           </button>
           <button
             type="button"
             className={getButtonClass('overview')}
             onClick={() => setActiveView('overview')}
           >
-            Overview & Settings
+            {BUTTON_OVERVIEW_SETTINGS}
           </button>
         </div>
       )}
@@ -85,7 +95,7 @@ function MainContentPanel({ activeView, setActiveView, portfolioLoaded }) {
         <div className="flex-grow border-t pt-4">{views[activeView]}</div>
       ) : (
         <div className="flex-grow flex items-center justify-center">
-          <p className="text-gray-500">Loading portfolio content...</p> { /* Or handle based on error state */ }
+          <p className="text-gray-500">{LOADING_PORTFOLIO_CONTENT}</p> { /* Or handle based on error state */ }
         </div>
       )}
     </div>
