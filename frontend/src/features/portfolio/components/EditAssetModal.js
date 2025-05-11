@@ -5,6 +5,7 @@ import Select from '../../../components/Select/Select';
 import Button from '../../../components/Button/Button';
 import portfolioService from '../../../api/portfolioService';
 import { usePortfolio } from '../state/PortfolioContext';
+import styles from '../../../components/Modal/Modal.module.css'; // Import the CSS module
 
 // Re-using options from AssetsView - consider moving to a shared location later
 const assetTypeOptions = [
@@ -163,39 +164,16 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
     return null; // Don't render anything if the modal is closed
   }
 
-  // Basic Modal Styling
-  const modalStyle = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Overlay
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000, // Ensure it's on top
-  };
-
-  const contentStyle = {
-    backgroundColor: 'white',
-    padding: '2rem',
-    borderRadius: '8px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    minWidth: '400px', // Minimum width
-    maxWidth: '600px', // Maximum width
-  };
-
   return (
-    <div style={modalStyle}>
+    <div className={styles.modalOverlay}>
       <div
-        style={contentStyle}
+        className={styles.modalContentLargePadding}
         role="dialog"
         aria-modal="true"
         aria-labelledby="edit-asset-modal-title"
         tabIndex="-1"
       >
-        <h2 id="edit-asset-modal-title" className="text-xl font-semibold mb-4">
+        <h2 id="edit-asset-modal-title" className={styles.modalTitleLarge}>
           Edit Asset
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">

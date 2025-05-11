@@ -1,0 +1,36 @@
+.modalOverlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center;
+  z-index: 1050; /* Ensure it's above other elements, adjust if needed */
+}
+
+.modalContent {
+  @apply bg-white p-6 rounded-lg shadow-lg;
+  min-width: 320px;
+  max-width: 500px; /* Max width for confirmation */
+  z-index: 1051;
+}
+
+/* Example for a slightly larger padding version if needed for other modals */
+.modalContentLargePadding {
+  @apply bg-white p-8 rounded-lg shadow-lg;
+  min-width: 320px;
+  max-width: 600px; /* Adjust as needed */
+  z-index: 1051;
+}
+
+/* Styles for title and text, if you want to move them from ConfirmationModal */
+.modalTitle {
+  @apply text-lg font-semibold mb-4;
+}
+
+.modalBodyText {
+  @apply mb-6 text-sm text-gray-700;
+}
+
+.modalFooter {
+  @apply flex justify-end space-x-3;
+}
+
+.modalTitleLarge {
+  @apply text-xl font-semibold mb-4;
+} 

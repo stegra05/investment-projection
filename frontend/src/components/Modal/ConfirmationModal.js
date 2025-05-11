@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import Button from '../Button/Button'; // Assuming Button component path
+import Button from '../Button/Button';
+import styles from './Modal.module.css'; // Import the CSS module
 
 function ConfirmationModal({
   isOpen,
@@ -32,43 +33,19 @@ function ConfirmationModal({
     return null;
   }
 
-  // Basic Modal Styling (consider extracting to a shared CSS module or using Tailwind)
-  const modalOverlayStyle = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1050, // Ensure it's above other elements, adjust if needed
-  };
-
-  const modalContentStyle = {
-    backgroundColor: 'white',
-    padding: '1.5rem', // Slightly smaller padding than edit modal
-    borderRadius: '8px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    minWidth: '320px',
-    maxWidth: '500px', // Max width for confirmation
-    zIndex: 1051,
-  };
-
   return (
     <div
-      style={modalOverlayStyle}
+      className={styles.modalOverlay} // Use CSS module class
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirmation-modal-title"
     >
-      <div style={modalContentStyle} role="document">
-        <h2 id="confirmation-modal-title" className="text-lg font-semibold mb-4">
+      <div className={styles.modalContent} role="document"> // Use CSS module class
+        <h2 id="confirmation-modal-title" className={styles.modalTitle}>
           {title}
         </h2>
-        <div className="mb-6 text-sm text-gray-700">{children}</div>
-        <div className="flex justify-end space-x-3">
+        <div className={styles.modalBodyText}>{children}</div>
+        <div className={styles.modalFooter}>
           <Button variant="secondary" onClick={onClose} disabled={isConfirming}>
             {cancelText}
           </Button>
@@ -76,7 +53,7 @@ function ConfirmationModal({
             variant="danger"
             onClick={onConfirm}
             disabled={isConfirming}
-            isLoading={isConfirming}
+            // isLoading={isConfirming} // isLoading prop is not defined in Button.js, removing for now
           >
             {confirmText}
           </Button>
