@@ -72,6 +72,17 @@ A web application designed for intermediate to advanced users to build investmen
         ```bash
         ./start_dev_env.sh
         ```
+    *   **Stopping the Automated Environment:**
+        *   A corresponding `stop_dev_env.sh` script is provided to stop all services initiated by `start_dev_env.sh`.
+        *   **First-time setup (if not already done):** Make the script executable:
+            ```bash
+            chmod +x stop_dev_env.sh
+            ```
+        *   **Run the stop script:**
+            ```bash
+            ./stop_dev_env.sh
+            ```
+        *   This script will attempt to terminate the Flask backend, Celery worker, and the React frontend development server processes. You can verify their termination by checking if the services are unresponsive or by using process monitoring tools (e.g., `ps aux | grep flask`). The terminal windows opened by the start script will remain open but the processes within them should have exited.
     *   **Important Notes for `start_dev_env.sh`:**
         *   On macOS, you might need to grant Terminal permission to control other apps (System Settings -> Privacy & Security -> Automation) the first time you run it.
         *   This script is currently tailored for macOS using `osascript`. For Linux/Windows, you'll need to adapt the commands for opening new terminals or use Option A.

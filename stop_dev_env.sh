@@ -24,6 +24,11 @@ fi
 # This will kill the 'npm start' process. Often, this also stops the child Node server.
 echo "Stopping Frontend React app (npm start)..."
 pkill -f "npm start"
+echo "Attempting to stop process on port 3000..."
+kill $(lsof -t -i:3000) 2>/dev/null || echo "No process found on port 3000 or failed to kill."
+echo "Attempting to stop all react-scripts start processes..."
+pkill -f "frontend/node_modules/react-scripts/scripts/start.js" 2>/dev/null || echo "No react-scripts start processes found or failed to kill."
+
 if [ $? -eq 0 ]; then
     echo "Frontend (npm start) process(es) sent kill signal."
 else
