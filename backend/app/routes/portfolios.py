@@ -13,7 +13,7 @@ from sqlalchemy import desc, asc
 # Import Pydantic Schemas
 from app.schemas.portfolio_schemas import (
     PortfolioSchema, PortfolioCreateSchema, PortfolioUpdateSchema,
-    BulkAllocationUpdateSchema # Import the new schema
+    BulkAllocationUpdateSchema, PortfolioSummarySchema # Import the new summary schema
 )
 
 # Import custom exceptions
@@ -161,11 +161,8 @@ def get_user_portfolios():
     except ValueError as e: # Handles Pydantic validation errors
         return jsonify({"errors": str(e)}), 400 # Or use a more structured error response
 
-    # Base query
-    query = Portfolio.query.options(
-        db.joinedload(Portfolio.assets),
-        db.joinedload(Portfolio.planned_changes)
-    ).filter_by(user_id=current_user_id)
+    # Base query - REMOVED joinedload for assets and planned_changes
+    query = Portfolio.query.filter_by(user_id=current_user_id)
 
     # Apply filtering
     if query_params.filter_name:
@@ -186,7 +183,8 @@ def get_user_portfolios():
     )
     
     portfolios = pagination.items
-    result = [PortfolioSchema.from_orm(p).model_dump(mode='json', by_alias=True) for p in portfolios]
+    # Use PortfolioSummarySchema for the list view
+    result = [PortfolioSummarySchema.from_orm(p).model_dump(mode='json', by_alias=True) for p in portfolios]
 
     return jsonify({
         "data": result,

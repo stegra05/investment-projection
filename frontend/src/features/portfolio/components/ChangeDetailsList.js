@@ -8,6 +8,7 @@ const ChangeDetailsList = ({
   onEdit,
   onDelete,
   itemRefs, // Pass itemRefs to attach to the div elements
+  assetIdToNameMap, // Accept the new prop
 }) => {
   return (
     <div
@@ -27,6 +28,7 @@ const ChangeDetailsList = ({
                 onSelectChange={() => onSelectChange(change.id)}
                 onEdit={() => onEdit(change)}
                 onDelete={() => onDelete(change.id)}
+                assetIdToNameMap={assetIdToNameMap} // Pass it to ChangeItemCard
               />
             </div>
           ))}

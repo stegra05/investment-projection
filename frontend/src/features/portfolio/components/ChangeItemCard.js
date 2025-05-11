@@ -8,7 +8,7 @@ import {
 } from 'react-icons/fa';
 import { getChangeTypeIcon } from '../utils/iconUtils.js';
 
-const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected, portfolioCurrency }) => {
+const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected, portfolioCurrency, assetIdToNameMap }) => {
   if (!change) return null;
 
   // Basic date formatting, consider using a library like date-fns for more complex needs
@@ -133,17 +133,21 @@ const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected, 
           <div className="mt-2 pt-2 border-t border-gray-200">
             <p className="text-xs font-medium text-gray-500 mb-1">Reallocation Targets:</p>
             <ul className="list-disc list-inside pl-1 text-xs text-gray-600">
-              {(typeof change.targetAllocationJson === 'string'
-                ? JSON.parse(change.targetAllocationJson)
-                : change.targetAllocationJson
-              ).map((allocation, index) => (
-                <li key={allocation.assetId || index}>
-                  {/* Placeholder: Asset name would be looked up here */}
-                  Asset {allocation.assetId || 'Unknown ID'}: {Number(allocation.percentage).toFixed(2)}%
-                </li>
-              ))}
+              {Object.entries(
+                typeof change.targetAllocationJson === 'string'
+                  ? JSON.parse(change.targetAllocationJson)
+                  : change.targetAllocationJson || {}
+              ).map(([assetId, percentage]) => {
+                const assetName = assetIdToNameMap && assetIdToNameMap[assetId] 
+                                  ? `${assetIdToNameMap[assetId]} (ID: ${assetId})` 
+                                  : `Asset ${assetId}`;
+                return (
+                  <li key={assetId}>
+                    {assetName}: {Number(percentage).toFixed(2)}%
+                  </li>
+                );
+              })}
             </ul>
-            {/* TODO: Replace assetId with fetched asset name. Consider passing an assetIdToNameMap prop or a getAssetName(assetId) function. */}
           </div>
         )}
       </div>
@@ -167,10 +171,12 @@ ChangeItemCard.propTypes = {
   onSelectChange: PropTypes.func,
   isSelected: PropTypes.bool,
   portfolioCurrency: PropTypes.string,
+  assetIdToNameMap: PropTypes.object,
 };
 
 ChangeItemCard.defaultProps = {
   portfolioCurrency: 'USD',
+  assetIdToNameMap: {},
 };
 
 export default ChangeItemCard;

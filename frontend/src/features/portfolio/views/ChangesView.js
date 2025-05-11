@@ -161,6 +161,17 @@ const ChangesView = () => {
     setDraftChangeForPreview(draftData);
   };
 
+  // Create a map of asset IDs to names
+  const assetIdToNameMap = React.useMemo(() => {
+    if (!portfolio || !portfolio.assets) {
+      return {};
+    }
+    return portfolio.assets.reduce((acc, asset) => {
+      acc[asset.asset_id] = asset.name_or_ticker || `Asset ${asset.asset_id}`;
+      return acc;
+    }, {});
+  }, [portfolio]);
+
   if (isLoading && !displayedChanges.length && !portfolioError) {
     return (
       <div className="p-4 flex justify-center items-center min-h-[200px]">
@@ -207,6 +218,7 @@ const ChangesView = () => {
           onEdit={handleOpenEditPanel}
           onDelete={handleDeleteChange}
           itemRefs={itemRefs}
+          assetIdToNameMap={assetIdToNameMap}
         />
       </div>
 

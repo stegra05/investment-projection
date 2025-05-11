@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, validator, condecimal
 from pydantic.alias_generators import to_camel
 from typing import List, Optional, Dict
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from pydantic import BaseModel, Field, field_validator, condecimal, ValidationInfo
 
@@ -219,12 +219,16 @@ class PortfolioSchema(PortfolioBase):
     # Include nested details when serializing
     assets: Optional[List[AssetSchema]] = []
     planned_changes: Optional[List[PlannedChangeSchema]] = [] # Removed alias='changes'
+    created_at: datetime 
+    updated_at: datetime
 
-    # Config is now inherited correctly from OrmBaseModel
-    # class Config(OrmBaseModel.Config):
-    #     pass
+# NEW Portfolio Summary Schema
+class PortfolioSummarySchema(PortfolioBase):
+    portfolio_id: int
+    user_id: int
+    total_value: Optional[Decimal] = Field(None, alias='totalValue') # Keep this, useful for dashboard
+    created_at: datetime
+    updated_at: datetime
+    # Excludes assets and planned_changes
 
-# Update Forward Refs if needed (often automatic in newer Pydantic/Python)
-# PortfolioSchema.update_forward_refs()
-# AssetSchema.update_forward_refs()
-# PlannedChangeSchema.update_forward_refs() 
+    # Config is inherited

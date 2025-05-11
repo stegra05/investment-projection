@@ -163,9 +163,9 @@ While specific error messages may vary, the backend aims to provide a consistent
           "user_id": 123, // integer (owner)
           "created_at": "2024-03-10T09:00:00Z", // string, datetime ISO 8601
           "updated_at": "2024-03-12T14:30:00Z", // string, datetime ISO 8601
-          "totalValue": "150000.00", // string, decimal (calculated summary. Field name matches PortfolioSchema alias)
-          "assets": [ /* array of asset objects, eager loaded */ ],
-          "planned_changes": [ /* array of planned change objects, eager loaded */ ]
+          "totalValue": "150000.00" // string, decimal (calculated summary. Field name matches PortfolioSchema alias)
+          // "assets" and "planned_changes" are not returned in the list view.
+          // Use GET /portfolios/{portfolio_id} with include parameters for full details.
         },
         {
           "portfolio_id": 2,
@@ -174,9 +174,8 @@ While specific error messages may vary, the backend aims to provide a consistent
           "user_id": 123,
           "created_at": "2024-02-01T11:00:00Z",
           "updated_at": "2024-02-01T11:00:00Z",
-          "totalValue": "75000.00",
-          "assets": [],
-          "planned_changes": []
+          "totalValue": "75000.00"
+          // "assets" and "planned_changes" are not returned in the list view.
         }
       ],
       "pagination": {
