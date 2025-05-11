@@ -1,10 +1,9 @@
 from flask import Blueprint, jsonify, current_app, abort
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 # Re-enable the original task_service import
-from app.services.task_service import get_task_status 
-
-# Remove the import of TEMP_TASK_RESULTS as it's now handled by the service
-# from app import TEMP_TASK_RESULTS
+from app.services.task_service import get_task_status
+from app.models import UserCeleryTask
+from app import db
 
 tasks_bp = Blueprint('tasks', __name__)
 
@@ -55,9 +54,20 @@ def get_task_status_route(task_id):
               format: date-time
               nullable: true
               description: Timestamp of when the task was completed or last updated.
+      403:
+        description: User does not have permission to access this task.
       404:
-        description: Task not found (Note: Celery might show unknown tasks as PENDING indefinitely).
+        description: Task not found or does not belong to the user.
     """
+    current_user_id = get_jwt_identity()
+    # Check if the task belongs to the current user
+    user_task = UserCeleryTask.query.filter_by(task_id=task_id, user_id=current_user_id).first()
+
+    if not user_task:
+        # To avoid leaking information about task existence, return 404
+        # if the task doesn't exist or doesn't belong to the user.
+        abort(404, description="Task not found or you do not have permission to view it.")
+
     status_data = get_task_status(task_id)
     return jsonify(status_data)
     # Rely on global 500 handler for other unexpected errors 
