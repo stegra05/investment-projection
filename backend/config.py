@@ -4,15 +4,15 @@ from datetime import timedelta
 import logging
 from logging.handlers import TimedRotatingFileHandler
 import sys
+from pathlib import Path
 
 # Load environment variables from .env file
-basedir = os.path.abspath(os.path.dirname(__file__))
-load_dotenv(os.path.join(basedir, '.env'))
+base_dir = Path(__file__).resolve().parent
+load_dotenv(base_dir / '.env')
 
 # --- Logging Configuration ---
-LOGS_DIR = os.path.join(basedir, 'logs')
-if not os.path.exists(LOGS_DIR):
-    os.makedirs(LOGS_DIR)
+LOGS_DIR = base_dir / 'logs'
+LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Define Log Formatters
 detailed_formatter = logging.Formatter(
@@ -24,7 +24,7 @@ simple_formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
 # --- Base File Handler Configuration ---
 def create_file_handler(filename, level, formatter):
     handler = TimedRotatingFileHandler(
-        os.path.join(LOGS_DIR, filename),
+        str(LOGS_DIR / filename),
         when='midnight',
         interval=1,
         backupCount=7,
@@ -71,7 +71,7 @@ class Config:
     # --------------------------
 
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'app.db') # Default to SQLite if not set
+        'sqlite:///' + str(base_dir / 'app.db') # Default to SQLite if not set, use pathlib & str()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # --- Celery Configuration ---
