@@ -80,8 +80,9 @@ def register(validated_data):
         #  abort(409, description="Username or email already exists.")
         raise ConflictError(message="Username or email already exists.")
 
-    hashed_password = generate_password_hash(password)
-    new_user = User(username=username, email=email, password_hash=hashed_password)
+    # new_user = User(username=username, email=email, password_hash=hashed_password) # Old way
+    new_user = User(username=username, email=email) # Create user without password hash first
+    new_user.set_password(password) # Set password using bcrypt via model's method
 
     try:
         db.session.add(new_user)
@@ -93,10 +94,6 @@ def register(validated_data):
         # abort(409, description="Username or email already exists (database constraint). Please try again.")
         raise ConflictError(message="Username or email already exists (database constraint). Please try again.")
     # Rely on global 500 handler for other unexpected errors
-    # except Exception as e:
-    #     db.session.rollback()
-    #     current_app.logger.exception(f"Unexpected error during user registration commit: {e}") # Log full traceback
-    #     abort(500, description=f"An unexpected error occurred during registration.")
 
     # Return the created user data (excluding password) using the schema
     return jsonify(UserSchema.from_orm(new_user).model_dump(exclude={'password_hash'})), 201

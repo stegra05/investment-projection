@@ -65,6 +65,11 @@ class Config:
     # JWT_REFRESH_CSRF_COOKIE_PATH = '/api/v1/auth/refresh'
     # Note: Access tokens are intended to be sent via headers, not cookies here.
 
+    # --- CORS Configuration ---
+    # Comma-separated list of allowed origins. Defaults to localhost:3000 for development.
+    CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
+    # --------------------------
+
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'app.db') # Default to SQLite if not set
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -194,8 +199,10 @@ class TestingConfig(Config):
 class ProductionConfig(Config):
     """Production configuration."""
     # Production settings might differ, e.g., database URL from production env
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'app.db')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') # No default to SQLite in prod
+    CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL')
+    CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND')
+
     # Ensure DEBUG is False in production
     DEBUG = False
     # Explicitly ensure Talisman security settings are enforced for production
@@ -204,6 +211,48 @@ class ProductionConfig(Config):
     TALISMAN_HSTS_PRELOAD = True # Enable HSTS preload in production once confirmed
     LOG_LEVEL = logging.INFO
     CONSOLE_LOG_LEVEL = logging.WARNING # Reduce console verbosity in production
+
+    def __init__(self):
+        super().__init__()
+        # Check for required environment variables in production
+        if not self.SQLALCHEMY_DATABASE_URI:
+            logging.critical("PRODUCTION ERROR: DATABASE_URL environment variable is not set.")
+            # Consider raising an exception here or exiting if critical for startup
+            # raise ValueError("PRODUCTION ERROR: DATABASE_URL environment variable is not set.")
+        else:
+            # Example check for PostgreSQL SSL
+            if self.SQLALCHEMY_DATABASE_URI.startswith('postgresql://') and 'sslmode=require' not in self.SQLALCHEMY_DATABASE_URI:
+                logging.warning(
+                    "PRODUCTION WARNING: SQLALCHEMY_DATABASE_URI for PostgreSQL does not explicitly specify 'sslmode=require'. "
+                    "Ensure the connection is secured via other means or update the URL."
+                )
+            # Add checks for other database types like MySQL (e.g., ?ssl_mode=REQUIRED) if needed
+
+        if not self.CELERY_BROKER_URL:
+            logging.critical("PRODUCTION ERROR: CELERY_BROKER_URL environment variable is not set.")
+        elif self.CELERY_BROKER_URL.startswith('redis://'):
+            logging.warning(
+                "PRODUCTION WARNING: CELERY_BROKER_URL is using 'redis://' (unencrypted). "
+                "Consider using 'rediss://' for a secure connection in production."
+            )
+
+        if not self.CELERY_RESULT_BACKEND:
+            logging.critical("PRODUCTION ERROR: CELERY_RESULT_BACKEND environment variable is not set.")
+        elif self.CELERY_RESULT_BACKEND.startswith('redis://'):
+            logging.warning(
+                "PRODUCTION WARNING: CELERY_RESULT_BACKEND is using 'redis://' (unencrypted). "
+                "Consider using 'rediss://' for a secure connection in production."
+            )
+        
+        if not self.SECRET_KEY or self.SECRET_KEY == 'you-will-never-guess':
+            logging.critical("PRODUCTION ERROR: SECRET_KEY is not set or is set to the default insecure value.")
+        
+        if not self.JWT_SECRET_KEY or self.JWT_SECRET_KEY == 'jwt-secret-string' or self.JWT_SECRET_KEY == self.SECRET_KEY:
+             logging.warning(
+                "PRODUCTION WARNING: JWT_SECRET_KEY is not set, is set to a default insecure value, or is the same as SECRET_KEY. "
+                "It is recommended to use a separate, strong key for JWT tokens."
+            )
+
 
 # Dictionary to map configuration names to classes
 config = {

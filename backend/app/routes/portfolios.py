@@ -30,18 +30,19 @@ portfolios_bp = Blueprint('portfolios', __name__, url_prefix='/api/v1/portfolios
 def verify_portfolio_ownership(f):
     """Decorator to fetch portfolio by ID, verify ownership, and inject portfolio.
     Assumes @jwt_required() has already validated the JWT for non-OPTIONS requests.
+    Flask-CORS and Flask-JWT-Extended are expected to handle OPTIONS preflight requests correctly.
     """
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
-        # Explicitly allow OPTIONS requests to pass through for CORS preflight
-        if request.method == 'OPTIONS':
-            return current_app.make_default_options_response()
-
         # For non-OPTIONS requests, JWT identity should be available via @jwt_required applied earlier.
+        # OPTIONS requests are typically handled by Flask-CORS and Flask-JWT-Extended before this point.
         user_id_str = get_jwt_identity()
         if user_id_str is None:
-            # This should ideally not happen if @jwt_required() is correctly applied before this decorator.
-            raise ApplicationException("Authentication required; user identity not found after JWT check.", status_code=401, logging_level="warning")
+            # This should ideally not happen if @jwt_required() is correctly applied before this decorator
+            # or if an OPTIONS request somehow bypassed earlier handlers.
+            current_app.logger.warning(f"verify_portfolio_ownership: User identity not found. Request method: {request.method}. Path: {request.path}")
+            # Abort with 401 if no identity is found, which is standard for missing/invalid JWT.
+            abort(401, description="Authentication required; user identity not found.")
         try:
             current_user_id = int(user_id_str)
         except (ValueError, TypeError):

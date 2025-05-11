@@ -124,7 +124,7 @@ def create_app(config_name='default'):
     # Initialize Flask extensions with the app instance
     db.init_app(app)
     migrate.init_app(app, db)
-    cors.init_app(app, origins="http://localhost:3000", 
+    cors.init_app(app, origins=app.config.get('CORS_ALLOWED_ORIGINS'), 
                   methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
                   allow_headers=["Content-Type", "Authorization"], 
                   supports_credentials=True, max_age=3600)
