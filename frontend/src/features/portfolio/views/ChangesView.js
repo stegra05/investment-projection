@@ -11,10 +11,10 @@ import ChangeDetailsList from '../components/ChangeDetailsList';
 import useFilteredChanges from '../hooks/useFilteredChanges';
 import useNotification from '../../../hooks/useNotification'; // Import the hook
 import {
-    SUCCESS_PLANNED_CHANGE_SAVED,
-    SUCCESS_PLANNED_CHANGE_DELETED,
-    ERROR_PLANNED_CHANGE_SAVE_FALLBACK,
-    ERROR_PLANNED_CHANGE_DELETE_FALLBACK,
+  SUCCESS_PLANNED_CHANGE_SAVED,
+  SUCCESS_PLANNED_CHANGE_DELETED,
+  ERROR_PLANNED_CHANGE_SAVE_FALLBACK,
+  ERROR_PLANNED_CHANGE_DELETE_FALLBACK,
 } from '../../../constants/textConstants'; // Assuming these constants exist or will be added
 import Spinner from '../../../components/Spinner/Spinner'; // Import Spinner
 

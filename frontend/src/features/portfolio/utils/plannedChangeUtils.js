@@ -179,17 +179,17 @@ const _processRecurringChange = (data) => {
   if (data.frequency === 'MONTHLY') {
     // Ensure day_of_month is parsed for monthly specific_day before _handleMonthlyRecurrence
     if (data.monthly_type === 'specific_day' && data.day_of_month) {
-        data.day_of_month = parseInt(data.day_of_month, 10);
+      data.day_of_month = parseInt(data.day_of_month, 10);
     }    
     currentError = _handleMonthlyRecurrence(data);
     if (currentError) return currentError;
   } else if (data.frequency === 'YEARLY') {
     // Ensure month_of_year and day_of_month are parsed before _handleYearlyRecurrence
     if (data.month_of_year) {
-        data.month_of_year = parseInt(data.month_of_year, 10);
+      data.month_of_year = parseInt(data.month_of_year, 10);
     }
     if (data.monthly_type === 'specific_day' && data.day_of_month) {
-        data.day_of_month = parseInt(data.day_of_month, 10);
+      data.day_of_month = parseInt(data.day_of_month, 10);
     }
     currentError = _handleYearlyRecurrence(data);
     if (currentError) return currentError;

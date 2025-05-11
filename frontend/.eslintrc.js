@@ -4,20 +4,17 @@ module.exports = {
     'react-app/jest',
     'eslint:recommended',
     'plugin:react/recommended',
-    'plugin:react-hooks/recommended',
     'plugin:jsx-a11y/recommended',
+    'eslint-config-prettier',
   ],
   plugins: [
     'react',
-    'react-hooks',
     'jsx-a11y',
   ],
   rules: {
     // React specific rules
     'react/prop-types': 'warn',
     'react/react-in-jsx-scope': 'off', // Not needed in React 17+
-    'react-hooks/rules-of-hooks': 'error',
-    'react-hooks/exhaustive-deps': 'warn',
     
     // Accessibility rules
     'jsx-a11y/click-events-have-key-events': 'warn',

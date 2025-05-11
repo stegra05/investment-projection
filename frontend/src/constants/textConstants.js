@@ -3,6 +3,8 @@
 // Success Messages
 export const SUCCESS_ASSET_DELETED = 'Asset deleted successfully!';
 export const SUCCESS_ASSET_UPDATED = 'Asset updated successfully!';
+export const SUCCESS_PLANNED_CHANGE_SAVED = 'Planned change saved successfully!';
+export const SUCCESS_PLANNED_CHANGE_DELETED = 'Planned change deleted successfully!';
 
 // Confirmation Modal Texts
 export const CONFIRM_DELETE_ASSET_TITLE = 'Confirm Deletion';
@@ -11,6 +13,8 @@ export const CONFIRM_DELETE_ASSET_MESSAGE = 'Are you sure you want to delete thi
 
 // Loading / Fallback Messages
 export const ERROR_ASSET_DELETE_FALLBACK = 'Failed to delete asset. Please try again.';
+export const ERROR_PLANNED_CHANGE_SAVE_FALLBACK = 'Failed to save planned change. Please try again.';
+export const ERROR_PLANNED_CHANGE_DELETE_FALLBACK = 'Failed to delete planned change. Please try again.';
 export const LOADING_PORTFOLIO_DATA = 'Loading portfolio data or portfolio not selected...';
 
 // Common Labels & Headings

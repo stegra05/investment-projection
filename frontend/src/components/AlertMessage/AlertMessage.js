@@ -10,23 +10,23 @@ const AlertMessage = ({ type = 'error', message, title, className = '' }) => {
   // let IconComponent = null; // Placeholder for icon
 
   switch (type) {
-    case 'success':
-      typeClasses = 'bg-green-50 border-green-300 text-green-700';
-      // IconComponent = FaCheckCircle;
-      break;
-    case 'warning':
-      typeClasses = 'bg-yellow-50 border-yellow-300 text-yellow-700';
-      // IconComponent = FaExclamationTriangle; // Example
-      break;
-    case 'info':
-      typeClasses = 'bg-blue-50 border-blue-300 text-blue-700';
-      // IconComponent = FaInfoCircle;
-      break;
-    case 'error':
-    default:
-      typeClasses = 'bg-red-50 border-red-300 text-red-700';
-      // IconComponent = FaExclamationCircle;
-      break;
+  case 'success':
+    typeClasses = 'bg-green-50 border-green-300 text-green-700';
+    // IconComponent = FaCheckCircle;
+    break;
+  case 'warning':
+    typeClasses = 'bg-yellow-50 border-yellow-300 text-yellow-700';
+    // IconComponent = FaExclamationTriangle; // Example
+    break;
+  case 'info':
+    typeClasses = 'bg-blue-50 border-blue-300 text-blue-700';
+    // IconComponent = FaInfoCircle;
+    break;
+  case 'error':
+  default:
+    typeClasses = 'bg-red-50 border-red-300 text-red-700';
+    // IconComponent = FaExclamationCircle;
+    break;
   }
 
   return (

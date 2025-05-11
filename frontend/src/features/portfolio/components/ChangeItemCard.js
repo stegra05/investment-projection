@@ -139,8 +139,8 @@ const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected, 
                   : change.targetAllocationJson || {}
               ).map(([assetId, percentage]) => {
                 const assetName = assetIdToNameMap && assetIdToNameMap[assetId] 
-                                  ? `${assetIdToNameMap[assetId]} (ID: ${assetId})` 
-                                  : `Asset ${assetId}`;
+                  ? `${assetIdToNameMap[assetId]} (ID: ${assetId})` 
+                  : `Asset ${assetId}`;
                 return (
                   <li key={assetId}>
                     {assetName}: {Number(percentage).toFixed(2)}%
