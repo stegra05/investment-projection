@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, current_app
 import json
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -27,11 +27,6 @@ limiter = Limiter(
 talisman = Talisman()
 
 # 1. Define Celery app globally
-# The name 'app' here for the Celery app is conventional if it's the main app for the 'app' Python package.
-# However, using 'celery_app' consistently avoids confusion with Flask's 'app'.
-# The first argument to Celery is typically the main module name of the app.
-# If this file is app/__init__.py, then 'app' as the module name is correct.
-# Let's use a placeholder name first, to be updated in create_app.
 celery_app = Celery('app') # Placeholder name, will be updated
 
 # Store the original base task class from this specific celery_app instance
@@ -45,17 +40,17 @@ class ContextTask(OriginalCeleryTask):
         if not hasattr(self.app, '_flask_app_instance') or self.app._flask_app_instance is None:
             raise RuntimeError("Flask app instance not set on Celery app. Ensure create_app sets celery_app._flask_app_instance.")
         with self.app._flask_app_instance.app_context():
-            # When calling super(), it correctly calls the __call__ of OriginalCeleryTask
             return super().__call__(*args, **kwargs)
 
-# Set the custom task class on the global celery_app
 celery_app.Task = ContextTask
 
 # 4. Import tasks AFTER celery_app and its .Task attribute are defined
 #    The tasks will be registered against this celery_app instance using @celery_app.task
+# Ensure background_workers.py does not cause circular imports with models if imported globally
 from . import background_workers
 
 # Import error handlers
+# Ensure error_handlers.py does not cause circular imports with models if imported globally
 from app.error_handlers import register_error_handlers
 # --------------------------------------------------------------------------
 
@@ -86,30 +81,23 @@ def create_app(config_name='default'):
         )
         app.logger.addHandler(error_file_handler)
         # Also send errors from other loggers (e.g. SQLAlchemy) to this file
-        logging.getLogger().addHandler(error_file_handler) 
+        logging.getLogger().addHandler(error_file_handler)
 
     # Console Handler for app logger
     if hasattr(current_config, 'CONSOLE_LOG_LEVEL'):
         console_handler.setLevel(current_config.CONSOLE_LOG_LEVEL)
         app.logger.addHandler(console_handler)
-    
+
     # Set app logger level
     if hasattr(current_config, 'LOG_LEVEL'):
         app.logger.setLevel(current_config.LOG_LEVEL)
-    
+
     app.logger.info("Flask app logger initialized.")
 
     # --- SQLAlchemy Logging Configuration (Optional) ---
-    # To enable, set SQLALCHEMY_ECHO = True in your config or use the setup below
-    # Or control via environment variable if desired.
-    # if app.config.get('SQLALCHEMY_ECHO', False) or os.environ.get('SQLALCHEMY_LOG_SQL'):
     sql_alchemy_logger = logging.getLogger('sqlalchemy.engine')
-    # Set level (INFO for statements, DEBUG for statements + result sets)
-    sql_alchemy_logger.setLevel(current_config.LOG_LEVEL if hasattr(current_config, 'LOG_LEVEL') else logging.INFO) 
-    # Add flask_app.log handler to sqlalchemy logger if not already added by root logger setup for errors
-    # This ensures SQL logs go to the main app log as well as potentially console
+    sql_alchemy_logger.setLevel(current_config.LOG_LEVEL if hasattr(current_config, 'LOG_LEVEL') else logging.INFO)
     if hasattr(current_config, 'FLASK_APP_LOG_FILE') and hasattr(current_config, 'LOG_LEVEL'):
-        # Avoid duplicate handlers if flask_app_log_handler is already on root or sqlalchemy logger
         already_has_app_handler = any(
             h.baseFilename == app_file_handler.baseFilename for h in sql_alchemy_logger.handlers
         ) or any(
@@ -117,16 +105,16 @@ def create_app(config_name='default'):
         )
         if not already_has_app_handler:
              sql_alchemy_logger.addHandler(app_file_handler) # Use the same app_file_handler
-    
+
     sql_alchemy_logger.info("SQLAlchemy logging configured.")
     # --- End Logging Setup ---
 
     # Initialize Flask extensions with the app instance
     db.init_app(app)
     migrate.init_app(app, db)
-    cors.init_app(app, origins=app.config.get('CORS_ALLOWED_ORIGINS'), 
-                  methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
-                  allow_headers=["Content-Type", "Authorization"], 
+    cors.init_app(app, origins=app.config.get('CORS_ALLOWED_ORIGINS'),
+                  methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                  allow_headers=["Content-Type", "Authorization"],
                   supports_credentials=True, max_age=3600)
     jwt.init_app(app)
     limiter.init_app(app)
@@ -143,17 +131,27 @@ def create_app(config_name='default'):
     )
 
     # Configure the global celery_app instance
-    # Update its main name and configuration from the Flask app
-    celery_app.main = app.import_name # Set Celery app name based on Flask app
+    celery_app.main = app.import_name
     celery_app.conf.update(
         broker_url=app.config['CELERY_BROKER_URL'],
         result_backend=app.config['CELERY_RESULT_BACKEND']
-        # You can add other Celery config items from app.config here
     )
-    
-    # Set the Flask app instance directly on the celery_app object
     celery_app._flask_app_instance = app
-    
+
+    # Import User model HERE, inside create_app, after db and jwt are initialized with app
+    from .models.user import User
+
+    # Define and register JWT user loader HERE
+    @jwt.user_lookup_loader
+    def user_lookup_callback(_jwt_header, jwt_data):
+        identity = jwt_data["sub"]
+        try:
+            user_id = int(identity)
+        except ValueError:
+            app.logger.error(f"Invalid user identity format in JWT: {identity}") # Use app.logger
+            return None
+        return User.query.get(user_id)
+
     # Import and register blueprints
     from app.routes.main import bp as main_bp
     app.register_blueprint(main_bp)
@@ -178,26 +176,19 @@ def create_app(config_name='default'):
     # --- Request Logging ---
     @app.before_request
     def before_request_logging():
-        # Store start time on the request context (g)
-        # g is a Flask global object that is unique to each request
         from flask import g
         g.start_time = time.monotonic()
 
     @app.after_request
     def after_request_logging(response):
-        from flask import g, request # request is already imported globally, but good for clarity here
-        # Calculate duration if start_time is set
+        from flask import g, request
         duration_ms = (time.monotonic() - g.start_time) * 1000 if hasattr(g, 'start_time') else -1
-        
-        # Prepare log message
-        # Exclude /static paths or other noisy endpoints if desired
-        if not request.path.startswith('/static'): # Example exclusion
+        if not request.path.startswith('/static'):
             log_message = (
                 f"Request: {request.remote_addr} '{request.method} {request.path} {request.scheme.upper()}/{request.environ.get('SERVER_PROTOCOL', '').split('/')[1]}' "
                 f"Status: {response.status_code} Size: {response.content_length} Duration: {duration_ms:.2f}ms "
                 f"Referer: '{request.referrer or '-'}' User-Agent: '{request.user_agent.string or '-'}'"
             )
-            # Log based on status code
             if 200 <= response.status_code < 400:
                 app.logger.info(log_message)
             elif 400 <= response.status_code < 500:
@@ -205,7 +196,7 @@ def create_app(config_name='default'):
             elif response.status_code >= 500:
                 app.logger.error(log_message)
             else:
-                app.logger.debug(log_message) # For other statuses like 1xx
+                app.logger.debug(log_message)
         return response
     # --- End Request Logging ---
 
@@ -216,6 +207,9 @@ def create_app(config_name='default'):
     return app
 
 # Import models here AFTER the app factory definition and extension initializations
+# This global import of 'models' might still be problematic if it triggers the User->db cycle
+# If the error persists, this 'try-except' block for importing '.models' globally might need to be removed
+# or models should only be imported within create_app or where specifically needed.
 try:
     from . import models
 except ImportError as e:

@@ -80,6 +80,28 @@ const portfolioService = {
     }
   },
 
+  /**
+   * Updates an existing asset within a specific portfolio.
+   * @param {string|number} portfolioId - The ID of the portfolio.
+   * @param {string|number} assetId - The ID of the asset to update.
+   * @param {object} assetData - The data to update the asset with.
+   * @returns {Promise<object>} A promise that resolves to the updated asset object.
+   * @throws {Error} Throws an error if the API request fails.
+   */
+  updateAssetInPortfolio: async (portfolioId, assetId, assetData) => {
+    try {
+      // Assuming you have an endpoint like ENDPOINTS.PORTFOLIO.UPDATE_ASSET(portfolioId, assetId)
+      // If not, you'll need to define it in your ENDPOINTS configuration.
+      // Example: UPDATE_ASSET: (portfolioId, assetId) => `portfolios/${portfolioId}/assets/${assetId}`,
+      const endpoint = ENDPOINTS.PORTFOLIO.UPDATE_ASSET(portfolioId, assetId);
+      const response = await instance.put(endpoint, assetData);
+      return response.data; // Assuming API returns the updated asset
+    } catch (error) {
+      console.error(`Error updating asset ${assetId} in portfolio ${portfolioId}:`, error);
+      throw error;
+    }
+  },
+
   // Projection Preview
   /**
    * Requests a projection preview with temporary planned changes.

@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, current_app, abort
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 # Re-enable the original task_service import
 from app.services.task_service import get_task_status
 from app.models import UserCeleryTask
@@ -9,65 +9,53 @@ tasks_bp = Blueprint('tasks', __name__)
 
 @tasks_bp.route('/<string:task_id>', methods=['GET'])
 @jwt_required()
-def get_task_status_route(task_id):
-    """
-    Returns the status of a background task.
-    Uses the task_service to fetch task status.
-    ---
-    parameters:
-      - name: task_id
-        in: path
-        type: string
-        required: true
-        description: Unique identifier of the task.
-    responses:
-      200:
-        description: Task status retrieved successfully.
-        schema:
-          type: object
-          properties:
-            task_id:
-              type: string
-              description: The task identifier.
-            status:
-              type: string
-              description: Current status of the task (e.g., PENDING, STARTED, SUCCESS, FAILURE, RETRY).
-            result:
-              type: object
-              nullable: true
-              description: Task result if completed (structure depends on task).
-            message:
-              type: string
-              nullable: true
-              description: Additional message from the task if available.
-            error:
-              type: string
-              nullable: true
-              description: Error message if task failed, null otherwise.
-            created_at:
-              type: string
-              format: date-time
-              nullable: true
-              description: Timestamp of when the task was created (placeholder).
-            updated_at:
-              type: string
-              format: date-time
-              nullable: true
-              description: Timestamp of when the task was completed or last updated.
-      403:
-        description: User does not have permission to access this task.
-      404:
-        description: Task not found or does not belong to the user.
-    """
-    current_user_id = get_jwt_identity()
-    # Check if the task belongs to the current user
-    user_task = UserCeleryTask.query.filter_by(task_id=task_id, user_id=current_user_id).first()
+def get_task_by_id(task_id):
+    # VERY EARLY LOGGING
+    current_app.logger.info(f"[tasks.py] GET /api/v1/tasks/{task_id} - ROUTE HIT") 
+    try:
+        current_app.logger.debug(f"[tasks.py] Entering get_task_by_id for task_id: {task_id}, user_id from JWT: {get_jwt_identity()}")
+        
+        # It's good practice to verify current_user exists, though @jwt_required should handle it.
+        if not current_user:
+            current_app.logger.error(f"[tasks.py] current_user is None for task_id: {task_id}. This should not happen with @jwt_required.")
+            abort(500, description="User context not available after JWT authentication.")
 
-    if not user_task:
-        # To avoid leaking information about task existence, return 404
-        # if the task doesn't exist or doesn't belong to the user.
-        abort(404, description="Task not found or you do not have permission to view it.")
+        current_app.logger.debug(f"[tasks.py] current_user.id: {current_user.id} for task_id: {task_id}")
 
-    status_data = get_task_status(task_id)
-    return jsonify(status_data)
-    # Rely on global 500 handler for other unexpected errors 
+        # Ensure the task belongs to the current user
+        current_app.logger.debug(f"[tasks.py] Querying UserCeleryTask for task_id: {task_id}, user_id: {str(current_user.id)}")
+        user_task = UserCeleryTask.query.filter_by(task_id=task_id, user_id=str(current_user.id)).first_or_404(
+            description=f"Task with ID {task_id} not found for the current user or query failed."
+        )
+        current_app.logger.debug(f"[tasks.py] UserCeleryTask found: {user_task} for task_id: {task_id}")
+
+        task_info = get_task_status(task_id)
+        current_app.logger.debug(f"[tasks.py] Task info from service for {task_id}: {task_info}")
+
+        return jsonify(task_info), 200
+    except Exception as e:
+        current_app.logger.error(f"[tasks.py] UNCAUGHT EXCEPTION in get_task_by_id for task_id {task_id}: {str(e)}", exc_info=True)
+        # Return a generic 500 error, but the logs will have the details
+        abort(500, description="An unexpected error occurred while fetching task status.")
+
+# Example route for initiating a task (replace with your actual task initiation logic)
+@tasks_bp.route('/run_example_task', methods=['POST'])
+@jwt_required()
+def run_example_task_route():
+    current_app.logger.info(f"[tasks.py] POST /run_example_task - ROUTE HIT by user {get_jwt_identity()}")
+    try:
+        # Make sure current_user is available
+        user_id = current_user.id 
+        # from app.background_workers import example_task # Assuming you have such a task
+        # task = example_task.delay(user_id=user_id)
+        
+        # Placeholder for actual task dispatch
+        task_id = "fake-task-id-for-example-" + str(user_id)
+        UserCeleryTask.create_task_for_user(user_id=user_id, task_id=task_id)
+        db.session.commit() 
+        current_app.logger.info(f"[tasks.py] Example task {task_id} dispatched for user {user_id}.")
+        return jsonify({"message": "Example task initiated", "task_id": task_id}), 202
+    except Exception as e:
+        current_app.logger.error(f"[tasks.py] UNCAUGHT EXCEPTION in run_example_task_route: {str(e)}", exc_info=True)
+        db.session.rollback()
+        abort(500, description="An unexpected error occurred while initiating example task.") 

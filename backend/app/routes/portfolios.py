@@ -35,8 +35,15 @@ def verify_portfolio_ownership(f):
     """
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
+        # If the request is an OPTIONS request, Flask-CORS and Flask-JWT-Extended will handle it.
+        # Bypass decorator logic for OPTIONS to allow preflight requests.
+        if request.method == 'OPTIONS':
+            return current_app.make_default_options_response()
+                                      # if the route itself doesn't need to handle OPTIONS.
+                                      # However, given the routes specify 'OPTIONS', letting it pass
+                                      # to the route function which then relies on Flask-CORS is safer.
+
         # For non-OPTIONS requests, JWT identity should be available via @jwt_required applied earlier.
-        # OPTIONS requests are typically handled by Flask-CORS and Flask-JWT-Extended before this point.
         user_id_str = get_jwt_identity()
         if user_id_str is None:
             # This should ideally not happen if @jwt_required() is correctly applied before this decorator

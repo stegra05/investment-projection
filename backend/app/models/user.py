@@ -1,4 +1,4 @@
-from app import db
+from .. import db
 # Remove werkzeug imports and add bcrypt
 # from werkzeug.security import generate_password_hash, check_password_hash
 import bcrypt

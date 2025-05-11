@@ -25,48 +25,101 @@ def get_task_status(task_id):
     Raises:
         KeyError: if the task_id is not found (though Celery might behave differently, e.g. PENDING for unknown).
     """
-    task_result = AsyncResult(task_id, app=celery_app)
-    
-    celery_status = task_result.status # Celery status: PENDING, STARTED, RETRY, FAILURE, SUCCESS
-    result_data = None
-    error_data = None
+    current_app.logger.debug(f"[task_service] Getting status for task_id: {task_id}")
+    try:
+        task_result = AsyncResult(task_id, app=celery_app)
+        current_app.logger.debug(f"[task_service] Task {task_id} AsyncResult acquired. State: {task_result.state}, Info: {task_result.info}")
 
-    # Map Celery status to your application's status terminology
-    app_status_map = {
-        "PENDING": "PENDING",    # Or your app's equivalent like "QUEUED"
-        "STARTED": "PROCESSING", # Or "RUNNING"
-        "SUCCESS": "COMPLETED",  # This is the key change
-        "FAILURE": "FAILED",
-        "RETRY": "PROCESSING",   # Or "RETRYING", tasks in retry often appear as PENDING or a custom state
-        # Add other Celery statuses if necessary (e.g., REVOKED)
-    }
-    application_status = app_status_map.get(celery_status, celery_status) # Fallback to Celery status if not in map
+        celery_status = task_result.status
+        current_app.logger.debug(f"[task_service] Task {task_id} Celery status: {celery_status}")
 
-    if task_result.successful():
-        result_data = task_result.result
-    elif task_result.failed():
-        # task_result.result or task_result.traceback can contain error info
-        error_info = task_result.result # The exception object
-        error_data = str(error_info) # Convert exception to string for simple representation
-        # For more detail, you might want task_result.traceback
-        current_app.logger.debug(f"Task {task_id} failed. Traceback: {task_result.traceback}")
-    elif celery_status == 'PENDING' and not task_result.info: # Check if it's truly pending or just unknown
-        # A task ID that Celery doesn't know about will also show as PENDING initially.
-        # If task_result.info is None or empty after a short while, it likely doesn't exist.
-        # For simplicity, we are not raising KeyError here anymore, the route will return PENDING.
-        # The route handler can decide if PENDING for an unknown task_id should be a 404.
-        pass # Keep status as PENDING
+        app_status_map = {
+            "PENDING": "PENDING",
+            "STARTED": "PROCESSING",
+            "SUCCESS": "COMPLETED",
+            "FAILURE": "FAILED",
+            "RETRY": "PROCESSING",
+        }
+        application_status = app_status_map.get(celery_status, celery_status)
+        current_app.logger.debug(f"[task_service] Task {task_id} Mapped application_status: {application_status}")
 
-    response = {
-        "task_id": task_id,
-        "status": application_status, # Use the mapped status
-        "result": result_data.get("data") if isinstance(result_data, dict) and "data" in result_data else None, # Extract nested data if present
-        "message": result_data.get("message") if isinstance(result_data, dict) and "message" in result_data else None,
-        "error": error_data, 
-        # Timestamps are not straightforward with AsyncResult alone.
-        # For more detailed timestamps, you might need to store them separately 
-        # when the task is created or use Celery events monitoring.
-        "created_at": None, # Placeholder 
-        "updated_at": task_result.date_done.isoformat() if task_result.date_done else None # When task finished
-    }
-    return response
+        api_result = None
+        api_message = None
+        error_data = None
+
+        if task_result.successful():
+            current_app.logger.debug(f"[task_service] Task {task_id} is successful.")
+            result_data = task_result.result
+            current_app.logger.debug(f"[task_service] Task {task_id} result_data type: {type(result_data)}, value: {result_data}")
+            if isinstance(result_data, dict):
+                api_result = result_data.get("data")
+                api_message = result_data.get("status") 
+                if "message" in result_data:
+                    api_message = result_data.get("message")
+                if not api_message:
+                    api_message = "Task completed successfully."
+            else:
+                api_result = result_data 
+                api_message = "Task completed successfully with non-dictionary result."
+            current_app.logger.debug(f"[task_service] Task {task_id} successful processing: api_result: {api_result is not None}, api_message: {api_message}")
+
+        elif task_result.failed():
+            current_app.logger.warning(f"[task_service] Task {task_id} failed.")
+            error_info = task_result.result
+            error_data = str(error_info) 
+            current_app.logger.debug(f"[task_service] Task {task_id} failure info: {error_info}. Traceback: {task_result.traceback}")
+            api_message = "Task failed. See error field for details."
+
+        elif celery_status == 'PENDING': # Removed 'and not task_result.info' to provide a message even if info is present
+            current_app.logger.debug(f"[task_service] Task {task_id} is PENDING. Info: {task_result.info}")
+            api_message = "Task is pending."
+            if task_result.info and isinstance(task_result.info, dict) and 'status' in task_result.info:
+                 api_message = f"Task is pending: {task_result.info.get('status')}"
+            elif task_result.info:
+                api_message = f"Task is pending with status: {str(task_result.info)}"
+        
+        if not api_message and (application_status == "PROCESSING" or celery_status == 'STARTED' or celery_status == 'RETRY'):
+            current_app.logger.debug(f"[task_service] Task {task_id} is PROCESSING/STARTED/RETRY without a specific message yet.")
+            api_message = f"Task is currently {application_status.lower()}."
+            if task_result.info and isinstance(task_result.info, dict) and 'status' in task_result.info:
+                 api_message = f"Task is {application_status.lower()}: {task_result.info.get('status')}"
+            elif task_result.info:
+                api_message = f"Task is {application_status.lower()} with status: {str(task_result.info)}"
+
+        # Ensure a default message if none is set
+        if not api_message:
+            api_message = f"Task status: {application_status}."
+            current_app.logger.debug(f"[task_service] Task {task_id} setting default api_message: {api_message}")
+
+        date_done_iso = None
+        if task_result.date_done:
+            try:
+                date_done_iso = task_result.date_done.isoformat()
+            except AttributeError as e_iso:
+                current_app.logger.warning(f"[task_service] Task {task_id} had date_done but failed to isoformat: {e_iso}")
+        current_app.logger.debug(f"[task_service] Task {task_id} date_done_iso: {date_done_iso}")
+
+        response = {
+            "task_id": task_id,
+            "status": application_status,
+            "result": api_result,
+            "message": api_message,
+            "error": error_data,
+            "created_at": None, 
+            "updated_at": date_done_iso
+        }
+        current_app.logger.debug(f"[task_service] Task {task_id} final response payload: {response}")
+        return response
+
+    except Exception as e_main:
+        current_app.logger.error(f"[task_service] CRITICAL error in get_task_status for {task_id}: {str(e_main)}", exc_info=True)
+        # Fallback response in case of unexpected error within get_task_status itself
+        return {
+            "task_id": task_id,
+            "status": "UNKNOWN_ERROR",
+            "result": None,
+            "message": "An internal error occurred while fetching task status.",
+            "error": str(e_main),
+            "created_at": None,
+            "updated_at": None
+        }
