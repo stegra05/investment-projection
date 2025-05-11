@@ -9,6 +9,9 @@ from app.schemas.portfolio_schemas import ( # Import relevant schemas
 )
 from app.utils.helpers import get_owned_child_or_404 # Import the new helper
 
+# Import custom exceptions
+from app.utils.exceptions import PlannedChangeNotFoundError, BadRequestError
+
 changes_bp = Blueprint('changes', __name__)
 
 # --- Helper Function ---
@@ -22,7 +25,7 @@ def get_change_or_404(portfolio: Portfolio, change_id: int):
      # Fallback query
      change_fallback = PlannedFutureChange.query.filter_by(portfolio_id=portfolio.portfolio_id, change_id=change_id).first()
      if change_fallback is None:
-         abort(404, description=f"Planned change with id {change_id} not found within portfolio {portfolio.portfolio_id}.")
+        raise PlannedChangeNotFoundError(message=f"Planned change with id {change_id} not found within portfolio {portfolio.portfolio_id}.")
      return change_fallback
 
 # --- Planned Future Change Routes (Moved from portfolios.py, Task 5.5) ---
@@ -83,9 +86,9 @@ def update_planned_change(portfolio_id, change_id, portfolio, validated_data):
     # We might need a custom check here, or enhance the decorator/schema.
     # For now, keeping the manual check as it was.
     if change.change_type in ['Contribution', 'Withdrawal'] and change.amount is None:
-        abort(400, description=f"'{change.change_type}' requires an 'amount'.")
+        raise BadRequestError(message=f"'{change.change_type}' requires an 'amount'.")
     if change.change_type == 'Reallocation' and change.amount is not None:
-        abort(400, description="'Reallocation' change type should not include an 'amount'.")
+        raise BadRequestError(message="'Reallocation' change type should not include an 'amount'.")
 
     # Commit handled by decorator
     # db.session.refresh(change) # Also removed - Refresh might be unnecessary here too after update.

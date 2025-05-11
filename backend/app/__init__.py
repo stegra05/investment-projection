@@ -8,10 +8,9 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_talisman import Talisman
 from config import Config, config
+from celery import Celery
 from werkzeug.exceptions import HTTPException
 
-# --- Added for background task simulation ---
-import threading
 # -----------------------------------------
 
 # Initialize extensions
@@ -25,15 +24,18 @@ limiter = Limiter(
 )
 talisman = Talisman()
 
-# Import the worker function and task results from the new module
-from app.background_workers import projection_worker_function, TEMP_TASK_RESULTS
+# Celery initialization function
+def make_celery(app_name=__name__):
+    # Use a default broker and backend if not found in config,
+    # or rely on Celery to pick up from app.config
+    # This basic setup assumes Celery config is loaded into Flask app.config
+    return Celery(app_name)
+
+celery_app = make_celery()
+
 # Import error handlers
 from app.error_handlers import register_error_handlers
 # --------------------------------------------------------------------------
-
-# --- Simulated Projection Worker ---
-# Removed projection_worker_function and TEMP_TASK_RESULTS from here
-# -------------------------------
 
 def create_app(config_name='default'): # Changed argument name for clarity
     """Application factory pattern"""
@@ -71,6 +73,23 @@ def create_app(config_name='default'): # Changed argument name for clarity
         # Add other Talisman options as needed
     )
 
+    # Update Celery configuration with Flask app config
+    # Celery will use CELERY_BROKER_URL and CELERY_RESULT_BACKEND from app.config
+    celery_app.conf.update(
+        broker_url=app.config['CELERY_BROKER_URL'],
+        result_backend=app.config['CELERY_RESULT_BACKEND']
+        # Add other Celery settings if needed
+    )
+    # Make tasks run within Flask application context
+    TaskBase = celery_app.Task
+    class ContextTask(TaskBase):
+        abstract = True
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return TaskBase.__call__(self, *args, **kwargs)
+    celery_app.Task = ContextTask
+
+
     from app.routes.main import bp as main_bp
     app.register_blueprint(main_bp)
 
@@ -95,11 +114,6 @@ def create_app(config_name='default'): # Changed argument name for clarity
     from app.routes.tasks import tasks_bp
     app.register_blueprint(tasks_bp, url_prefix='/api/v1/tasks')
 
-    # --- Start the projection worker thread ---
-    # Pass the application context to the worker function
-    worker_thread = threading.Thread(target=projection_worker_function, args=(app.app_context(),), daemon=True)
-    worker_thread.start()
-    app.logger.info("Projection worker thread started.")
     # ---------------------------------------
 
     # --- Register Custom Error Handlers ---
@@ -119,7 +133,7 @@ try:
     from . import models
 except ImportError as e:
     # This might happen during initial setup before models.py exists
-    print(f"--- app/__init__.py: Could not import app.models (normal if models don't exist yet): {e} ---")
+    print(f"--- app/__init__.py: Could not import app.models (normal if models don\'t exist yet): {e} ---")
 except Exception as e:
     print(f"--- app/__init__.py: ERROR importing app.models: {e} ---")
     import traceback

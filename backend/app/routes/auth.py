@@ -14,6 +14,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app.utils.decorators import handle_api_errors
 from app.schemas.auth_schemas import UserRegistrationSchema, UserLoginSchema, UserSchema
 
+# Import custom exceptions
+from app.utils.exceptions import ConflictError, BadRequestError, ApplicationException, ExternalServiceError
+
 # Define the blueprint: 'auth', prefix: /api/v1/auth
 # Following API spec (prefix /api/v1/)
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/v1/auth')
@@ -77,7 +80,8 @@ def register(validated_data):
 
     # Check if user already exists (optional, DB constraint handles it too)
     if User.query.filter((User.username == username) | (User.email == email)).first():
-         abort(409, description="Username or email already exists.")
+        #  abort(409, description="Username or email already exists.")
+        raise ConflictError(message="Username or email already exists.")
 
     hashed_password = generate_password_hash(password)
     new_user = User(username=username, email=email, password_hash=hashed_password)
@@ -89,7 +93,8 @@ def register(validated_data):
         # This is the expected error for duplicate username/email if the initial check missed a race condition
         db.session.rollback()
         logging.warning(f"Database integrity error during registration: {ie}") # Log as warning
-        abort(409, description="Username or email already exists (database constraint). Please try again.")
+        # abort(409, description="Username or email already exists (database constraint). Please try again.")
+        raise ConflictError(message="Username or email already exists (database constraint). Please try again.")
     # Rely on global 500 handler for other unexpected errors
     # except Exception as e:
     #     db.session.rollback()
@@ -109,7 +114,8 @@ def login():
     if not identifier or not password:
         # Log missing credentials attempt
         logging.warning(f"Login attempt failed: Missing identifier or password. Source IP: {request.remote_addr}")
-        return jsonify({"message": "Missing username/email or password"}), 400
+        # return jsonify({"message": "Missing username/email or password"}), 400
+        raise BadRequestError("Missing username/email or password")
     # Search for user by email or username
     user = User.query.filter(
         or_(User.email == identifier, User.username == identifier)
@@ -138,7 +144,8 @@ def login():
     else:
         # Log failed login
         logging.warning(f"Login failed: Invalid credentials for identifier '{identifier}'. Source IP: {request.remote_addr}")
-        return jsonify({"message": "Invalid email or password"}), 401
+        # return jsonify({"message": "Invalid email or password"}), 401
+        raise ApplicationException("Invalid email or password", status_code=401, logging_level="warning")
 
 @auth_bp.route('/logout', methods=['POST'])
 @jwt_required() # Protect this route

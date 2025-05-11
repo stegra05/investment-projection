@@ -13,6 +13,11 @@ from app.schemas.portfolio_schemas import (
     BulkAllocationUpdateSchema # Import the new schema
 )
 
+# Import custom exceptions
+from app.utils.exceptions import (
+    ApplicationException, PortfolioNotFoundError, AccessDeniedError, BadRequestError
+)
+
 # Define the blueprint: 'portfolios', prefix: /api/v1/portfolios
 portfolios_bp = Blueprint('portfolios', __name__, url_prefix='/api/v1/portfolios')
 
@@ -34,26 +39,26 @@ def verify_portfolio_ownership(f):
         user_id_str = get_jwt_identity()
         if user_id_str is None:
             # This should ideally not happen if @jwt_required() is correctly applied before this decorator.
-            abort(401, "Authentication required; user identity not found after JWT check.")
+            raise ApplicationException("Authentication required; user identity not found after JWT check.", status_code=401, logging_level="warning")
         try:
             current_user_id = int(user_id_str)
         except (ValueError, TypeError):
-            abort(401, "Invalid user identity format in token.")
+            raise ApplicationException("Invalid user identity format in token.", status_code=401, logging_level="warning")
 
         portfolio_id = kwargs.get('portfolio_id')
         if portfolio_id is None:
-            abort(500, "Developer error: portfolio_id missing in route arguments for ownership check.")
+            raise ApplicationException("Developer error: portfolio_id missing in route arguments for ownership check.", status_code=500)
 
         portfolio = Portfolio.query.options(
             db.joinedload(Portfolio.assets),
         ).get(portfolio_id)
 
         if portfolio is None:
-            abort(404, description=f"Portfolio with id {portfolio_id} not found.")
+            raise PortfolioNotFoundError(message=f"Portfolio with id {portfolio_id} not found.")
 
         if portfolio.user_id != current_user_id:
             logging.warning(f"Access denied: UserID='{current_user_id}' attempted to access PortfolioID='{portfolio_id}' owned by UserID='{portfolio.user_id}'. Source IP: {request.remote_addr}")
-            abort(403, description="User does not have permission to access this portfolio.")
+            raise AccessDeniedError(message="User does not have permission to access this portfolio.")
 
         kwargs['portfolio'] = portfolio
         return f(*args, **kwargs)
@@ -80,7 +85,7 @@ def _validate_bulk_allocation_data(portfolio, allocation_data, current_app):
     if len(portfolio_asset_ids) != len(payload_asset_ids):
         error_msg = "Payload must include allocation for all assets currently in the portfolio."
         current_app.logger.warning(f"Validation Error: {error_msg} (Payload: {len(payload_asset_ids)}, Portfolio: {len(portfolio_asset_ids)}) ")
-        abort(400, description=error_msg)
+        raise BadRequestError(message=error_msg)
 
     # 2. Check if all asset IDs in the payload belong to the portfolio (Set comparison)
     if payload_asset_ids != portfolio_asset_ids:
@@ -88,7 +93,8 @@ def _validate_bulk_allocation_data(portfolio, allocation_data, current_app):
         extra_in_payload = payload_asset_ids - portfolio_asset_ids
         error_msg = "Asset IDs in payload do not exactly match assets in portfolio."
         current_app.logger.warning(f"Validation Error: {error_msg} Missing: {missing_from_payload}, Extra: {extra_in_payload}")
-        abort(400, description=f"{error_msg} Missing: {list(missing_from_payload)}, Extra: {list(extra_in_payload)}")
+        full_error_msg = f"{error_msg} Missing: {list(missing_from_payload)}, Extra: {list(extra_in_payload)}"
+        raise BadRequestError(message=full_error_msg)
 
     # 3. Double check sum (already done by schema, but belt and braces)
     total_percentage = sum(item.allocation_percentage for item in allocation_data)
@@ -97,7 +103,7 @@ def _validate_bulk_allocation_data(portfolio, allocation_data, current_app):
          # This case should ideally be caught by the schema validator
          error_msg = f"Internal check failed: Total allocation must be 100%. Received: {total_percentage:.2f}%"
          current_app.logger.error(f"Validation Error: {error_msg}") # Log as error if schema missed it
-         abort(400, description=error_msg)
+         raise BadRequestError(message=error_msg)
 
 
 # --- Portfolio Routes (Task 5.3) ---
@@ -266,7 +272,7 @@ def update_allocations(portfolio_id, portfolio, validated_data):
     except Exception as e:
         # Rollback handled by decorator
         current_app.logger.error(f"Error during allocation database update: {e}", exc_info=True)
-        abort(500, description=f"An internal error occurred while updating allocations: {e}")
+        raise ApplicationException(message=f"An internal error occurred while updating allocations: {e}", status_code=500, logging_level="exception")
 
 
 # --- Asset Routes (Task 5.4) ---

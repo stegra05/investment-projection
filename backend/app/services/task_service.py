@@ -1,65 +1,73 @@
 from flask import current_app
 from datetime import datetime
-# Import TEMP_TASK_RESULTS from the app package
-from app import TEMP_TASK_RESULTS
+from celery.result import AsyncResult
+
+# Import the Celery app instance to potentially access task states if needed,
+# though AsyncResult is usually sufficient.
+from app import celery_app 
 
 def get_task_status(task_id):
     """
-    Get the status of a task by its ID.
+    Get the status of a Celery task by its ID.
     
     Args:
-        task_id (str): The ID of the task to check
+        task_id (str): The ID of the Celery task to check.
         
     Returns:
         dict: Task status information including:
             - task_id: The task identifier
-            - status: Current status (PENDING, PROCESSING, COMPLETED, FAILED)
-            - result: Task result if completed
-            - error: Error message if failed
-            - created_at: When the task was created
-            - updated_at: When the task was last updated
+            - status: Current status (PENDING, STARTED, RETRY, FAILURE, SUCCESS)
+                      (mapping to your application's preferred terms like COMPLETED, FAILED may be needed)
+            - result: Task result if completed successfully (structure depends on task return value)
+            - error: Error message/traceback if failed (structure depends on Celery error storage)
+            - created_at: Placeholder, Celery doesn't directly store creation time in AsyncResult easily.
+            - updated_at: Placeholder, Celery provides date_done, but not continuous updates.
     Raises:
-        KeyError: if the task_id is not found.
+        KeyError: if the task_id is not found (though Celery might behave differently, e.g. PENDING for unknown).
     """
-    if task_id in TEMP_TASK_RESULTS:
-        task_info = TEMP_TASK_RESULTS[task_id]
-        
-        # Determine status; default to PENDING if not explicitly set yet by worker
-        status = task_info.get("status", "PENDING") 
-        
-        response = {
-            "task_id": task_id,
-            "status": status,
-            "result": task_info.get("result"),
-            "error": task_info.get("error"),
-            # For now, using current time. Ideally, these would be stored with the task.
-            "created_at": datetime.utcnow().isoformat(), 
-            "updated_at": datetime.utcnow().isoformat()
-        }
-        
-        # If the worker set a message, it could be useful, but it's not in the defined schema.
-        # We could log it or add it to a 'details' field if the schema were extended.
-        # For now, we'll stick to the defined schema.
-        # current_app.logger.info(f"Task {task_id} details: {task_info.get('message')}")
+    task_result = AsyncResult(task_id, app=celery_app)
+    
+    status = task_result.status # Celery status: PENDING, STARTED, RETRY, FAILURE, SUCCESS
+    result_data = None
+    error_data = None
 
-        return response
-    else:
-        # If task_id is not in TEMP_TASK_RESULTS, it's considered not found.
-        # The route handler in tasks.py will catch this KeyError and return a 404.
-        raise KeyError(f"Task with id {task_id} not found in TEMP_TASK_RESULTS.")
+    # Map Celery status to your application's status terminology if needed
+    # For now, we'll use Celery's native statuses.
+    # Example mapping:
+    # app_status_map = {
+    #     "PENDING": "PENDING",
+    #     "STARTED": "PROCESSING", # Or "RUNNING"
+    #     "SUCCESS": "COMPLETED",
+    #     "FAILURE": "FAILED",
+    #     "RETRY": "PROCESSING", # Or "RETRYING"
+    # }
+    # application_status = app_status_map.get(status, "UNKNOWN")
 
-# Example of how the worker might update TEMP_TASK_RESULTS (for reference, not part of this service)
-# TEMP_TASK_RESULTS["some_task_id"] = {
-#     "status": "PENDING", 
-#     "start_date": "2024-01-01", 
-#     # ... other parameters for the worker
-# }
-# TEMP_TASK_RESULTS["completed_task_id"] = {
-#     "status": "COMPLETED", 
-#     "result": {"data": {"key": "value"}},
-#     "message": "Task done"
-# }
-# TEMP_TASK_RESULTS["failed_task_id"] = {
-#     "status": "FAILED", 
-#     "error": "Something went wrong"
-# } 
+    if task_result.successful():
+        result_data = task_result.result # This is the dict returned by the task
+    elif task_result.failed():
+        # task_result.result or task_result.traceback can contain error info
+        error_info = task_result.result # The exception object
+        error_data = str(error_info) # Convert exception to string for simple representation
+        # For more detail, you might want task_result.traceback
+        current_app.logger.debug(f"Task {task_id} failed. Traceback: {task_result.traceback}")
+    elif status == 'PENDING' and not task_result.info: # Check if it's truly pending or just unknown
+        # A task ID that Celery doesn't know about will also show as PENDING initially.
+        # If task_result.info is None or empty after a short while, it likely doesn't exist.
+        # For simplicity, we are not raising KeyError here anymore, the route will return PENDING.
+        # The route handler can decide if PENDING for an unknown task_id should be a 404.
+        pass # Keep status as PENDING
+
+    response = {
+        "task_id": task_id,
+        "status": status, # Using Celery's direct status for now
+        "result": result_data.get("data") if isinstance(result_data, dict) and "data" in result_data else None, # Extract nested data if present
+        "message": result_data.get("message") if isinstance(result_data, dict) and "message" in result_data else None,
+        "error": error_data, 
+        # Timestamps are not straightforward with AsyncResult alone.
+        # For more detailed timestamps, you might need to store them separately 
+        # when the task is created or use Celery events monitoring.
+        "created_at": None, # Placeholder 
+        "updated_at": task_result.date_done.isoformat() if task_result.date_done else None # When task finished
+    }
+    return response

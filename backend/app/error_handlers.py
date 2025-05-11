@@ -2,6 +2,9 @@ from flask import jsonify
 from werkzeug.exceptions import HTTPException
 import json
 
+# Import the base custom exception
+from app.utils.exceptions import ApplicationException
+
 # It's good practice to get the logger from the current app,
 # but for a separate module, we might need to pass the app or db instance,
 # or define a way to access them if these handlers need them (e.g., for db.session.rollback).
@@ -48,4 +51,30 @@ def register_error_handlers(app, db):
 
     @app.errorhandler(403)
     def handle_403_error(e):
-        return jsonify(error=str(e.description or "Forbidden")), 403 
+        return jsonify(error=str(e.description or "Forbidden")), 403
+
+    # Add a handler for our custom ApplicationException base class
+    @app.errorhandler(ApplicationException)
+    def handle_application_exception(e):
+        """Handle custom application exceptions."""
+        # Log based on the exception's defined level
+        log_method = getattr(app.logger, e.logging_level, app.logger.error) # Default to error
+        log_message = f"ApplicationException: {e.message}" 
+        if e.payload:
+            log_message += f" - Payload: {e.payload}"
+        
+        if e.logging_level == "exception" or e.status_code >= 500:
+            log_method(log_message, exc_info=e)
+        else:
+            log_method(log_message)
+
+        # For 5xx errors originating from ApplicationException, also attempt rollback
+        if e.status_code >= 500:
+            try:
+                db.session.rollback()
+                app.logger.info(f"Database session rolled back due to ApplicationException (status {e.status_code}).")
+            except Exception as rollback_error:
+                app.logger.error(f"Error during database rollback after ApplicationException: {rollback_error}", exc_info=rollback_error)
+
+        response_data = e.to_dict()
+        return jsonify(response_data), e.status_code 

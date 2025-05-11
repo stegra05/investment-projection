@@ -4,22 +4,20 @@ from pydantic import BaseModel, Field, ValidationError as PydanticValidationErro
 from typing import List, Optional # For type hinting
 from decimal import Decimal, InvalidOperation
 import datetime
-import uuid
 
 from app.services.projection_engine import calculate_projection
-# Import models from app.models
-from app.models import Portfolio # Removed PlannedFutureChange as it's not directly used here
-# Import db instance from the app package
+from app.models import Portfolio
 from app import db 
-# Import Pydantic schemas for request/response and draft changes
 from app.schemas.portfolio_schemas import PlannedChangeCreateSchema, OrmBaseModel 
-# Import the shared task results dictionary
-from app import TEMP_TASK_RESULTS
+from app.background_workers import run_projection_task
+
+# Import custom exceptions
+from app.utils.exceptions import (
+    BadRequestError, PortfolioNotFoundError, AccessDeniedError, ApplicationException
+)
 
 projections_bp = Blueprint('projections_bp', __name__, url_prefix='/api/v1/portfolios')
 
-# TEMPORARY: In-memory storage for task results. Not suitable for production.
-# TEMP_TASK_RESULTS = {} # This line will be removed
 
 # --- Pydantic Schemas for Projection Requests ---
 class ProjectionRequestBase(OrmBaseModel):
@@ -100,13 +98,23 @@ def create_portfolio_projection(portfolio_id):
     data = request.get_json()
 
     if not data:
-        return jsonify({"message": "Request body must be JSON"}), 400
+        raise BadRequestError("Request body must be JSON")
 
-    # --- Input Validation ---
+    # --- Input Validation (using Pydantic for consistency, though manual validation is here) ---
+    # For a more robust validation, use ProjectionTaskRequestSchema directly:
+    # try:
+    #     task_request_data = ProjectionTaskRequestSchema(**data)
+    # except PydanticValidationError as e:
+    #     return jsonify({"message": "Invalid input data", "errors": e.errors()}), 400
+    # start_date = task_request_data.start_date
+    # end_date = task_request_data.end_date
+    # initial_total_value = task_request_data.initial_total_value
+
+    # Current manual validation:
     required_fields = ['start_date', 'end_date', 'initial_total_value']
     missing_fields = [field for field in required_fields if field not in data]
     if missing_fields:
-        return jsonify({"message": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+        raise BadRequestError(f"Missing required fields: {', '.join(missing_fields)}")
 
     try:
         start_date_str = data['start_date']
@@ -118,49 +126,44 @@ def create_portfolio_projection(portfolio_id):
         initial_total_value = Decimal(initial_value_str)
 
         if start_date >= end_date:
-            return jsonify({"message": "End date must be after start date"}), 400
+            raise BadRequestError("End date must be after start date")
         if initial_total_value < 0:
-            return jsonify({"message": "Initial total value cannot be negative"}), 400
+            raise BadRequestError("Initial total value cannot be negative")
 
     except (ValueError, TypeError) as e:
-        return jsonify({"message": f"Invalid date format. Please use YYYY-MM-DD. Error: {e}"}), 400
+        raise BadRequestError(f"Invalid date format. Please use YYYY-MM-DD. Error: {e}")
     except InvalidOperation:
-        return jsonify({"message": "Invalid format for initial_total_value. Please provide a valid decimal string."}), 400
+        raise BadRequestError("Invalid format for initial_total_value. Please provide a valid decimal string.")
 
     # --- Authorization Check: Ensure user owns the portfolio --- 
     portfolio = Portfolio.query.filter_by(portfolio_id=portfolio_id, user_id=current_user_id).first()
     if not portfolio:
-        # Distinguish between not found and not authorized
         if Portfolio.query.filter_by(portfolio_id=portfolio_id).first():
-            return jsonify({"message": "Forbidden: You do not own this portfolio."}), 403
+            raise AccessDeniedError("Forbidden: You do not own this portfolio.")
         else:
-            return jsonify({"message": "Portfolio not found."}), 404
+            # return jsonify({"message": "Portfolio not found."}), 404
+            raise PortfolioNotFoundError(f"Portfolio with id {portfolio_id} not found.")
 
-    task_id = uuid.uuid4().hex
+    # Dispatch the Celery task
+    try:
+        # Pass arguments as strings, as the task expects to convert them
+        task = run_projection_task.delay(
+            portfolio_id=portfolio_id,
+            start_date_str=start_date.isoformat(),
+            end_date_str=end_date.isoformat(),
+            initial_total_value_str=str(initial_total_value)
+        )
+        task_id = task.id
+        current_app.logger.info(f"Projection task {task_id} dispatched for portfolio {portfolio_id}.")
 
-    # Log the task initiation (replace with actual task dispatch later)
-    current_app.logger.info(
-        f"Projection task initiated - TaskID: {task_id}, PortfolioID: {portfolio_id}, "
-        f"StartDate: {start_date}, EndDate: {end_date}, InitialValue: {initial_total_value}"
-    )
-
-    # Simulate dispatching to a background task by storing task info with PENDING status
-    # A separate worker process would pick this up and call calculate_projection.
-    TEMP_TASK_RESULTS[task_id] = {
-        "status": "PENDING",
-        "portfolio_id": portfolio_id,
-        "start_date": start_date.isoformat(),
-        "end_date": end_date.isoformat(),
-        "initial_total_value": str(initial_total_value),
-        "message": "Projection task is pending execution."
-        # Any other parameters needed by calculate_projection would be stored here
-    }
-    current_app.logger.info(f"Projection task {task_id} accepted and marked as PENDING.")
-
-    return jsonify({
-        "message": "Projection task accepted",
-        "task_id": task_id
-    }), 202 
+        return jsonify({
+            "message": "Projection task accepted",
+            "task_id": task_id
+        }), 202
+        
+    except Exception as e:
+        current_app.logger.error(f"Failed to dispatch projection task for portfolio {portfolio_id}: {e}", exc_info=True)
+        raise ApplicationException("Failed to initiate projection task. Please try again later.", status_code=500, logging_level="exception")
 
 # --- NEW: Projection Preview Route ---
 @projections_bp.route('/<int:portfolio_id>/projections/preview', methods=['POST'])
@@ -175,24 +178,24 @@ def preview_portfolio_projection(portfolio_id):
     data = request.get_json()
 
     if not data:
-        return jsonify({"message": "Request body must be JSON"}), 415 # Use 415 for wrong media type
+        raise ApplicationException("Request body must be JSON", status_code=415, logging_level="warning")
 
     try:
         preview_request_data = ProjectionPreviewRequestSchema(**data)
     except PydanticValidationError as e:
-        return jsonify({"message": "Invalid input data", "errors": e.errors()}), 400
+        raise BadRequestError("Invalid input data", payload={"errors": e.errors()})
     except Exception as e: # Catch any other unexpected parsing errors
         current_app.logger.error(f"Error parsing preview request: {e}")
-        return jsonify({"message": "Error processing request data."}), 400
+        raise BadRequestError("Error processing request data.")
 
     # --- Authorization Check: Ensure user owns the portfolio ---
     # (Reusing logic from above, could be refactored into a decorator/helper if used more)
     portfolio = Portfolio.query.filter_by(portfolio_id=portfolio_id, user_id=current_user_id).first()
     if not portfolio:
         if Portfolio.query.filter_by(portfolio_id=portfolio_id).first():
-            return jsonify({"message": "Forbidden: You do not own this portfolio."}), 403
+            raise AccessDeniedError("Forbidden: You do not own this portfolio.")
         else:
-            return jsonify({"message": "Portfolio not found."}), 404
+            raise PortfolioNotFoundError(f"Portfolio with id {portfolio_id} not found.")
 
     try:
         # Call the projection engine with the validated and parsed data
@@ -213,7 +216,7 @@ def preview_portfolio_projection(portfolio_id):
     except ValueError as e:
         # Catch ValueErrors from projection_engine (e.g., portfolio not found if somehow missed above, or other data issues)
         current_app.logger.warning(f"ValueError during projection calculation for preview: {e}")
-        return jsonify({"message": str(e)}), 400 # Could also be 404 or other based on error type
+        raise BadRequestError(str(e))
     except Exception as e:
         current_app.logger.exception(f"Unexpected error during projection preview for portfolio {portfolio_id}")
-        return jsonify({"message": "An unexpected error occurred during projection calculation."}), 500 
+        raise ApplicationException("An unexpected error occurred during projection calculation.", status_code=500, logging_level="exception") 

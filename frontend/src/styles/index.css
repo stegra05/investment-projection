@@ -55,3 +55,38 @@ progress::-webkit-progress-bar {
 .form-helper-text {
   @apply text-xs text-gray-500 block mt-1;
 }
+
+/* Allotment Sash Styles */
+/* Basic Sash Styling */
+.allotment-sash-vertical { /* Adjust if horizontal */
+  @apply bg-gray-200 w-px relative transition-colors duration-200 ease-linear;
+}
+
+/* Invisible thicker hit area */
+.allotment-sash-vertical::before {
+  content: '';
+  @apply absolute cursor-col-resize z-10;
+  left: -4px; /* Center the hit area */
+  right: -4px; /* Center the hit area */
+  top: 0;
+  bottom: 0;
+}
+
+/* Hover state */
+.allotment-sash-vertical:hover {
+  @apply bg-primary-500;
+  /* Tailwind doesn't directly support margin for centering a thicker border on hover like this */
+  /* So we make the sash itself thicker and adjust its position if needed */
+  /* For simplicity, we'll rely on the background color change and the grabber dots for hover indication */
+  /* If precise thickness change is needed, consider a wrapper or more complex CSS */
+}
+
+/* Optional: Add grabber dots on hover */
+.allotment-sash-vertical:hover::after {
+  content: '...'; /* Or use an SVG icon */
+  @apply absolute text-white text-xs leading-none pointer-events-none z-[11];
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(90deg); /* Vertical dots */
+  letter-spacing: 1px;
+}

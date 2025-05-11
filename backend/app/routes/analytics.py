@@ -10,6 +10,11 @@ import json
 from app.schemas.analytics_schemas import RiskProfileSchema
 from app.services.analytics_service import calculate_historical_performance
 
+# Import custom exceptions
+from app.utils.exceptions import (
+    ApplicationException, PortfolioNotFoundError, AccessDeniedError, BadRequestError
+)
+
 analytics_bp = Blueprint('analytics', __name__, url_prefix='/api/v1/portfolios/<int:portfolio_id>/analytics')
 
 # --- Decorators ---
@@ -21,23 +26,27 @@ def verify_portfolio_ownership(f):
     def wrapper(*args, **kwargs):
         portfolio_id = kwargs.get('portfolio_id')
         if portfolio_id is None:
-            abort(500, "Developer error: portfolio_id missing in route arguments for ownership check.")
+            # abort(500, "Developer error: portfolio_id missing in route arguments for ownership check.")
+            raise ApplicationException("Developer error: portfolio_id missing in route arguments for ownership check.", status_code=500)
 
         try:
             user_id_str = get_jwt_identity()
             current_user_id = int(user_id_str)
         except (ValueError, TypeError):
-             abort(401, "Invalid user identity in token.")
+            #  abort(401, "Invalid user identity in token.")
+            raise ApplicationException("Invalid user identity in token.", status_code=401, logging_level="warning")
 
         portfolio = Portfolio.query.get(portfolio_id)
 
         if portfolio is None:
-            abort(404, description=f"Portfolio with id {portfolio_id} not found.")
+            # abort(404, description=f"Portfolio with id {portfolio_id} not found.")
+            raise PortfolioNotFoundError(message=f"Portfolio with id {portfolio_id} not found.")
 
         if portfolio.user_id != current_user_id:
             # Log access control denial
             logging.warning(f"Access denied: UserID='{current_user_id}' attempted to access PortfolioID='{portfolio_id}' owned by UserID='{portfolio.user_id}'. Source IP: {request.remote_addr}")
-            abort(403, description="User does not have permission to access this portfolio.")
+            # abort(403, description="User does not have permission to access this portfolio.")
+            raise AccessDeniedError(message="User does not have permission to access this portfolio.")
 
         kwargs['portfolio'] = portfolio
         return f(*args, **kwargs)
@@ -76,14 +85,16 @@ def get_performance(portfolio_id, portfolio):
         end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else date.today()
 
         if start_date > end_date:
-            abort(400, description="start_date must be before or equal to end_date")
+            # abort(400, description="start_date must be before or equal to end_date")
+            raise BadRequestError(message="start_date must be before or equal to end_date")
         if end_date > date.today(): # Cap end_date to today
             end_date = date.today()
         # Ensure start_date is not before portfolio creation date for calculation logic
         # However, the user can request an earlier start_date; performance will be 0 until portfolio creation.
         
     except ValueError:
-        abort(400, description="Invalid date format. Use YYYY-MM-DD")
+        # abort(400, description="Invalid date format. Use YYYY-MM-DD")
+        raise BadRequestError(message="Invalid date format. Use YYYY-MM-DD")
 
     performance_data = calculate_historical_performance(portfolio, start_date, end_date, portfolio_id)
     

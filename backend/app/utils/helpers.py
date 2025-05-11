@@ -7,6 +7,9 @@ from app import db
 from flask import current_app
 from werkzeug.exceptions import HTTPException # Import HTTPException
 
+# Import custom exceptions
+from app.utils.exceptions import ChildResourceNotFoundError, ApplicationException, DatabaseError, BadRequestError
+
 # Define a generic type variable for SQLAlchemy models
 # Using Type[Any] for simplicity, could refine further if needed.
 ModelType = TypeVar('ModelType', bound=Any)
@@ -36,10 +39,10 @@ def get_owned_child_or_404(
         The found child entity instance.
 
     Raises:
-        NotFound: Flask abort(404) if the child is not found.
+        ChildResourceNotFoundError: If the child is not found.
+        ApplicationException: For internal configuration or unexpected errors.
         AttributeError: If the parent_instance does not have the specified relationship.
         ValueError: If the relationship configuration is unexpected.
-        Exception: If there's an issue querying the child model.
     """
     try:
         # 1. Check eagerly loaded collection first
@@ -80,23 +83,31 @@ def get_owned_child_or_404(
         child_fallback = child_model.query.filter_by(**filter_conditions).first()
 
         if child_fallback is None:
-             abort(404, description=f"{child_model.__name__} with {child_pk_attr}={child_id} not found associated with {parent_instance.__class__.__name__} {parent_pk_name}={parent_pk_value}.")
+            # Use the specific ChildResourceNotFoundError
+            raise ChildResourceNotFoundError(
+                child_model_name=child_model.__name__,
+                child_id=child_id,
+                parent_model_name=parent_instance.__class__.__name__,
+                parent_id=getattr(parent_instance, parent_pk_name, None) # Get parent ID safely
+            )
 
         return child_fallback
 
     except AttributeError as e:
-         # Parent might not have the relationship attribute, or child lacks PK attr
-         # Or getattr failed on child in loop
-         print(f"AttributeError in get_owned_child_or_404: {e}") # Log this
-         abort(500, description=f"Internal configuration error accessing relationship or attribute: {e}")
+        # Parent might not have the relationship attribute, or child lacks PK attr
+        # Or getattr failed on child in loop
+        current_app.logger.error(f"AttributeError in get_owned_child_or_404: {e}") # Log this
+        # This suggests a potential coding or configuration error.
+        raise ApplicationException(message=f"Internal configuration error accessing relationship or attribute: {e}", status_code=500)
     except ValueError as e:
-        # Raised if relationship inspection fails
-        print(f"ValueError in get_owned_child_or_404: {e}")
-        abort(500, description=f"Internal configuration error: {e}")
-    except HTTPException as e:
-        # Re-raise HTTPExceptions (like 404 Not Found) so they are handled by Flask
-        raise e
+        # Raised if relationship inspection fails - likely a setup/coding error
+        current_app.logger.error(f"ValueError in get_owned_child_or_404: {e}")
+        raise ApplicationException(message=f"Internal configuration error: {e}", status_code=500)
+    except HTTPException:
+        # Re-raise HTTPExceptions (like those from abort() if any were kept, or Werkzeug's)
+        raise
     except Exception as e:
-         # Catch other potential DB errors during fallback query
-         current_app.logger.exception(f"Unexpected error in get_owned_child_or_404 fallback query for child {child_pk_attr}={child_id}")
-         abort(500, description="An unexpected error occurred while retrieving the requested item.") 
+        # Catch other potential DB errors during fallback query or other unexpected issues
+        current_app.logger.exception(f"Unexpected error in get_owned_child_or_404 fallback query for child {child_pk_attr}={child_id}")
+        # Raise a more specific DatabaseError or a generic ApplicationException
+        raise DatabaseError(message="An unexpected error occurred while retrieving the requested item.") 

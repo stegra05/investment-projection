@@ -32,34 +32,32 @@ def get_task_status_route(task_id):
               description: The task identifier.
             status:
               type: string
-              description: Current status of the task (PENDING, PROCESSING, COMPLETED, FAILED).
+              description: Current status of the task (e.g., PENDING, STARTED, SUCCESS, FAILURE, RETRY).
             result:
               type: object
               nullable: true
-              description: Task result if completed, null otherwise.
+              description: Task result if completed (structure depends on task).
+            message:
+              type: string
+              nullable: true
+              description: Additional message from the task if available.
             error:
               type: string
               nullable: true
               description: Error message if task failed, null otherwise.
-            # Consider adding created_at and updated_at to the schema if they are consistently returned
-            # created_at:
-            #   type: string
-            #   format: date-time
-            #   description: Timestamp of when the task was created.
-            # updated_at:
-            #   type: string
-            #   format: date-time
-            #   description: Timestamp of when the task was last updated.
+            created_at:
+              type: string
+              format: date-time
+              nullable: true
+              description: Timestamp of when the task was created (placeholder).
+            updated_at:
+              type: string
+              format: date-time
+              nullable: true
+              description: Timestamp of when the task was completed or last updated.
       404:
-        description: Task not found.
+        description: Task not found (Note: Celery might show unknown tasks as PENDING indefinitely).
     """
-    try:
-        status_data = get_task_status(task_id)
-        # The get_task_status function now returns a schema-compliant dict,
-        # including task_id, created_at, and updated_at.
-        return jsonify(status_data)
-    except KeyError:
-        # This is the expected error if the task_id doesn't exist in the service layer
-        current_app.logger.info(f"Task {task_id} not found via task_service.")
-        abort(404, description=f"Task with id {task_id} not found.")
+    status_data = get_task_status(task_id)
+    return jsonify(status_data)
     # Rely on global 500 handler for other unexpected errors 

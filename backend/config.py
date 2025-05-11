@@ -37,6 +37,11 @@ class Config:
         'sqlite:///' + os.path.join(basedir, 'app.db') # Default to SQLite if not set
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # --- Celery Configuration ---
+    CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL') or 'redis://localhost:6379/0'
+    CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND') or 'redis://localhost:6379/0'
+    # ----------------------------
+
     # --- Talisman Security Headers Configuration ---
     # Define a basic Content Security Policy (CSP)
     # Adjust this policy based on your specific frontend needs (scripts, styles, images sources)
@@ -99,13 +104,13 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
         'sqlite:///:memory:' # Use in-memory SQLite for tests
     WTF_CSRF_ENABLED = False # Disable CSRF for tests
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'app.db')
-    DEBUG = False
-    # Explicitly ensure Talisman security settings are enforced for production
-    TALISMAN_FORCE_HTTPS = True
-    TALISMAN_SESSION_COOKIE_SECURE = True
-    TALISMAN_HSTS_PRELOAD = True
+    # SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+    #     'sqlite:///' + os.path.join(basedir, 'app.db') # THIS LINE IS REDUNDANT AND OVERWRITES IN-MEMORY DB
+    DEBUG = True # Enable debug for more detailed error messages in tests
+    # Disable Talisman HTTPS enforcement for tests
+    TALISMAN_FORCE_HTTPS = False
+    TALISMAN_SESSION_COOKIE_SECURE = False
+    # TALISMAN_HSTS_PRELOAD = True # Not relevant for local testing
 
 class ProductionConfig(Config):
     """Production configuration."""
