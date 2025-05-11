@@ -13,11 +13,13 @@ const usePortfolioListStore = create(set => ({
     set({ isLoading: true, error: null });
     try {
       const data = await portfolioService.getUserPortfolios();
-      set({ portfolios: data, isLoading: false }); // Update portfolios on success
+      // Ensure that 'data' is an array. If not, default to an empty array.
+      set({ portfolios: Array.isArray(data) ? data : [], isLoading: false });
     } catch (error) {
       const errorMessage =
         error.response?.data?.message || error.message || 'Failed to fetch portfolios';
-      set({ error: errorMessage, isLoading: false }); // Set error message on failure
+      // Reset portfolios to an empty array on error to prevent stale data or type issues.
+      set({ portfolios: [], isLoading: false, error: errorMessage });
     }
   },
 

@@ -212,3 +212,5 @@ db.sqlite3-journal
 
 # Flask-Migrate directory
 migrations/
+
+dump.rdb

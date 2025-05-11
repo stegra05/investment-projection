@@ -27,31 +27,30 @@ def get_task_status(task_id):
     """
     task_result = AsyncResult(task_id, app=celery_app)
     
-    status = task_result.status # Celery status: PENDING, STARTED, RETRY, FAILURE, SUCCESS
+    celery_status = task_result.status # Celery status: PENDING, STARTED, RETRY, FAILURE, SUCCESS
     result_data = None
     error_data = None
 
-    # Map Celery status to your application's status terminology if needed
-    # For now, we'll use Celery's native statuses.
-    # Example mapping:
-    # app_status_map = {
-    #     "PENDING": "PENDING",
-    #     "STARTED": "PROCESSING", # Or "RUNNING"
-    #     "SUCCESS": "COMPLETED",
-    #     "FAILURE": "FAILED",
-    #     "RETRY": "PROCESSING", # Or "RETRYING"
-    # }
-    # application_status = app_status_map.get(status, "UNKNOWN")
+    # Map Celery status to your application's status terminology
+    app_status_map = {
+        "PENDING": "PENDING",    # Or your app's equivalent like "QUEUED"
+        "STARTED": "PROCESSING", # Or "RUNNING"
+        "SUCCESS": "COMPLETED",  # This is the key change
+        "FAILURE": "FAILED",
+        "RETRY": "PROCESSING",   # Or "RETRYING", tasks in retry often appear as PENDING or a custom state
+        # Add other Celery statuses if necessary (e.g., REVOKED)
+    }
+    application_status = app_status_map.get(celery_status, celery_status) # Fallback to Celery status if not in map
 
     if task_result.successful():
-        result_data = task_result.result # This is the dict returned by the task
+        result_data = task_result.result
     elif task_result.failed():
         # task_result.result or task_result.traceback can contain error info
         error_info = task_result.result # The exception object
         error_data = str(error_info) # Convert exception to string for simple representation
         # For more detail, you might want task_result.traceback
         current_app.logger.debug(f"Task {task_id} failed. Traceback: {task_result.traceback}")
-    elif status == 'PENDING' and not task_result.info: # Check if it's truly pending or just unknown
+    elif celery_status == 'PENDING' and not task_result.info: # Check if it's truly pending or just unknown
         # A task ID that Celery doesn't know about will also show as PENDING initially.
         # If task_result.info is None or empty after a short while, it likely doesn't exist.
         # For simplicity, we are not raising KeyError here anymore, the route will return PENDING.
@@ -60,7 +59,7 @@ def get_task_status(task_id):
 
     response = {
         "task_id": task_id,
-        "status": status, # Using Celery's direct status for now
+        "status": application_status, # Use the mapped status
         "result": result_data.get("data") if isinstance(result_data, dict) and "data" in result_data else None, # Extract nested data if present
         "message": result_data.get("message") if isinstance(result_data, dict) and "message" in result_data else None,
         "error": error_data, 

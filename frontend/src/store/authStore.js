@@ -57,17 +57,29 @@ const useAuthStore = create(set => ({
     }
   },
 
-  logout: () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
-    set({ user: null, isAuthenticated: false, error: null, isLoading: false });
-    authService.logout().catch(error => {
-      // Even if backend logout fails, client-side cleanup has occurred.
-      // Log the error or display a notification to the user if necessary.
+  logout: async () => { // Make it async to await the service call
+    set(state => ({ ...state, isLoading: true, error: null })); // Indicate loading
+    try {
+      await authService.logout(); // Call backend logout first
+      // If backend logout is successful, then clear local storage and state
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('user');
+      set({ user: null, isAuthenticated: false, error: null, isLoading: false });
+    } catch (error) {
+      // Backend logout failed
       console.error('Backend logout failed:', error);
-      // You might want to set an error state here if needed for the UI
-      // set({ error: 'Backend logout failed. Please try again or contact support.' });
-    });
+      // Still clear local storage and set user as unauthenticated on the client-side
+      // as a fallback, because the user's intent was to log out.
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('user');
+      set({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        // Optionally, set an error message to inform the user about the backend issue
+        error: error.response?.data?.msg || error.message || 'Logout failed on server. You have been logged out locally.',
+      });
+    }
   },
 
   clearError: () => {

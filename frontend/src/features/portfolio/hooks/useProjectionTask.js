@@ -34,8 +34,8 @@ function useProjectionTask() {
         switch (currentStatus) {
         case 'completed':
           setProjectionStatus('completed');
-          if (statusData.result?.data) {
-            const chartData = transformProjectionData(statusData.result.data);
+          if (statusData.result) {
+            const chartData = transformProjectionData(statusData.result);
             setProjectionResults(chartData);
           } else {
             setProjectionResults([]);

@@ -11,7 +11,7 @@ const portfolioService = {
     try {
       const response = await instance.get(ENDPOINTS.PORTFOLIO.LIST);
       // Assuming the API returns the array of portfolios directly in the data property
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('Error fetching user portfolios:', error);
       // Re-throw the error or handle it as needed (e.g., return a specific error object)

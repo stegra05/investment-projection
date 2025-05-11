@@ -20,6 +20,7 @@ A web application designed for intermediate to advanced users to build investmen
 * **Backend:** Flask (Python)
 * **Database:** PostgreSQL
 * **Database Interaction:** SQLAlchemy (with Flask-SQLAlchemy/Flask-Migrate likely)
+* **Task Queue:** Celery (with Redis as broker/backend)
 * **Version Control:** Git / GitHub
 * **Task Tracking:** Trello
 * **Environment:** Python `venv`
@@ -27,7 +28,7 @@ A web application designed for intermediate to advanced users to build investmen
 
 ## 4. Setup (Local Development)
 
-1.  **Prerequisites:** Ensure Git, Python 3.x, Node.js (npm/yarn), and PostgreSQL are installed.
+1.  **Prerequisites:** Ensure Git, Python 3.x, Node.js (npm/yarn), PostgreSQL, and Redis are installed.
 2.  **Clone Repository:** `git clone https://github.com/stegra05/investment-projection`
 3.  **Navigate to Project:** `cd investment-projection`
 4.  **Backend Setup:**
@@ -45,14 +46,22 @@ A web application designed for intermediate to advanced users to build investmen
 ## 5. Usage (Local Development)
 
 1.  Ensure your local PostgreSQL server is running.
-2.  **Run Backend:**
-    * Navigate to backend directory & activate `venv`.
-    * Set environment variables (e.g., `FLASK_APP`, `FLASK_ENV=development`, `DATABASE_URL`).
-    * `flask run`
-3.  **Run Frontend:**
-    * Navigate to frontend directory.
+2.  Ensure your local Redis server is running (e.g., `redis-server &`).
+3.  **Run Backend Flask Application:**
+    * In a terminal, navigate to the `backend` directory.
+    * Activate the virtual environment: `source .venv/bin/activate` (Linux/macOS) or `.\venv\Scripts\activate` (Windows).
+    * Set required environment variables (e.g., `FLASK_APP=run.py`, `FLASK_ENV=development`, `DATABASE_URL`).
+    * Run the Flask app: `flask run`. This will typically serve on `http://127.0.0.1:5000`.
+4.  **Run Celery Worker:**
+    * **In a separate terminal window:**
+    * Navigate to the `backend` directory.
+    * Activate the virtual environment: `source .venv/bin/activate` (Linux/macOS) or `.\venv\Scripts\activate` (Windows).
+    * Set the `FLASK_CONFIG` environment variable if you use different configurations (e.g., `export FLASK_CONFIG=development`). The `celery_worker.py` script will use this or default to 'default'.
+    * Run the Celery worker: `celery -A celery_worker.app_celery worker -l INFO`.
+5.  **Run Frontend:**
+    * Navigate to the `frontend` directory.
     * `npm start` (or `yarn start`)
-4.  Access application via browser at `http://localhost:3000` (or the port specified by React).
+6.  Access application via browser at `http://localhost:3000` (or the port specified by React).
 
 ## 6. Initial Task List (High-Level)
 
@@ -73,23 +82,9 @@ A web application designed for intermediate to advanced users to build investmen
 | T11| Integrate FE/BE API Calls          | Must       | L           | T8, T9, T10  |
 | T12| Basic Testing Setup (Jest/Pytest)    | Should     | M           | T1           |
 
-## 7. Key Risks & Mitigations
 
-*(Based on our discussion)*
-
-| Risk Description                                  | Likelihood | Impact | Mitigation Strategy                                                                 | Contingency                                     |
-|---------------------------------------------------|------------|--------|-----------------------------------------------------------------------------------|-------------------------------------------------|
-| Underestimating Projection Engine Complexity      | Medium     | High   | Break down logic into smaller parts; allocate specific research/learning time. | Simplify projection model for V1 if necessary.  |
-| Learning Curve for SQLAlchemy/PostgreSQL          | Medium     | Medium | Start with simple CRUD; follow tutorials; allocate learning time.                 | Seek community help (Stack Overflow, forums). |
-| Data Source Limitations (Free APIs)               | Medium     | Medium | Implement caching; monitor usage; design defensively for API errors.              | Use small budget (€10/mo) for paid tier if vital. |
-| Overall Time Estimation (Solo Dev @ 8hrs/wk)    | Medium     | High   | Use task tracking (Trello); Break down tasks; Regularly review progress vs plan.  | Adjust scope (move Must->Should); Extend timeline. |
-
-## 8. Contributing
+## 7. Contributing
 
 This is currently a personal project.
-
-## 9. License
-
-(Specify License - e.g., MIT License or None)
 
 ---

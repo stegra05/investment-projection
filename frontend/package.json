@@ -16,13 +16,13 @@
     "react-router-dom": "^7.6.0",
     "react-scripts": "^5.0.1",
     "recharts": "^2.15.3",
+    "tailwindcss": "^3.4.17",
     "web-vitals": "^5.0.0",
     "zustand": "^5.0.4",
     "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.10",
-    "@tailwindcss/postcss": "^4.1.6",
     "autoprefixer": "^10.4.21",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.1.5",
@@ -34,8 +34,7 @@
     "lint-staged": "^16.0.0",
     "postcss": "^8.5.3",
     "prettier": "^3.5.3",
-    "source-map-explorer": "^2.5.3",
-    "tailwindcss": "^4.1.6"
+    "source-map-explorer": "^2.5.3"
   },
   "scripts": {
     "start": "react-scripts start",

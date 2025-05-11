@@ -4,10 +4,8 @@ import ToastMessage from './ToastMessage';
 import styles from './NotificationContainer.module.css';
 
 const NotificationContainer = () => {
-  const { notifications, removeNotification } = useNotificationStore(state => ({
-    notifications: state.notifications,
-    removeNotification: state.removeNotification,
-  }));
+  const notifications = useNotificationStore(state => state.notifications);
+  const removeNotification = useNotificationStore(state => state.removeNotification);
 
   if (!notifications.length) {
     return null;
