@@ -47,21 +47,54 @@ A web application designed for intermediate to advanced users to build investmen
 
 1.  Ensure your local PostgreSQL server is running.
 2.  Ensure your local Redis server is running (e.g., `redis-server &`).
-3.  **Run Backend Flask Application:**
-    * In a terminal, navigate to the `backend` directory.
-    * Activate the virtual environment: `source .venv/bin/activate` (Linux/macOS) or `.\venv\Scripts\activate` (Windows).
-    * Set required environment variables (e.g., `FLASK_APP=run.py`, `FLASK_ENV=development`, `DATABASE_URL`).
-    * Run the Flask app: `flask run`. This will typically serve on `http://127.0.0.1:5000`.
-4.  **Run Celery Worker:**
-    * **In a separate terminal window:**
-    * Navigate to the `backend` directory.
-    * Activate the virtual environment: `source .venv/bin/activate` (Linux/macOS) or `.\venv\Scripts\activate` (Windows).
-    * Set the `FLASK_CONFIG` environment variable if you use different configurations (e.g., `export FLASK_CONFIG=development`). The `celery_worker.py` script will use this or default to 'default'.
-    * Run the Celery worker: `celery -A celery_worker.app_celery worker -l INFO`.
-5.  **Run Frontend:**
-    * Navigate to the `frontend` directory.
-    * `npm start` (or `yarn start`)
-6.  Access application via browser at `http://localhost:3000` (or the port specified by React).
+3.  **Option A: Manual Startup (Individual Components)**
+    *   **Run Backend Flask Application:**
+        *   In a terminal, navigate to the `backend` directory.
+        *   Activate the virtual environment: `source .venv/bin/activate` (Linux/macOS) or `.\venv\Scripts\activate` (Windows).
+        *   Set required environment variables (e.g., `FLASK_APP=run.py`, `FLASK_ENV=development`, `DATABASE_URL`). Refer to `.env.example` or your local `.env` file for necessary variables.
+        *   Run the Flask app: `flask run`. This will typically serve on `http://127.0.0.1:5000`.
+    *   **Run Celery Worker:**
+        *   **In a separate terminal window:**
+        *   Navigate to the `backend` directory.
+        *   Activate the virtual environment.
+        *   Set the `FLASK_CONFIG` environment variable if you use different configurations (e.g., `export FLASK_CONFIG=development`). The `celery_worker.py` script will use this or default to 'default'.
+        *   Run the Celery worker: `celery -A celery_worker.app_celery worker -l INFO`.
+    *   **Run Frontend:**
+        *   Navigate to the `frontend` directory.
+        *   `npm start` (or `yarn start`).
+4.  **Option B: Automated Startup Script (macOS)**
+    *   A helper script `start_dev_env.sh` is provided at the root of the project to automate starting the Flask backend, Celery worker, and React frontend in separate Terminal windows on macOS.
+    *   **First-time setup:** Make the script executable:
+        ```bash
+        chmod +x start_dev_env.sh
+        ```
+    *   **Run the script:**
+        ```bash
+        ./start_dev_env.sh
+        ```
+    *   **Important Notes for `start_dev_env.sh`:**
+        *   On macOS, you might need to grant Terminal permission to control other apps (System Settings -> Privacy & Security -> Automation) the first time you run it.
+        *   This script is currently tailored for macOS using `osascript`. For Linux/Windows, you'll need to adapt the commands for opening new terminals or use Option A.
+5.  Access application via browser at `http://localhost:3000` (or the port specified by React).
+
+### Accessing Logs
+
+The backend application (Flask and Celery) is configured to output detailed logs to files, which is essential for development and debugging.
+
+*   **Log File Locations:** All log files are stored in the `backend/logs/` directory.
+    *   `flask_app.log`: Contains logs from the Flask web application, including request handling, API calls, and general application events.
+    *   `celery_worker.log`: Contains logs specific to Celery task processing, including task execution, errors within tasks, and worker status.
+    *   `errors.log`: A consolidated log file that captures all messages logged at `ERROR` or `CRITICAL` levels from both the Flask app and Celery workers. This is useful for quickly identifying critical issues.
+*   **Log Format:** Logs include a timestamp, log level, logger name (indicating the source module/component), module, function name, line number, and the log message.
+*   **Log Rotation:** Log files are automatically rotated daily, and a history of the last 7 days is kept to prevent files from growing excessively large.
+*   **Usage for Debugging:**
+    *   To monitor logs in real-time, you can "tail" the log files in your terminal. For example:
+        ```bash
+        tail -f backend/logs/flask_app.log
+        tail -f backend/logs/celery_worker.log
+        tail -f backend/logs/errors.log
+        ```
+    *   Review these logs to understand application flow, diagnose errors, and track the execution of background tasks.
 
 ## 6. Initial Task List (High-Level)
 
