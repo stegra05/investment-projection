@@ -146,37 +146,52 @@ While specific error messages may vary, the backend aims to provide a consistent
 * **Path:** `/portfolios`
 * **Description:** Retrieves a list of portfolios belonging to the authenticated user. Requires Authentication.
 * **Query Parameters (Optional):**
-    * `page` (integer, default: 1): For pagination, the page number to retrieve.
-    * `limit` (integer, default: 20): For pagination, the number of items per page.
-    * `sort_by` (string, e.g., "name", "created_at"): Field to sort by.
-    * `sort_order` (string, "asc" or "desc", default: "asc"): Sort order.
-    * `filter[name]` (string): Filter by portfolio name (e.g., partial match).
-    *(Note: Specific implementation of sorting/filtering to be confirmed.)*
+    * `page` (integer, default: 1, min: 1): For pagination, the page number to retrieve.
+    * `per_page` (integer, default: 10, min: 1, max: 100): For pagination, the number of items per page.
+    * `sort_by` (string, default: "created_at", allowed: "name", "created_at", "updated_at"): Field to sort by.
+    * `sort_order` (string, default: "desc", allowed: "asc", "desc"): Sort order.
+    * `filter_name` (string, optional, min_length: 1, max_length: 100): Filter portfolios by name (case-insensitive, partial match).
 * **Request Body:** None
 * **Success Response:** `200 OK`
     ```json
-    [
-      {
-        "portfolio_id": 1, // integer
-        "name": "Retirement Plan", // string
-        "description": "My long term retirement savings", // string, optional
-        "user_id": 123, // integer (owner)
-        "created_at": "2024-03-10T09:00:00Z", // string, datetime ISO 8601
-        "updated_at": "2024-03-12T14:30:00Z", // string, datetime ISO 8601
-        "totalValue": "150000.00" // string, decimal (calculated summary, present if assets exist or calculation is applicable. Field name matches PortfolioSchema alias)
-      },
-      {
-        "portfolio_id": 2,
-        "name": "House Fund",
-        "description": null,
-        "user_id": 123,
-        "created_at": "2024-02-01T11:00:00Z",
-        "updated_at": "2024-02-01T11:00:00Z",
-        "totalValue": "75000.00"
+    {
+      "data": [
+        {
+          "portfolio_id": 1, // integer
+          "name": "Retirement Plan", // string
+          "description": "My long term retirement savings", // string, optional
+          "user_id": 123, // integer (owner)
+          "created_at": "2024-03-10T09:00:00Z", // string, datetime ISO 8601
+          "updated_at": "2024-03-12T14:30:00Z", // string, datetime ISO 8601
+          "totalValue": "150000.00", // string, decimal (calculated summary. Field name matches PortfolioSchema alias)
+          "assets": [ /* array of asset objects, eager loaded */ ],
+          "planned_changes": [ /* array of planned change objects, eager loaded */ ]
+        },
+        {
+          "portfolio_id": 2,
+          "name": "House Fund",
+          "description": null,
+          "user_id": 123,
+          "created_at": "2024-02-01T11:00:00Z",
+          "updated_at": "2024-02-01T11:00:00Z",
+          "totalValue": "75000.00",
+          "assets": [],
+          "planned_changes": []
+        }
+      ],
+      "pagination": {
+        "page": 1,
+        "per_page": 10,
+        "total_pages": 1, // Example value, will depend on total_items and per_page
+        "total_items": 2, // Example value
+        "next_page": null, // Example value, URL or page number
+        "prev_page": null, // Example value, URL or page number
+        "has_next": false, // boolean
+        "has_prev": false  // boolean
       }
-    ]
+    }
     ```
-* **Error Responses:** `401 Unauthorized`
+* **Error Responses:** `400 Bad Request` (Invalid query parameters), `401 Unauthorized`
 
 **2. Create Portfolio**
 * **Method:** `POST`

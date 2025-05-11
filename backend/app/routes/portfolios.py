@@ -4,8 +4,11 @@ from app.models import Portfolio, Asset
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import functools
 from app.utils.decorators import handle_api_errors # Keep it for create/update
-from decimal import Decimal # Add Decimal import
+from decimal import Decimal 
 import logging
+from pydantic import BaseModel, Field, validator
+from typing import Optional
+from sqlalchemy import desc, asc
 
 # Import Pydantic Schemas
 from app.schemas.portfolio_schemas import (
@@ -23,7 +26,6 @@ portfolios_bp = Blueprint('portfolios', __name__, url_prefix='/api/v1/portfolios
 
 # --- Decorators ---
 
-# NEW version of verify_portfolio_ownership
 # This decorator assumes @jwt_required() has already been applied and JWT identity is available.
 def verify_portfolio_ownership(f):
     """Decorator to fetch portfolio by ID, verify ownership, and inject portfolio.
@@ -118,23 +120,87 @@ def debug_headers():
     current_app.logger.debug(f"Incoming headers: {headers}")
     return jsonify(headers), 200
 
+# Pydantic model for query parameters for get_user_portfolios
+class PortfolioQueryArgs(BaseModel):
+    page: int = Field(1, ge=1, description="Page number for pagination.")
+    per_page: int = Field(10, ge=1, le=100, description="Number of items per page.")
+    sort_by: str = Field('created_at', description="Field to sort by. Allowed values: name, created_at, updated_at.")
+    sort_order: str = Field('desc', description="Sort order. Allowed values: asc, desc.")
+    filter_name: Optional[str] = Field(None, min_length=1, max_length=100, description="Filter portfolios by name (case-insensitive, partial match).")
+
+    @validator('sort_by')
+    def validate_sort_by(cls, value):
+        allowed_fields = ['name', 'created_at', 'updated_at']
+        if value not in allowed_fields:
+            raise ValueError(f"Invalid sort_by field. Allowed fields: {', '.join(allowed_fields)}")
+        return value
+
+    @validator('sort_order')
+    def validate_sort_order(cls, value):
+        allowed_orders = ['asc', 'desc']
+        if value.lower() not in allowed_orders:
+            raise ValueError("Invalid sort_order. Allowed values: asc, desc")
+        return value.lower()
+
 @portfolios_bp.route('/', methods=['GET'])
 @jwt_required()
 def get_user_portfolios():
-    """Retrieves a list of portfolios belonging to the authenticated user."""
-    # For OPTIONS requests, @jwt_required() lets them pass through, and Flask-CORS
-    # (with automatic_options=True) should handle the response before this view code is run.
-    # This function will only fully execute for GET requests.
-
-    # Exceptions are handled by the global 500 handler
+    """Retrieves a list of portfolios belonging to the authenticated user,
+    with support for pagination, sorting, and filtering."""
     current_user_id = int(get_jwt_identity())
-    # Eager load details for serialization
-    portfolios = Portfolio.query.options(
-            db.joinedload(Portfolio.assets),
-            db.joinedload(Portfolio.planned_changes)
-        ).filter_by(user_id=current_user_id).all()
+
+    # Parse and validate query parameters
+    try:
+        query_params = PortfolioQueryArgs(
+            page=request.args.get('page', default=1, type=int),
+            per_page=request.args.get('per_page', default=10, type=int),
+            sort_by=request.args.get('sort_by', default='created_at', type=str),
+            sort_order=request.args.get('sort_order', default='desc', type=str),
+            filter_name=request.args.get('filter_name', default=None, type=str)
+        )
+    except ValueError as e: # Handles Pydantic validation errors
+        return jsonify({"errors": str(e)}), 400 # Or use a more structured error response
+
+    # Base query
+    query = Portfolio.query.options(
+        db.joinedload(Portfolio.assets),
+        db.joinedload(Portfolio.planned_changes)
+    ).filter_by(user_id=current_user_id)
+
+    # Apply filtering
+    if query_params.filter_name:
+        query = query.filter(Portfolio.name.ilike(f"%{query_params.filter_name}%"))
+
+    # Apply sorting
+    sort_column = getattr(Portfolio, query_params.sort_by, Portfolio.created_at)
+    if query_params.sort_order == 'asc':
+        query = query.order_by(asc(sort_column))
+    else:
+        query = query.order_by(desc(sort_column))
+
+    # Apply pagination
+    pagination = query.paginate(
+        page=query_params.page,
+        per_page=query_params.per_page,
+        error_out=False
+    )
+    
+    portfolios = pagination.items
     result = [PortfolioSchema.from_orm(p).model_dump(mode='json', by_alias=True) for p in portfolios]
-    return jsonify(result), 200
+
+    return jsonify({
+        "data": result,
+        "pagination": {
+            "page": pagination.page,
+            "per_page": pagination.per_page,
+            "total_pages": pagination.pages,
+            "total_items": pagination.total,
+            "next_page": pagination.next_num,
+            "prev_page": pagination.prev_num,
+            "has_next": pagination.has_next,
+            "has_prev": pagination.has_prev
+        }
+    }), 200
 
 @portfolios_bp.route('/', methods=['POST'])
 @jwt_required()
