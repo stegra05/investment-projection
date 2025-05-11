@@ -88,7 +88,7 @@ def _apply_yearly_rrule_params(change: PlannedFutureChange, rrule_params: dict) 
 # Type alias for the parameter applying function
 ParamApplier = Callable[[PlannedFutureChange, dict], None]
 
-FREQUENCY_CONFIG: Dict[FrequencyType, Dict[str, Optional[ParamApplier] | rrule.asters]] = {
+FREQUENCY_CONFIG: Dict[FrequencyType, Dict[str, Optional[ParamApplier] | int]] = {
     FrequencyType.DAILY: {
         "rrule_const": rrule.DAILY,
         "param_func": None  # No specific params beyond generic ones

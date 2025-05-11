@@ -25,8 +25,8 @@ export const useChangePanelActions = ({
     }
     // Defensive check, though prepareFinalPlannedChangeData should handle this
     if (!dataToSave) { 
-        setSubmitError("No data available to save. Please check form inputs.");
-        return;
+      setSubmitError('No data available to save. Please check form inputs.');
+      return;
     }
 
     setIsSubmitting(true);
@@ -51,8 +51,8 @@ export const useChangePanelActions = ({
     }
     // Defensive check
     if (!dataForPreview) { 
-        setPreviewError("No data available for preview. Please check form inputs.");
-        return;
+      setPreviewError('No data available for preview. Please check form inputs.');
+      return;
     }
     
     setIsPreviewing(true);
