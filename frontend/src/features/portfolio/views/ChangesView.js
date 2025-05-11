@@ -11,6 +11,14 @@ import { CHANGE_TYPES } from '../../../constants/portfolioConstants'; // Still n
 import ChangeFilters from '../components/ChangeFilters';
 import ChangeDetailsList from '../components/ChangeDetailsList';
 import useFilteredChanges from '../hooks/useFilteredChanges';
+import useNotification from '../../../hooks/useNotification'; // Import the hook
+import {
+    SUCCESS_PLANNED_CHANGE_SAVED,
+    SUCCESS_PLANNED_CHANGE_DELETED,
+    ERROR_PLANNED_CHANGE_SAVE_FALLBACK,
+    ERROR_PLANNED_CHANGE_DELETE_FALLBACK,
+    LOADING_PLANNED_CHANGES // Added for loading state
+} from '../../../constants/textConstants'; // Assuming these constants exist or will be added
 
 // TODO: Define these types, perhaps from a shared enum/constants file
 // const CHANGE_TYPES = [
@@ -30,9 +38,9 @@ const ChangesView = () => {
     setDraftChangeForPreview,
     clearDraftChangeForPreview,
   } = usePortfolio();
+  const { addNotification } = useNotification(); // Use the hook
 
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     type: '',
     startDate: '',
@@ -43,7 +51,6 @@ const ChangesView = () => {
 
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [editingChangeData, setEditingChangeData] = useState(null);
-  const [actionError, setActionError] = useState(null);
 
   const { displayedChanges, itemRefs } = useFilteredChanges(
     portfolio,
@@ -56,9 +63,12 @@ const ChangesView = () => {
     setIsLoading(isPortfolioLoading);
   }, [isPortfolioLoading]);
 
+  // Display initial portfolio loading error via notification if it occurs
   useEffect(() => {
-    setError(portfolioError);
-  }, [portfolioError]);
+    if (portfolioError) {
+      addNotification(portfolioError.message || 'Error loading portfolio data.', 'error');
+    }
+  }, [portfolioError, addNotification]);
 
   const handleFilterChange = e => {
     const { name, value } = e.target;
@@ -103,13 +113,10 @@ const ChangesView = () => {
   }, [selectedChangeId, itemRefs]);
 
   const handleSaveChanges = async changeDataFromPanel => {
-    console.log('ChangesView (handleSaveChanges): portfolio context:', portfolio);
-    setActionError(null);
     if (!portfolio || !portfolio.portfolio_id) {
-      console.error('Portfolio ID is missing, cannot save change.');
-      const err = new Error('Portfolio not loaded. Cannot save change.');
-      setActionError(err.message);
-      throw err;
+      const errorMsg = 'Portfolio not loaded. Cannot save change.';
+      addNotification(errorMsg, 'error');
+      throw new Error(errorMsg);
     }
 
     const dataToSend = { ...changeDataFromPanel };
@@ -120,73 +127,57 @@ const ChangesView = () => {
         const changeId = dataToSend.id;
         await portfolioService.updatePlannedChange(portfolio.portfolio_id, changeId, dataToSend);
       } else {
-        const { id, ...addData } = dataToSend;
+        const { id, ...addData } = dataToSend; // eslint-disable-line @typescript-eslint/no-unused-vars
         await portfolioService.addPlannedChange(portfolio.portfolio_id, addData);
       }
       if (refreshPortfolio) {
         await refreshPortfolio();
       }
+      addNotification(SUCCESS_PLANNED_CHANGE_SAVED, 'success');
     } catch (apiError) {
-      console.error('API Error saving planned change:', apiError);
-      setActionError(apiError.message || 'Failed to save change.');
-      throw apiError;
+      const errorMessage = apiError.message || ERROR_PLANNED_CHANGE_SAVE_FALLBACK;
+      addNotification(errorMessage, 'error');
+      throw apiError; // Re-throw to be caught by AddEditChangePanel if needed
     }
   };
 
   const handleDeleteChange = async (changeId) => {
-    setActionError(null); // Clear previous action errors
     if (!portfolio || !portfolio.portfolio_id) {
-      console.error('Portfolio ID is missing, cannot delete change.');
-      setActionError('Portfolio not loaded. Cannot delete change.');
+      addNotification('Portfolio not loaded. Cannot delete change.', 'error');
       return;
     }
     if (!changeId) {
-      console.error('Change ID is missing, cannot delete change.');
-      setActionError('Change ID missing. Cannot delete change.');
+      addNotification('Change ID missing. Cannot delete change.', 'error');
       return;
     }
-
-    // Optional: Add a confirmation dialog here
-    // if (!window.confirm('Are you sure you want to delete this planned change?')) {
-    //   return;
-    // }
 
     try {
       await portfolioService.deletePlannedChange(portfolio.portfolio_id, changeId);
       if (refreshPortfolio) {
-        await refreshPortfolio(); // Refresh portfolio data
+        await refreshPortfolio();
       }
-      // Optionally: Show a success notification (e.g., using a toast library)
+      addNotification(SUCCESS_PLANNED_CHANGE_DELETED, 'success');
+      if (selectedChangeId === changeId) setSelectedChangeId(null); // Clear selection if deleted
     } catch (apiError) {
-      console.error('API Error deleting planned change:', apiError);
-      setActionError(apiError.message || 'Failed to delete planned change.');
-      // Optionally: Show an error notification
+      const errorMessage = apiError.message || ERROR_PLANNED_CHANGE_DELETE_FALLBACK;
+      addNotification(errorMessage, 'error');
     }
   };
 
   const handleRequestPreview = draftData => {
     if (!portfolio || !portfolio.portfolio_id) {
-      console.error('Portfolio ID is missing, cannot request preview.');
-      // Optionally, you could throw an error to be displayed in AddEditChangePanel for preview attempts
-      // throw new Error("Portfolio not loaded. Cannot request preview.");
-      return; // Or simply do nothing if portfolio not ready
+      addNotification('Portfolio not loaded. Cannot request preview.', 'error');
+      return;
     }
-    console.log('ChangesView: Requesting preview with draft data:', draftData);
     setDraftChangeForPreview(draftData);
-    // User will then need to switch to ProjectionPanel or it auto-updates
   };
 
-  if (isLoading && !displayedChanges.length) {
-    return <div className="p-4">Loading planned changes...</div>;
+  if (isLoading && !displayedChanges.length && !portfolioError) {
+    return <div className="p-4">{LOADING_PLANNED_CHANGES}</div>;
   }
 
-  if (error || actionError) {
-    return (
-      <div className="p-4 text-red-600">
-        Error: {error?.message || actionError || 'Unknown error'}
-      </div>
-    );
-  }
+  // Initial load error is handled by useEffect notification, so don't show generic error div for it
+  // Action errors (save/delete) are now toasts.
 
   return (
     <div className="p-4 space-y-4">

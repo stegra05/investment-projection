@@ -1,0 +1,42 @@
+.toast {
+  @apply flex items-center p-4 mb-3 rounded-md shadow-lg text-sm max-w-md w-full;
+  min-height: 50px;
+  transition: all 0.3s ease-in-out;
+  /* Add specific styles for positioning if NotificationContainer doesn't handle it fully */
+}
+
+.toastSuccess {
+  @apply bg-green-500 text-white;
+}
+
+.toastError {
+  @apply bg-red-500 text-white;
+}
+
+.toastInfo {
+  @apply bg-blue-500 text-white;
+}
+
+.toastWarning {
+  @apply bg-yellow-500 text-black; /* Yellow often needs black text for contrast */
+}
+
+.toastContent {
+  @apply flex-grow;
+}
+
+.toastMessage {
+  @apply font-medium;
+}
+
+.closeButton {
+  @apply ml-4 -mr-1 flex-shrink-0 p-1 rounded-md text-current opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-white;
+  /* Ensure background is transparent if the parent toast has a color */
+  background: transparent;
+  border: none;
+}
+
+/* Optional: Icons styling if you add them directly or via a library */
+.toastIcon {
+  @apply mr-3 h-5 w-5;
+} 

@@ -16,9 +16,11 @@ import {
   LOADING_PORTFOLIO_DATA,
   HEADING_EXISTING_ASSETS,
 } from '../../../constants/textConstants';
+import useNotification from '../../../hooks/useNotification'; // Import the hook
 
 function AssetsView() {
   const { portfolio, refreshPortfolio, portfolioId } = usePortfolio();
+  const { addNotification } = useNotification(); // Use the hook
 
   const [deletingAssetId, setDeletingAssetId] = useState(null); // State for delete loading indicator on the row
   const [editingAsset, setEditingAsset] = useState(null); // State for asset being edited
@@ -27,22 +29,22 @@ function AssetsView() {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [assetToDeleteId, setAssetToDeleteId] = useState(null); // State to hold the ID of the asset targeted for deletion
 
-  const [deleteError, setDeleteError] = useState(null); // For delete errors
+  // const [deleteError, setDeleteError] = useState(null); // Removed
   const [editError, setEditError] = useState(null); // For edit errors
-  const [globalSuccessMessage, setGlobalSuccessMessage] = useState(null); // For success messages not related to Add form
+  // const [globalSuccessMessage, setGlobalSuccessMessage] = useState(null); // Removed
 
   // --- Handle Asset Deletion Flow ---
   const handleDeleteRequest = assetId => {
     setAssetToDeleteId(assetId);
     setIsConfirmModalOpen(true);
-    setDeleteError(null);
-    setGlobalSuccessMessage(null);
+    // setDeleteError(null); // Removed
+    // setGlobalSuccessMessage(null); // Removed
   };
 
   const handleConfirmDelete = async () => {
     if (!assetToDeleteId) return;
 
-    setDeleteError(null);
+    // setDeleteError(null); // Removed
     setDeletingAssetId(assetToDeleteId);
     setIsConfirmModalOpen(false);
 
@@ -50,15 +52,13 @@ function AssetsView() {
       await portfolioService.deleteAssetFromPortfolio(portfolioId, assetToDeleteId);
       if (refreshPortfolio) {
         refreshPortfolio();
-      } else {
-        console.warn('refreshPortfolio function not available from context.');
       }
-      setGlobalSuccessMessage(SUCCESS_ASSET_DELETED);
-      setTimeout(() => setGlobalSuccessMessage(null), 3000);
+      addNotification(SUCCESS_ASSET_DELETED, 'success'); // Use notification
     } catch (error) {
       const detailMessage = error.response?.data?.detail;
       const generalApiMessage = error.response?.data?.message;
-      setDeleteError(detailMessage || generalApiMessage || error.message || ERROR_ASSET_DELETE_FALLBACK);
+      const errorMessage = detailMessage || generalApiMessage || error.message || ERROR_ASSET_DELETE_FALLBACK;
+      addNotification(errorMessage, 'error'); // Use notification
     } finally {
       setDeletingAssetId(null);
       setAssetToDeleteId(null);
@@ -74,7 +74,7 @@ function AssetsView() {
   const handleOpenEditModal = assetToEdit => {
     setEditingAsset(assetToEdit);
     setEditError(null);
-    setGlobalSuccessMessage(null);
+    // setGlobalSuccessMessage(null); // Removed
   };
 
   const handleCloseEditModal = () => {
@@ -84,12 +84,9 @@ function AssetsView() {
   const handleSaveEdit = () => {
     if (refreshPortfolio) {
       refreshPortfolio();
-    } else {
-      console.warn('refreshPortfolio function not available from context.');
     }
     handleCloseEditModal();
-    setGlobalSuccessMessage(SUCCESS_ASSET_UPDATED);
-    setTimeout(() => setGlobalSuccessMessage(null), 3000);
+    addNotification(SUCCESS_ASSET_UPDATED, 'success'); // Use notification
   };
 
   if (!portfolio) {
@@ -105,16 +102,10 @@ function AssetsView() {
       <div>
         <h2 className="text-xl font-semibold mb-4 border-b pb-2">Assets for {portfolio.name}</h2>
 
-        {deleteError && (
-          <div className="text-red-600 text-sm p-3 my-2 bg-red-100 border border-red-400 rounded">
-            {deleteError}
-          </div>
-        )}
-        {globalSuccessMessage && (
-          <div className="text-green-600 text-sm p-3 my-2 bg-green-100 border border-green-400 rounded">
-            {globalSuccessMessage}
-          </div>
-        )}
+        {/* Removed manual error/success message displays */}
+        {/* {deleteError && (...)} */}
+        {/* {globalSuccessMessage && (...)} */}
+
         {editError && (
           <div className="text-red-600 text-sm p-3 my-2 bg-red-100 border border-red-400 rounded">
             {editError}
@@ -125,17 +116,17 @@ function AssetsView() {
           <h3 className="text-lg font-semibold mb-3">{HEADING_EXISTING_ASSETS}</h3>
           <AssetList
             assets={portfolio.assets}
-            editingAsset={editingAsset} /* Pass editingAsset to disable buttons on other rows */
+            editingAsset={editingAsset}
             deletingAssetId={deletingAssetId}
-            onEdit={handleOpenEditModal} /* Pass the handler from AssetsView */
-            onDelete={handleDeleteRequest} /* Pass the handler from AssetsView */
+            onEdit={handleOpenEditModal}
+            onDelete={handleDeleteRequest}
           />
         </div>
       </div>
 
       <AddAssetForm
         portfolioId={portfolioId}
-        refreshPortfolio={refreshPortfolio} /* This will also show add success/error messages */
+        refreshPortfolio={refreshPortfolio}
         assetTypeOptions={ASSET_TYPE_OPTIONS}
       />
 
@@ -144,7 +135,7 @@ function AssetsView() {
         onClose={handleCloseEditModal}
         asset={editingAsset}
         onSave={handleSaveEdit}
-        onError={setEditError} /* Pass setEditError to display edit errors */
+        onError={setEditError} /* Keep passing onError for now */
       />
 
       <ConfirmationModal

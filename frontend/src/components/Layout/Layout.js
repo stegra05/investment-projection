@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import NotificationContainer from '../Notification/NotificationContainer';
 
 const Layout = ({ children }) => (
   <div className="min-h-screen bg-gray-50 text-gray-900">
@@ -7,6 +8,7 @@ const Layout = ({ children }) => (
     {/* <header>...</header> */}
     <main className="container mx-auto px-4 py-8">{children}</main>
     {/* <footer>...</footer> */}
+    <NotificationContainer />
   </div>
 );
 

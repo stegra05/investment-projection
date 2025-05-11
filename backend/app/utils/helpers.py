@@ -19,7 +19,7 @@ def get_owned_child_or_404(
     child_relationship_name: str,
     child_id: int,
     child_model: Type[ModelType],
-    child_pk_attr: str # Must be explicitly provided now
+    child_pk_attr: str
 ) -> ModelType:
     """
     Gets a child entity by ID within a parent's collection or via direct query,
@@ -45,36 +45,51 @@ def get_owned_child_or_404(
         ValueError: If the relationship configuration is unexpected.
     """
     try:
-        # 1. Check eagerly loaded collection first
+        # Stage 1: Check eagerly loaded collection first.
+        # This is an optimization. If the parent object (e.g., a Portfolio) was loaded
+        # from the database with its child collection (e.g., its 'assets') already joined
+        # (eagerly loaded), then iterating through this in-memory collection is faster
+        # than issuing a new database query.
         child_collection = getattr(parent_instance, child_relationship_name)
-        if child_collection is not None: # Ensure the collection exists
+        if child_collection is not None:
             for child in child_collection:
-                # Check if child has the pk attribute and if it matches
                 if hasattr(child, child_pk_attr) and getattr(child, child_pk_attr) == child_id:
                     return child
 
-        # 2. Fallback: Query the database directly using parent linkage
-        # Inspect the relationship to find the foreign key on the child model
+        # Stage 2: Fallback to a direct database query.
+        # If the child was not found in an eagerly loaded collection (or the collection
+        # wasn't loaded), this part attempts to fetch the child directly from the database.
+        # This requires ensuring the child belongs to the specified parent.
+
+        # Inspect the relationship to dynamically find the foreign key on the child model
+        # that links it to the parent model. This makes the helper more generic.
         mapper = object_mapper(parent_instance)
         prop = mapper.get_property(child_relationship_name)
 
         if not isinstance(prop, RelationshipProperty):
-             raise ValueError(f"'{child_relationship_name}' is not a relationship property on {parent_instance.__class__.__name__}")
+            # The `prop` must be a RelationshipProperty, which describes how two models are related
+            # (e.g., one-to-many, many-to-many). If it's not, the provided
+            # `child_relationship_name` is not a valid SQLAlchemy relationship attribute.
+            raise ValueError(f"'{child_relationship_name}' is not a relationship property on {parent_instance.__class__.__name__}")
 
-        # Find the column on the child model that holds the foreign key to the parent
+        # Determine the parent's primary key name and value to filter the child query.
         parent_pk_cols = mapper.primary_key
         if len(parent_pk_cols) != 1:
-             raise ValueError("Parent model must have a single primary key column for this helper.")
+            raise ValueError("Parent model must have a single primary key column for this helper.")
         parent_pk_name = parent_pk_cols[0].name
         parent_pk_value = getattr(parent_instance, parent_pk_name)
 
-        # Get the corresponding foreign key attribute name on the child model
-        # This relies on standard backref or explicit foreign_keys configuration
-        child_fk_attrs = prop.remote_side # Columns on the child side of the relationship
+        # `prop.remote_side` refers to the columns on the "many" side of a one-to-many relationship
+        # (or the other side in a many-to-many, though this helper is more geared towards one-to-many).
+        # These are typically the foreign key columns on the child model that point back to the parent.
+        # We expect a single foreign key column for a simple parent-child link.
+        child_fk_attrs = prop.remote_side
         if not child_fk_attrs or len(child_fk_attrs) != 1:
-             raise ValueError(f"Could not determine single foreign key attribute on {child_model.__name__} for relationship '{child_relationship_name}'.")
+            raise ValueError(f"Could not determine single foreign key attribute on {child_model.__name__} for relationship '{child_relationship_name}'. Check relationship configuration and foreign_keys/remote_side.")
         child_fk_attr_name = list(child_fk_attrs)[0].name
 
+        # Construct filter conditions to find the child with the given ID (child_pk_attr)
+        # AND ensure it is linked to the parent (child_fk_attr_name == parent_pk_value).
         filter_conditions = {
             child_fk_attr_name: parent_pk_value,
             child_pk_attr: child_id
@@ -83,12 +98,11 @@ def get_owned_child_or_404(
         child_fallback = child_model.query.filter_by(**filter_conditions).first()
 
         if child_fallback is None:
-            # Use the specific ChildResourceNotFoundError
             raise ChildResourceNotFoundError(
                 child_model_name=child_model.__name__,
                 child_id=child_id,
                 parent_model_name=parent_instance.__class__.__name__,
-                parent_id=getattr(parent_instance, parent_pk_name, None) # Get parent ID safely
+                parent_id=getattr(parent_instance, parent_pk_name, None)
             )
 
         return child_fallback

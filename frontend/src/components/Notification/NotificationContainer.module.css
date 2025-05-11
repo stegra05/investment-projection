@@ -1,0 +1,5 @@
+.notificationContainer {
+  @apply fixed top-5 right-5 z-[10000]; /* High z-index to be on top of everything */
+  width: auto;
+  max-width: 400px; /* Or whatever max-width you prefer for the container */
+} 
