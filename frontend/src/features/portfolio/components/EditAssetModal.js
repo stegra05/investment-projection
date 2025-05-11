@@ -6,6 +6,8 @@ import Button from '../../../components/Button/Button';
 import portfolioService from '../../../api/portfolioService';
 import { usePortfolio } from '../state/PortfolioContext';
 import styles from '../../../components/Modal/Modal.module.css'; // Import the CSS module
+import Spinner from '../../../components/Spinner/Spinner'; // Import Spinner
+import AlertMessage from '../../../components/AlertMessage/AlertMessage'; // Import AlertMessage
 
 // Re-using options from AssetsView - consider moving to a shared location later
 const assetTypeOptions = [
@@ -257,11 +259,7 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
           </div>
 
           {/* General error message */}
-          {error && (
-            <div className="text-red-600 text-sm p-2 my-2 bg-red-100 border border-red-400 rounded">
-              {error}
-            </div>
-          )}
+          <AlertMessage type="error" message={error} />
 
           {/* Action Buttons */}
           <div className="flex justify-end space-x-3 pt-3">
@@ -269,7 +267,14 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
               Cancel
             </Button>
             <Button type="submit" variant="primary" disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Save Changes'}
+              {isSaving ? (
+                <>
+                  <Spinner size="h-4 w-4" color="text-white" className="mr-2" />
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
             </Button>
           </div>
         </form>

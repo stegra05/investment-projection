@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { usePortfolio } from '../state/PortfolioContext'; // Corrected path
 import TimelineView from '../components/TimelineView'; // Import TimelineView
-// import ChangeItemCard from '../components/ChangeItemCard'; // No longer directly used here
 import AddEditChangePanel from '../components/AddEditChangePanel'; // Import the new panel
 import portfolioService from '../../../api/portfolioService'; // Adjusted path and import type
-// import Input from '../../../components/Input/Input'; // No longer directly used here
 import { CHANGE_TYPES } from '../../../constants/portfolioConstants'; // Still needed for AddEditChangePanel or other logic if any remains
 
 // Import new components and hook
@@ -17,17 +15,8 @@ import {
     SUCCESS_PLANNED_CHANGE_DELETED,
     ERROR_PLANNED_CHANGE_SAVE_FALLBACK,
     ERROR_PLANNED_CHANGE_DELETE_FALLBACK,
-    LOADING_PLANNED_CHANGES // Added for loading state
 } from '../../../constants/textConstants'; // Assuming these constants exist or will be added
-
-// TODO: Define these types, perhaps from a shared enum/constants file
-// const CHANGE_TYPES = [
-//   { value: '', label: 'All Types' },
-//   { value: 'CONTRIBUTION', label: 'Contribution' },
-//   { value: 'WITHDRAWAL', label: 'Withdrawal' },
-//   { value: 'REALLOCATION', label: 'Reallocation' },
-//   // Add other types as defined in backend enums
-// ];
+import Spinner from '../../../components/Spinner/Spinner'; // Import Spinner
 
 const ChangesView = () => {
   const {
@@ -173,7 +162,11 @@ const ChangesView = () => {
   };
 
   if (isLoading && !displayedChanges.length && !portfolioError) {
-    return <div className="p-4">{LOADING_PLANNED_CHANGES}</div>;
+    return (
+      <div className="p-4 flex justify-center items-center min-h-[200px]">
+        <Spinner size="h-8 w-8" />
+      </div>
+    );
   }
 
   // Initial load error is handled by useEffect notification, so don't show generic error div for it

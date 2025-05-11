@@ -7,6 +7,8 @@ import RecurrenceSettingsForm from './RecurrenceSettingsForm';
 import TargetAllocationInput from './TargetAllocationInput';
 import { usePlannedChangeForm } from '../hooks/usePlannedChangeForm';
 import { prepareFinalPlannedChangeData } from '../utils/plannedChangeUtils';
+import Spinner from '../../../components/Spinner/Spinner';
+import AlertMessage from '../../../components/AlertMessage/AlertMessage';
 
 const CHANGE_TYPE_OPTIONS = [
   { value: 'Contribution', label: 'Contribution' },
@@ -262,19 +264,28 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
 
             <div className="p-4 border-t border-gray-200 flex flex-col items-stretch bg-gray-50">
               {(submitError || previewError) && (
-                <div className="mb-3 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-sm">
-                  <p className="font-semibold">Error:</p>
-                  <p>{submitError || previewError}</p>
-                </div>
+                <AlertMessage 
+                  type="error" 
+                  title="Error:" 
+                  message={submitError || previewError} 
+                  className="mb-3"
+                />
               )}
               <div className="flex justify-end space-x-3">
                 <button
                   type="button"
                   onClick={handlePreview}
                   disabled={isSubmitting || isPreviewing || !portfolio?.portfolio_id}
-                  className="px-4 py-2 text-sm font-medium text-primary-700 bg-primary-100 border border-primary-300 rounded-md shadow-sm hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+                  className="px-4 py-2 text-sm font-medium text-primary-700 bg-primary-100 border border-primary-300 rounded-md shadow-sm hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 flex items-center justify-center"
                 >
-                  {isPreviewing ? 'Loading Preview...' : 'Preview Impact'}
+                  {isPreviewing ? (
+                    <>
+                      <Spinner size="h-4 w-4" color="text-primary-700" className="mr-2" />
+                      Loading Preview...
+                    </>
+                  ) : (
+                    'Preview Impact'
+                  )}
                 </button>
                 <button
                   type="button"
@@ -288,15 +299,18 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
                   type="submit"
                   form="addEditChangeForm"
                   disabled={isSubmitting || isPreviewing || !portfolio?.portfolio_id}
-                  className="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:bg-primary-400"
+                  className="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:bg-primary-400 flex items-center justify-center"
                 >
-                  {isSubmitting
-                    ? isEditing
-                      ? 'Saving...'
-                      : 'Adding...'
-                    : isEditing
-                      ? 'Save Changes'
-                      : 'Add Change'}
+                  {isSubmitting ? (
+                    <>
+                      <Spinner size="h-4 w-4" color="text-white" className="mr-2" />
+                      {isEditing ? 'Saving...' : 'Adding...'}
+                    </>
+                  ) : isEditing ? (
+                    'Save Changes'
+                  ) : (
+                    'Add Change'
+                  )}
                 </button>
               </div>
             </div>

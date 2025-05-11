@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Input from '../../../components/Input/Input'; // Assuming path is correct
 import Button from '../../../components/Button/Button'; // Assuming path is correct
+import Spinner from '../../../components/Spinner/Spinner'; // Import Spinner
+import AlertMessage from '../../../components/AlertMessage/AlertMessage'; // Import AlertMessage
 
 function CreatePortfolioModal({
   isOpen = false,
@@ -24,13 +26,12 @@ function CreatePortfolioModal({
 
   const handleInternalSubmit = e => {
     e.preventDefault();
-    // Basic validation (can be expanded)
     if (!name.trim()) {
-      // Handle validation error (e.g., show a message)
+      // This local validation could also use AlertMessage or a field-specific error display
       console.warn('Portfolio name is required.');
       return;
     }
-    onSubmit({ name, description }); // Pass data up to parent
+    onSubmit({ name, description });
   };
 
   if (!isOpen) {
@@ -62,7 +63,8 @@ function CreatePortfolioModal({
             <Input
               label="Description (Optional)"
               id="portfolioDescription"
-              type="text" // Or could be textarea if Input supports it
+              name="portfolioDescription" // Added name prop
+              type="text" 
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="e.g., Long-term investments"
@@ -70,14 +72,27 @@ function CreatePortfolioModal({
             />
           </div>
 
-          {error && <p className="text-red-600 mb-4">Error: {error}</p>}
+          {/* Use AlertMessage for error display */}
+          <AlertMessage type="error" message={error} className="mb-4" />
 
           <div className="flex justify-end space-x-3">
             <Button type="button" variant="secondary" onClick={onClose} disabled={isLoading}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" isLoading={isLoading}>
-              {isLoading ? 'Creating...' : 'Create Portfolio'}
+            <Button 
+              type="submit" 
+              variant="primary" 
+              disabled={isLoading} 
+              className="flex items-center justify-center" // For spinner alignment
+            >
+              {isLoading ? (
+                <>
+                  <Spinner size="h-4 w-4" color="text-white" className="mr-2" />
+                  Creating...
+                </>
+              ) : (
+                'Create Portfolio'
+              )}
             </Button>
           </div>
         </form>
@@ -91,7 +106,7 @@ CreatePortfolioModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
-  error: PropTypes.string,
+  error: PropTypes.string, // Assuming error is a string message
 };
 
 export default CreatePortfolioModal;

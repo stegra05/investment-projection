@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Button from '../Button/Button';
 import styles from './Modal.module.css'; // Import the CSS module
+import Spinner from '../Spinner/Spinner'; // Import Spinner
 
 function ConfirmationModal({
   isOpen,
@@ -53,9 +54,16 @@ function ConfirmationModal({
             variant="danger"
             onClick={onConfirm}
             disabled={isConfirming}
-            // isLoading={isConfirming} // isLoading prop is not defined in Button.js, removing for now
           >
-            {confirmText}
+            {isConfirming ? (
+              <>
+                <Spinner size="h-4 w-4" color="text-white" className="mr-2" />
+                {/* TODO: Consider a shorter text like "Confirming..." if confirmText is long */}
+                {confirmText}
+              </>
+            ) : (
+              confirmText
+            )}
           </Button>
         </div>
       </div>

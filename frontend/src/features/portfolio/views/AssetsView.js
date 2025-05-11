@@ -13,10 +13,10 @@ import {
   CONFIRM_DELETE_ASSET_BUTTON,
   CONFIRM_DELETE_ASSET_MESSAGE,
   ERROR_ASSET_DELETE_FALLBACK,
-  LOADING_PORTFOLIO_DATA,
   HEADING_EXISTING_ASSETS,
 } from '../../../constants/textConstants';
 import useNotification from '../../../hooks/useNotification'; // Import the hook
+import Spinner from '../../../components/Spinner/Spinner'; // Import Spinner
 
 function AssetsView() {
   const { portfolio, refreshPortfolio, portfolioId } = usePortfolio();
@@ -29,16 +29,12 @@ function AssetsView() {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [assetToDeleteId, setAssetToDeleteId] = useState(null); // State to hold the ID of the asset targeted for deletion
 
-  // const [deleteError, setDeleteError] = useState(null); // Removed
   const [editError, setEditError] = useState(null); // For edit errors
-  // const [globalSuccessMessage, setGlobalSuccessMessage] = useState(null); // Removed
 
   // --- Handle Asset Deletion Flow ---
   const handleDeleteRequest = assetId => {
     setAssetToDeleteId(assetId);
     setIsConfirmModalOpen(true);
-    // setDeleteError(null); // Removed
-    // setGlobalSuccessMessage(null); // Removed
   };
 
   const handleConfirmDelete = async () => {
@@ -74,7 +70,6 @@ function AssetsView() {
   const handleOpenEditModal = assetToEdit => {
     setEditingAsset(assetToEdit);
     setEditError(null);
-    // setGlobalSuccessMessage(null); // Removed
   };
 
   const handleCloseEditModal = () => {
@@ -91,8 +86,8 @@ function AssetsView() {
 
   if (!portfolio) {
     return (
-      <div className="p-4 text-center text-gray-500">
-        {LOADING_PORTFOLIO_DATA}
+      <div className="p-4 flex justify-center items-center min-h-[200px]"> {/* Added flex for centering */}
+        <Spinner size="h-8 w-8" />
       </div>
     );
   }
@@ -101,11 +96,6 @@ function AssetsView() {
     <div className="p-1 space-y-8">
       <div>
         <h2 className="text-xl font-semibold mb-4 border-b pb-2">Assets for {portfolio.name}</h2>
-
-        {/* Removed manual error/success message displays */}
-        {/* {deleteError && (...)} */}
-        {/* {globalSuccessMessage && (...)} */}
-
         {editError && (
           <div className="text-red-600 text-sm p-3 my-2 bg-red-100 border border-red-400 rounded">
             {editError}
