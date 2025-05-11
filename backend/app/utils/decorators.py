@@ -1,6 +1,6 @@
 import logging
 import functools
-from flask import request, jsonify, abort
+from flask import request, jsonify, abort, current_app
 from pydantic import ValidationError
 from app import db
 from decimal import InvalidOperation
@@ -37,14 +37,12 @@ def handle_api_errors(schema=None):
                         # Convert Pydantic errors to a more readable format if needed
                         error_details = e.errors()
                         # Log the validation failure
-                        logging.warning(f"Validation Error on endpoint '{request.path}': {error_details}. Source IP: {request.remote_addr}")
+                        current_app.logger.warning(f"Validation Error on endpoint '{request.path}': {error_details}. Source IP: {request.remote_addr}")
                         # Return JSON directly instead of aborting
-                        # abort(400, description=error_details)
                         return jsonify(validation_error=error_details), 400
                     except Exception as e: # Catch potential unexpected errors during validation
                          db.session.rollback()
-                         import traceback
-                         traceback.print_exc()
+                         current_app.logger.exception(f"Error during data validation for {request.method} {request.path}")
                          abort(500, description=f"Error during data validation: {e}")
                 else:
                     # Pass raw json_data if no schema is specified
@@ -62,8 +60,7 @@ def handle_api_errors(schema=None):
             except Exception as e:
                 db.session.rollback()
                 # Log the full exception for debugging
-                import traceback
-                traceback.print_exc() # Consider using current_app.logger in production
+                current_app.logger.exception(f"An unexpected error occurred in API handler for {request.method} {request.path}")
                 abort(500, description=f"An unexpected error occurred: {e}")
         return wrapper
     return decorator 

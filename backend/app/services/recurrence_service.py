@@ -8,6 +8,8 @@ from app.models import PlannedFutureChange
 # Import the Enums! (adjust path if necessary)
 from app.enums import FrequencyType, MonthOrdinalType, OrdinalDayType, EndsOnType
 
+logger = logging.getLogger(__name__)
+
 # Helper for rrule day mapping
 _RRULE_DAYS_MAP = [rrule.MO, rrule.TU, rrule.WE, rrule.TH, rrule.FR, rrule.SA, rrule.SU]
 
@@ -190,7 +192,7 @@ def _expand_single_recurring_change(
                 )
                 occurrences.append(new_occurrence)
     except Exception as e:
-        logging.error(f"Error generating occurrences for change_id {change.change_id if change.change_id else 'unknown'}: {e}", exc_info=True)
+        logger.error(f"Error generating occurrences for PortfolioID '{change.portfolio_id}', ChangeID '{change.change_id if change.change_id else 'unknown'}': {e}", exc_info=True)
 
     return occurrences
 

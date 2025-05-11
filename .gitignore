@@ -214,3 +214,6 @@ db.sqlite3-journal
 migrations/
 
 dump.rdb
+
+# Custom logs
+backend/logs/

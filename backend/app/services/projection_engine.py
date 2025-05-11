@@ -134,26 +134,3 @@ def calculate_projection(
              break
 
     return [(date, Decimal(value)) for date, value in projection_results]
-
-# Example Usage (can be removed or moved to tests later)
-# Ensure this part requires app context if run directly
-# if __name__ == '__main__':
-#     from app import create_app # Assuming you have an app factory
-#     app = create_app()
-#     with app.app_context():
-#         start = datetime.date(2024, 1, 1)
-#         end = datetime.date(2025, 12, 31)
-#         # Assuming Portfolio ID 1 exists and has some initial value logic
-#         # You might need to query the actual current value for a portfolio ID
-#         portfolio_id_to_project = 1
-#         # Fetch or calculate a sensible initial_total_value
-#         # initial_value = calculate_initial_value(portfolio_id_to_project, start)
-#         initial_value = Decimal('10000.00') 
-
-#         try:
-#             results = calculate_projection(portfolio_id_to_project, start, end, initial_value)
-#             print("Projection Results:")
-#             for date, value in results:
-#                 print(f"{date.strftime('%Y-%m-%d')}: {value:.2f}")
-#         except ValueError as e:
-#             print(f"Error: {e}") 

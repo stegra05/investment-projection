@@ -59,7 +59,7 @@ def verify_portfolio_ownership(f):
             raise PortfolioNotFoundError(message=f"Portfolio with id {portfolio_id} not found.")
 
         if portfolio.user_id != current_user_id:
-            logging.warning(f"Access denied: UserID='{current_user_id}' attempted to access PortfolioID='{portfolio_id}' owned by UserID='{portfolio.user_id}'. Source IP: {request.remote_addr}")
+            current_app.logger.warning(f"Access denied: UserID='{current_user_id}' attempted to access PortfolioID='{portfolio_id}' owned by UserID='{portfolio.user_id}'. Source IP: {request.remote_addr}")
             raise AccessDeniedError(message="User does not have permission to access this portfolio.")
 
         kwargs['portfolio'] = portfolio

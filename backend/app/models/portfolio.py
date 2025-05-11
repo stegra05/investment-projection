@@ -1,8 +1,10 @@
 from app import db
 from sqlalchemy.sql import func
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import logging
+
+logger = logging.getLogger(__name__)
 
 class Portfolio(db.Model):
     __tablename__ = 'portfolios'
@@ -31,7 +33,7 @@ class Portfolio(db.Model):
                     total += Decimal(asset.allocation_value)
                 except (InvalidOperation, TypeError) as e:
                     # Log error if conversion/addition fails, but continue calculation
-                    logging.error(f"Could not add allocation_value for asset {asset.asset_id} to portfolio total: {e}. Value: '{asset.allocation_value}'")
+                    logger.error(f"PortfolioID '{self.portfolio_id}': Could not add allocation_value for AssetID '{asset.asset_id}' to portfolio total: {e}. Value: '{asset.allocation_value}'")
                     # Optionally, re-raise if you want calculation to fail hard?
                     # For now, we log and continue, resulting in a potentially partial sum.
         return total

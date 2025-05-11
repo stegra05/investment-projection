@@ -1,13 +1,10 @@
-from flask import Blueprint, request, jsonify, abort
+from flask import Blueprint, request, jsonify, abort, current_app
 from app import db
 from app.models.user import User
 from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt_identity, jwt_required, set_refresh_cookies, unset_jwt_cookies
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
-# Import the limiter instance from the app factory
 from app import limiter
-import re # Add re import for regex validation
-import logging
 import hashlib # Add hashlib for SHA-1 hashing
 import requests # Add requests for API calls
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -54,7 +51,7 @@ def is_password_pwned(password):
         for line in response.text.splitlines():
             if line.startswith(suffix):
                 count = int(line.split(':')[1])
-                logging.warning(f"Password pwned check failed: Password found {count} times. Hash prefix: {prefix}. Source IP: {request.remote_addr}")
+                current_app.logger.warning(f"Password pwned check failed: Password found {count} times. Hash prefix: {prefix}. Source IP: {request.remote_addr}")
                 return True, f"This password has appeared in a data breach {count} times and is unsafe. Please choose a different password."
 
         return False, "" # Password not found in the pwned list for this prefix
@@ -62,11 +59,11 @@ def is_password_pwned(password):
     except requests.exceptions.RequestException as e:
         # Log API request errors but allow registration to proceed (fail-open)
         # Alternatively, could block registration if the check fails (fail-closed)
-        logging.error(f"Pwned Passwords API request failed: {e}. Allowing registration attempt to proceed. Source IP: {request.remote_addr}")
+        current_app.logger.error(f"Pwned Passwords API request failed: {e}. Allowing registration attempt to proceed. Source IP: {request.remote_addr}")
         return False, "" # Treat API errors as non-pwned to avoid blocking users
     except Exception as e:
         # Log other unexpected errors during the check
-        logging.error(f"Unexpected error during pwned password check: {e}. Allowing registration attempt to proceed. Source IP: {request.remote_addr}")
+        current_app.logger.error(f"Unexpected error during pwned password check: {e}. Allowing registration attempt to proceed. Source IP: {request.remote_addr}")
         return False, ""
 
 @auth_bp.route('/register', methods=['POST'])
@@ -92,13 +89,13 @@ def register(validated_data):
     except IntegrityError as ie:
         # This is the expected error for duplicate username/email if the initial check missed a race condition
         db.session.rollback()
-        logging.warning(f"Database integrity error during registration: {ie}") # Log as warning
+        current_app.logger.warning(f"Database integrity error during registration for username '{username}' / email '{email}': {ie}") # Log as warning
         # abort(409, description="Username or email already exists (database constraint). Please try again.")
         raise ConflictError(message="Username or email already exists (database constraint). Please try again.")
     # Rely on global 500 handler for other unexpected errors
     # except Exception as e:
     #     db.session.rollback()
-    #     logging.exception(f"Unexpected error during user registration commit: {e}") # Log full traceback
+    #     current_app.logger.exception(f"Unexpected error during user registration commit: {e}") # Log full traceback
     #     abort(500, description=f"An unexpected error occurred during registration.")
 
     # Return the created user data (excluding password) using the schema
@@ -113,7 +110,7 @@ def login():
     password = data.get('password')
     if not identifier or not password:
         # Log missing credentials attempt
-        logging.warning(f"Login attempt failed: Missing identifier or password. Source IP: {request.remote_addr}")
+        current_app.logger.warning(f"Login attempt failed: Missing identifier or password. Source IP: {request.remote_addr}")
         # return jsonify({"message": "Missing username/email or password"}), 400
         raise BadRequestError("Missing username/email or password")
     # Search for user by email or username
@@ -123,7 +120,7 @@ def login():
 
     if user and user.check_password(password):
         # Log successful login
-        logging.info(f"Login successful: UserID='{user.id}', Identifier='{identifier}'. Source IP: {request.remote_addr}")
+        current_app.logger.info(f"Login successful: UserID='{user.id}', Identifier='{identifier}'. Source IP: {request.remote_addr}")
         access_token = create_access_token(identity=str(user.id))
         refresh_token = create_refresh_token(identity=str(user.id))
         # Prepare the JSON response without the refresh token
@@ -143,7 +140,7 @@ def login():
         return response, 200 # Return the response object with the cookie
     else:
         # Log failed login
-        logging.warning(f"Login failed: Invalid credentials for identifier '{identifier}'. Source IP: {request.remote_addr}")
+        current_app.logger.warning(f"Login failed: Invalid credentials for identifier '{identifier}'. Source IP: {request.remote_addr}")
         # return jsonify({"message": "Invalid email or password"}), 401
         raise ApplicationException("Invalid email or password", status_code=401, logging_level="warning")
 
@@ -169,21 +166,21 @@ def refresh():
 # @auth_bp.route('/request-password-reset', methods=['POST'])
 # def request_password_reset():
 #     # email = request.json.get('email')
-#     # logging.info(f"Password reset requested for email '{email}'. Source IP: {request.remote_addr}")
+#     # current_app.logger.info(f"Password reset requested for email '{email}'. Source IP: {request.remote_addr}")
 #     # ... implementation for task 4.6 ...
 #     pass
 
 # @auth_bp.route('/reset-password/<token>', methods=['POST'])
 # def reset_password(token):
 #     # user = User.verify_reset_token(token)
-#     # logging.info(f"Password reset attempt with token '{token}' for UserID '{user.id if user else 'unknown'}'. Source IP: {request.remote_addr}")
+#     # current_app.logger.info(f"Password reset attempt with token '{token}' for UserID '{user.id if user else 'unknown'}'. Source IP: {request.remote_addr}")
 #     # if user:
 #     #     password = request.json.get('password')
 #     #     # Validate password complexity...
 #     #     user.set_password(password)
 #     #     db.session.commit()
-#     #     logging.info(f"Password reset successful for UserID '{user.id}'. Source IP: {request.remote_addr}")
+#     #     current_app.logger.info(f"Password reset successful for UserID '{user.id}'. Source IP: {request.remote_addr}")
 #     # else:
-#     #     logging.warning(f"Password reset failed: Invalid or expired token '{token}'. Source IP: {request.remote_addr}")
+#     #     current_app.logger.warning(f"Password reset failed: Invalid or expired token '{token}'. Source IP: {request.remote_addr}")
 #     # ... implementation for task 4.6 ...
 #     pass 

@@ -1,7 +1,7 @@
 import os
 import logging
 
-logging.basicConfig(level=logging.INFO) # Or configure as needed
+# logging.basicConfig(level=logging.INFO) # Or configure as needed
 
 try:
     from app import create_app, db

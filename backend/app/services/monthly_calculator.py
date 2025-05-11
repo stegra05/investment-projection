@@ -1,10 +1,11 @@
 import datetime
 from decimal import Decimal, InvalidOperation
 from typing import List, Dict, Tuple
-
-# Import models and enums (adjust paths if necessary)
+import logging # Added logging
 from app.models import PlannedFutureChange # Assuming PlannedFutureChange is used here
 from app.enums import ChangeType # Assuming ChangeType is used here
+
+logger = logging.getLogger(__name__) # Added logger instantiation
 
 def _apply_monthly_growth(
     current_asset_values: dict[int, Decimal],
@@ -56,7 +57,7 @@ def _distribute_cash_flow(
                 value_i_final[asset_id] = final_value
             except InvalidOperation:
                 # Log or handle potential division by zero or other issues if needed
-                print(f"Warning: Invalid operation during cash flow distribution for asset {asset_id}. Using pre-cashflow value.")
+                logger.warning(f"Invalid operation during cash flow distribution for asset {asset_id}. Using pre-cashflow value.")
                 value_i_final[asset_id] = pre_cashflow_val # Keep pre-cashflow value
 
         # Recalculate total from final asset values for accuracy
@@ -76,7 +77,7 @@ def _distribute_cash_flow(
 
         elif net_change_month != Decimal('0.0'):
              # Log that the change was applied directly to the total (e.g., if withdrawing from zero)
-             print(f"Warning: Portfolio value before cash flow at {current_date.strftime('%Y-%m')} was {total_value_pre_cashflow:.2f}. "
+             logger.warning(f"Portfolio value before cash flow at {current_date.strftime('%Y-%m')} was {total_value_pre_cashflow:.2f}. "
                    f"Applied net change {net_change_month:.2f} directly to total.")
 
     return value_i_final, current_total_value_month

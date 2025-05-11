@@ -44,7 +44,7 @@ def verify_portfolio_ownership(f):
 
         if portfolio.user_id != current_user_id:
             # Log access control denial
-            logging.warning(f"Access denied: UserID='{current_user_id}' attempted to access PortfolioID='{portfolio_id}' owned by UserID='{portfolio.user_id}'. Source IP: {request.remote_addr}")
+            current_app.logger.warning(f"Access denied: UserID='{current_user_id}' attempted to access PortfolioID='{portfolio_id}' owned by UserID='{portfolio.user_id}'. Source IP: {request.remote_addr}")
             # abort(403, description="User does not have permission to access this portfolio.")
             raise AccessDeniedError(message="User does not have permission to access this portfolio.")
 

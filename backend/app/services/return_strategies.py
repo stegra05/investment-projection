@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
 from decimal import Decimal, InvalidOperation
+import logging # Added logging
 
 # Assuming models and enums are accessible via app package or direct import path
 # Adjust import paths if necessary based on your project structure
 from app.models import Asset
 from app.enums import AssetType
 
+logger = logging.getLogger(__name__) # Added logger instantiation
 
 # --- Return Calculation Strategy ---
 
@@ -38,14 +40,14 @@ class StandardAnnualReturnStrategy(AbstractReturnCalculationStrategy):
             try:
                 r_annual_percent = Decimal(asset.manual_expected_return)
             except (InvalidOperation, TypeError):
-                print(f"Warning: Invalid manual_expected_return for asset {asset.asset_id}. Using default.")
+                logger.warning(f"PortfolioID '{asset.portfolio_id}', AssetID '{asset.asset_id}': Invalid manual_expected_return. Using default.")
                 asset_type = asset.asset_type
                 # Ensure asset_type is an Enum member before using it as a key
                 if not isinstance(asset_type, AssetType):
                     try:
                         asset_type = AssetType[str(asset_type)]
                     except KeyError:
-                         print(f"Error: Unrecognized asset type '{asset_type}' for asset {asset.asset_id} during default return lookup.")
+                         logger.error(f"PortfolioID '{asset.portfolio_id}', AssetID '{asset.asset_id}': Unrecognized asset type '{asset_type}' during default return lookup.")
                          return Decimal('0.0') # Cannot determine default
                 r_annual_percent = self.DEFAULT_ANNUAL_RETURNS.get(asset_type, Decimal('0.0'))
         else:
@@ -55,12 +57,12 @@ class StandardAnnualReturnStrategy(AbstractReturnCalculationStrategy):
                 try:
                     asset_type = AssetType[str(asset_type)]
                 except KeyError:
-                     print(f"Error: Unrecognized asset type '{asset_type}' for asset {asset.asset_id} during default return lookup.")
+                     logger.error(f"PortfolioID '{asset.portfolio_id}', AssetID '{asset.asset_id}': Unrecognized asset type '{asset_type}' during default return lookup.")
                      return Decimal('0.0') # Cannot determine default
 
             r_annual_percent = self.DEFAULT_ANNUAL_RETURNS.get(asset_type, Decimal('0.0'))
             if asset_type in [AssetType.OPTIONS, AssetType.OTHER] and r_annual_percent == Decimal('0.0'):
-                 print(f"Info: Asset {asset.asset_id} type '{asset_type.name}' has no manual return. Projection assumes 0% growth. Provide 'manual_expected_return' for custom projection.")
+                 logger.info(f"PortfolioID '{asset.portfolio_id}', AssetID '{asset.asset_id}' type '{asset_type.name}' has no manual return. Projection assumes 0% growth. Provide 'manual_expected_return' for custom projection.")
 
         r_annual = r_annual_percent / Decimal('100')
 
@@ -72,7 +74,7 @@ class StandardAnnualReturnStrategy(AbstractReturnCalculationStrategy):
                 # (1 + r_annual).power(Decimal('1.0') / Decimal('12.0')) - Decimal('1.0')
                  monthly_return = (Decimal('1.0') + r_annual) ** (Decimal('1.0') / Decimal('12.0')) - Decimal('1.0')
             except InvalidOperation as e:
-                print(f"Warning: Could not calculate monthly return for asset {asset.asset_id} from annual return {r_annual*100}%. Error: {e}. Defaulting monthly return to 0.")
+                logger.warning(f"PortfolioID '{asset.portfolio_id}', AssetID '{asset.asset_id}': Could not calculate monthly return from annual return {r_annual*100}%. Error: {e}. Defaulting monthly return to 0.")
                 monthly_return = Decimal('0.0')
         else:
              # Handle extremely negative annual returns (e.g., -100% or less) - monthly equivalent is -100%
@@ -98,11 +100,11 @@ def get_return_strategy(asset_type: AssetType) -> AbstractReturnCalculationStrat
         try:
             asset_type = AssetType[str(asset_type)] # Try converting string to Enum
         except KeyError:
-             print(f"Error: Unrecognized asset type '{asset_type}' provided to get_return_strategy. Using standard strategy as fallback.")
+             logger.error(f"Unrecognized asset type '{asset_type}' provided to get_return_strategy. Using standard strategy as fallback. Portfolio context not directly available here.")
              return _standard_strategy
 
     strategy = _strategy_registry.get(asset_type)
     if not strategy:
-        print(f"Warning: No return calculation strategy found for asset type {asset_type.name}. Using standard strategy as fallback.")
+        logger.warning(f"No return calculation strategy found for asset type {asset_type.name}. Using standard strategy as fallback. Portfolio context not directly available here.")
         return _standard_strategy
     return strategy 

@@ -7,6 +7,8 @@ from app.enums import AssetType
 # Assuming return_strategies is in the same directory or accessible
 from .return_strategies import get_return_strategy as _get_return_strategy
 
+logger = logging.getLogger(__name__)
+
 def initialize_projection(assets: list[Asset], initial_total_value: Decimal | None) -> tuple[Dict[int, Decimal], Dict[int, Decimal], Decimal]:
     """Initializes asset values, monthly returns, and total value."""
     current_asset_values: Dict[int, Decimal] = {}
@@ -27,7 +29,7 @@ def initialize_projection(assets: list[Asset], initial_total_value: Decimal | No
     final_initial_total = initial_total_value if initial_total_value is not None else calculated_initial_total
 
     if final_initial_total == Decimal('0.0') and any(a.allocation_percentage is not None for a in assets):
-         print("Warning: Cannot calculate percentage allocations because initial total value is zero and no fixed value allocations exist.")
+         logger.warning("Cannot calculate percentage allocations because initial total value is zero and no fixed value allocations exist.")
          # Proceed, but percentage assets will remain at 0 initial value
 
     # Second pass: Finalize initial values and calculate monthly returns
@@ -40,7 +42,7 @@ def initialize_projection(assets: list[Asset], initial_total_value: Decimal | No
             initial_value = (Decimal(asset.allocation_percentage) / Decimal('100')) * final_initial_total
         elif asset.allocation_percentage is not None and asset.allocation_value is not None:
              # If both are set, value takes precedence (already handled), maybe log a warning?
-             print(f"Warning: Asset {asset.asset_id} has both allocation_value and allocation_percentage. Using allocation_value.")
+             logger.warning(f"Asset {asset.asset_id} has both allocation_value and allocation_percentage. Using allocation_value.")
 
 
         current_asset_values[asset.asset_id] = initial_value
@@ -56,7 +58,7 @@ def initialize_projection(assets: list[Asset], initial_total_value: Decimal | No
                  try:
                      asset_enum_type = AssetType[asset_enum_type] # Assumes the string matches enum member name
                  except KeyError:
-                      print(f"Error: Asset {asset.asset_id} has an unrecognized asset type '{asset_enum_type}'. Cannot determine return strategy.")
+                      logger.error(f"Asset {asset.asset_id} has an unrecognized asset type '{asset_enum_type}'. Cannot determine return strategy.")
                       monthly_asset_returns[asset.asset_id] = Decimal('0.0') # Assign default zero return
                       continue # Skip to next asset
 
@@ -66,16 +68,16 @@ def initialize_projection(assets: list[Asset], initial_total_value: Decimal | No
             monthly_asset_returns[asset.asset_id] = monthly_return
         except Exception as e:
              # Log the full traceback for unexpected errors during strategy execution
-             logging.exception(f"Error calculating monthly return for asset {asset.asset_id} via strategy. Setting return to 0.")
+             logger.exception(f"Error calculating monthly return for asset {asset.asset_id} via strategy. Setting return to 0.")
              monthly_asset_returns[asset.asset_id] = Decimal('0.0')
 
 
     # Optional Validation: Compare final actual calculated total with provided initial_total_value
     tolerance = Decimal('0.01') * max(Decimal('1.0'), final_initial_total) # Relative tolerance or absolute 0.01 if total is small/zero
     if initial_total_value is not None and abs(actual_calculated_total - initial_total_value) > tolerance:
-        print(f"Warning: Final calculated initial asset values sum ({actual_calculated_total:.2f}) "
+        logger.warning(f"Final calculated initial asset values sum ({actual_calculated_total:.2f}) "
               f"differs significantly from provided initial_total_value ({initial_total_value:.2f}). Check allocations. Using calculated total for projection start.")
-        start_total_value = actual_calculated_total 
+        start_total_value = actual_calculated_total
     elif initial_total_value is not None:
          start_total_value = initial_total_value 
     else:

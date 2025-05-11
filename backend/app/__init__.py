@@ -7,9 +7,11 @@ from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_talisman import Talisman
-from config import Config, config
+from config import Config, config, create_file_handler, detailed_formatter, console_handler
+import logging
 from celery import Celery
 from werkzeug.exceptions import HTTPException
+import time # Added for request duration
 
 # -----------------------------------------
 
@@ -60,6 +62,64 @@ from app.error_handlers import register_error_handlers
 def create_app(config_name='default'):
     app = Flask(__name__) # This is the Flask app instance
     app.config.from_object(config[config_name])
+    current_config = config[config_name]
+
+    # --- Logging Setup ---
+    # Clear any default handlers Flask might add
+    app.logger.handlers = []
+
+    # Flask App general log
+    if hasattr(current_config, 'FLASK_APP_LOG_FILE') and hasattr(current_config, 'LOG_LEVEL'):
+        app_file_handler = create_file_handler(
+            current_config.FLASK_APP_LOG_FILE,
+            current_config.LOG_LEVEL,
+            detailed_formatter
+        )
+        app.logger.addHandler(app_file_handler)
+
+    # Consolidated Error log
+    if hasattr(current_config, 'ERROR_LOG_FILE'):
+        error_file_handler = create_file_handler(
+            current_config.ERROR_LOG_FILE,
+            logging.ERROR, # Only logs ERROR and CRITICAL
+            detailed_formatter
+        )
+        app.logger.addHandler(error_file_handler)
+        # Also send errors from other loggers (e.g. SQLAlchemy) to this file
+        logging.getLogger().addHandler(error_file_handler) 
+
+    # Console Handler for app logger
+    if hasattr(current_config, 'CONSOLE_LOG_LEVEL'):
+        console_handler.setLevel(current_config.CONSOLE_LOG_LEVEL)
+        app.logger.addHandler(console_handler)
+    
+    # Set app logger level
+    if hasattr(current_config, 'LOG_LEVEL'):
+        app.logger.setLevel(current_config.LOG_LEVEL)
+    
+    app.logger.info("Flask app logger initialized.")
+
+    # --- SQLAlchemy Logging Configuration (Optional) ---
+    # To enable, set SQLALCHEMY_ECHO = True in your config or use the setup below
+    # Or control via environment variable if desired.
+    # if app.config.get('SQLALCHEMY_ECHO', False) or os.environ.get('SQLALCHEMY_LOG_SQL'):
+    sql_alchemy_logger = logging.getLogger('sqlalchemy.engine')
+    # Set level (INFO for statements, DEBUG for statements + result sets)
+    sql_alchemy_logger.setLevel(current_config.LOG_LEVEL if hasattr(current_config, 'LOG_LEVEL') else logging.INFO) 
+    # Add flask_app.log handler to sqlalchemy logger if not already added by root logger setup for errors
+    # This ensures SQL logs go to the main app log as well as potentially console
+    if hasattr(current_config, 'FLASK_APP_LOG_FILE') and hasattr(current_config, 'LOG_LEVEL'):
+        # Avoid duplicate handlers if flask_app_log_handler is already on root or sqlalchemy logger
+        already_has_app_handler = any(
+            h.baseFilename == app_file_handler.baseFilename for h in sql_alchemy_logger.handlers
+        ) or any(
+            h.baseFilename == app_file_handler.baseFilename for h in sql_alchemy_logger.parent.handlers if sql_alchemy_logger.parent
+        )
+        if not already_has_app_handler:
+             sql_alchemy_logger.addHandler(app_file_handler) # Use the same app_file_handler
+    
+    sql_alchemy_logger.info("SQLAlchemy logging configured.")
+    # --- End Logging Setup ---
 
     # Initialize Flask extensions with the app instance
     db.init_app(app)
@@ -115,6 +175,40 @@ def create_app(config_name='default'):
     # Register custom error handlers
     register_error_handlers(app, db)
 
+    # --- Request Logging ---
+    @app.before_request
+    def before_request_logging():
+        # Store start time on the request context (g)
+        # g is a Flask global object that is unique to each request
+        from flask import g
+        g.start_time = time.monotonic()
+
+    @app.after_request
+    def after_request_logging(response):
+        from flask import g, request # request is already imported globally, but good for clarity here
+        # Calculate duration if start_time is set
+        duration_ms = (time.monotonic() - g.start_time) * 1000 if hasattr(g, 'start_time') else -1
+        
+        # Prepare log message
+        # Exclude /static paths or other noisy endpoints if desired
+        if not request.path.startswith('/static'): # Example exclusion
+            log_message = (
+                f"Request: {request.remote_addr} '{request.method} {request.path} {request.scheme.upper()}/{request.environ.get('SERVER_PROTOCOL', '').split('/')[1]}' "
+                f"Status: {response.status_code} Size: {response.content_length} Duration: {duration_ms:.2f}ms "
+                f"Referer: '{request.referrer or '-'}' User-Agent: '{request.user_agent.string or '-'}'"
+            )
+            # Log based on status code
+            if 200 <= response.status_code < 400:
+                app.logger.info(log_message)
+            elif 400 <= response.status_code < 500:
+                app.logger.warning(log_message)
+            elif response.status_code >= 500:
+                app.logger.error(log_message)
+            else:
+                app.logger.debug(log_message) # For other statuses like 1xx
+        return response
+    # --- End Request Logging ---
+
     @app.route('/test/')
     def test_page():
         return '<h1>Testing the Flask Application Factory Pattern</h1>'
@@ -125,8 +219,6 @@ def create_app(config_name='default'):
 try:
     from . import models
 except ImportError as e:
-    print(f"--- app/__init__.py: Could not import app.models (normal if models don't exist yet): {e} ---")
+    logging.info(f"--- app/__init__.py: Could not import app.models (normal if models don't exist yet): {e} ---")
 except Exception as e:
-    print(f"--- app/__init__.py: ERROR importing app.models: {e} ---")
-    import traceback
-    traceback.print_exc()
+    logging.exception(f"--- app/__init__.py: ERROR importing app.models: {e} ---")

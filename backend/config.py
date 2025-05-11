@@ -1,10 +1,42 @@
 import os
 from dotenv import load_dotenv
 from datetime import timedelta
+import logging
+from logging.handlers import TimedRotatingFileHandler
+import sys
 
 # Load environment variables from .env file
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
+
+# --- Logging Configuration ---
+LOGS_DIR = os.path.join(basedir, 'logs')
+if not os.path.exists(LOGS_DIR):
+    os.makedirs(LOGS_DIR)
+
+# Define Log Formatters
+detailed_formatter = logging.Formatter(
+    '%(asctime)s %(levelname)s [%(name)s:%(module)s:%(funcName)s:%(lineno)d] %(message)s'
+)
+
+simple_formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
+
+# --- Base File Handler Configuration ---
+def create_file_handler(filename, level, formatter):
+    handler = TimedRotatingFileHandler(
+        os.path.join(LOGS_DIR, filename),
+        when='midnight',
+        interval=1,
+        backupCount=7,
+        encoding='utf-8'
+    )
+    handler.setFormatter(formatter)
+    handler.setLevel(level)
+    return handler
+
+# --- Console Handler Configuration ---
+console_handler = logging.StreamHandler(sys.stderr)
+console_handler.setFormatter(detailed_formatter) # Or simple_formatter for less verbosity
 
 class Config:
     """Base configuration class."""
@@ -74,6 +106,13 @@ class Config:
     # X-Content-Type-Options: nosniff is enabled by default in Talisman
     # -----------------------------------------------
 
+    # --- Logging Settings ---
+    LOG_LEVEL = logging.INFO # Default log level for the application
+    FLASK_APP_LOG_FILE = 'flask_app.log'
+    CELERY_WORKER_LOG_FILE = 'celery_worker.log'
+    ERROR_LOG_FILE = 'errors.log'
+    CONSOLE_LOG_LEVEL = logging.INFO # Default log level for console output
+
     # Add other configurations here, e.g., Mail settings, API keys
     # MAIL_SERVER = os.environ.get('MAIL_SERVER')
     # MAIL_PORT = int(os.environ.get('MAIL_PORT') or 25)
@@ -84,7 +123,43 @@ class Config:
 
     @staticmethod
     def init_app(app):
-        pass
+        # --- Setup Logging Handlers ---
+        # Flask App general log
+        app_file_handler = create_file_handler(
+            Config.FLASK_APP_LOG_FILE, 
+            Config.LOG_LEVEL, 
+            detailed_formatter
+        )
+        app.logger.addHandler(app_file_handler)
+
+        # Celery Worker general log (though typically configured in Celery setup)
+        # We define it here for consistency and potential use by other parts of the app
+        # if they need to log to the celery file directly (uncommon).
+        # Actual Celery worker logging is usually set up via Celery signals.
+        celery_file_handler = create_file_handler(
+            Config.CELERY_WORKER_LOG_FILE,
+            Config.LOG_LEVEL,
+            detailed_formatter
+        )
+        # This logger can be used by non-Celery parts if needed: logging.getLogger('celery_general').addHandler(celery_file_handler)
+
+
+        # Consolidated Error log
+        error_file_handler = create_file_handler(
+            Config.ERROR_LOG_FILE,
+            logging.ERROR, # Only logs ERROR and CRITICAL
+            detailed_formatter
+        )
+        app.logger.addHandler(error_file_handler)
+        logging.getLogger('celery').addHandler(error_file_handler) # Also send Celery errors here
+        logging.getLogger().addHandler(error_file_handler) # Catch errors from any logger
+
+        # Console Handler for app logger
+        console_handler.setLevel(Config.CONSOLE_LOG_LEVEL)
+        app.logger.addHandler(console_handler)
+        
+        app.logger.setLevel(Config.LOG_LEVEL)
+
 
 class DevelopmentConfig(Config):
     """Development configuration."""
@@ -97,6 +172,8 @@ class DevelopmentConfig(Config):
     #     **Config.TALISMAN_CSP, # Inherit base CSP
     #     'script-src': Config.TALISMAN_CSP.get('script-src', []) + ['\'unsafe-eval\''],
     # }
+    LOG_LEVEL = logging.DEBUG
+    CONSOLE_LOG_LEVEL = logging.DEBUG
 
 class TestingConfig(Config):
     """Testing configuration."""
@@ -111,6 +188,8 @@ class TestingConfig(Config):
     TALISMAN_FORCE_HTTPS = False
     TALISMAN_SESSION_COOKIE_SECURE = False
     # TALISMAN_HSTS_PRELOAD = True # Not relevant for local testing
+    LOG_LEVEL = logging.DEBUG # Keep logs verbose for testing
+    CONSOLE_LOG_LEVEL = logging.DEBUG # Keep console verbose for testing
 
 class ProductionConfig(Config):
     """Production configuration."""
@@ -123,6 +202,8 @@ class ProductionConfig(Config):
     TALISMAN_FORCE_HTTPS = True
     TALISMAN_SESSION_COOKIE_SECURE = True
     TALISMAN_HSTS_PRELOAD = True # Enable HSTS preload in production once confirmed
+    LOG_LEVEL = logging.INFO
+    CONSOLE_LOG_LEVEL = logging.WARNING # Reduce console verbosity in production
 
 # Dictionary to map configuration names to classes
 config = {
