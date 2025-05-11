@@ -2,20 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { usePortfolio } from '../state/PortfolioContext'; // Corrected path
 import TimelineView from '../components/TimelineView'; // Import TimelineView
 import AddEditChangePanel from '../components/AddEditChangePanel'; // Import the new panel
-import portfolioService from '../../../api/portfolioService'; // Adjusted path and import type
-import { CHANGE_TYPES } from '../../../constants/portfolioConstants'; // Still needed for AddEditChangePanel or other logic if any remains
-
-// Import new components and hook
 import ChangeFilters from '../components/ChangeFilters';
 import ChangeDetailsList from '../components/ChangeDetailsList';
 import useFilteredChanges from '../hooks/useFilteredChanges';
 import useNotification from '../../../hooks/useNotification'; // Import the hook
-import {
-  SUCCESS_PLANNED_CHANGE_SAVED,
-  SUCCESS_PLANNED_CHANGE_DELETED,
-  ERROR_PLANNED_CHANGE_SAVE_FALLBACK,
-  ERROR_PLANNED_CHANGE_DELETE_FALLBACK,
-} from '../../../constants/textConstants'; // Assuming these constants exist or will be added
+import { usePlannedChangeCRUD } from '../hooks/usePlannedChangeCRUD'; // Import the new CRUD hook
 import Spinner from '../../../components/Spinner/Spinner'; // Import Spinner
 
 const ChangesView = () => {
@@ -47,6 +38,13 @@ const ChangesView = () => {
     isPortfolioLoading,
     portfolioError
   );
+
+  // Instantiate the CRUD hook
+  const { savePlannedChange, deletePlannedChange } = usePlannedChangeCRUD({
+    portfolioId: portfolio?.portfolio_id,
+    refreshPortfolio,
+    addNotification,
+  });
 
   useEffect(() => {
     setIsLoading(isPortfolioLoading);
@@ -101,55 +99,11 @@ const ChangesView = () => {
     }
   }, [selectedChangeId, itemRefs]);
 
-  const handleSaveChanges = async changeDataFromPanel => {
-    if (!portfolio || !portfolio.portfolio_id) {
-      const errorMsg = 'Portfolio not loaded. Cannot save change.';
-      addNotification(errorMsg, 'error');
-      throw new Error(errorMsg);
-    }
-
-    const dataToSend = { ...changeDataFromPanel };
-    const isUpdating = !!dataToSend.id;
-
-    try {
-      if (isUpdating) {
-        const changeId = dataToSend.id;
-        await portfolioService.updatePlannedChange(portfolio.portfolio_id, changeId, dataToSend);
-      } else {
-        const { id, ...addData } = dataToSend; // eslint-disable-line @typescript-eslint/no-unused-vars
-        await portfolioService.addPlannedChange(portfolio.portfolio_id, addData);
-      }
-      if (refreshPortfolio) {
-        await refreshPortfolio();
-      }
-      addNotification(SUCCESS_PLANNED_CHANGE_SAVED, 'success');
-    } catch (apiError) {
-      const errorMessage = apiError.message || ERROR_PLANNED_CHANGE_SAVE_FALLBACK;
-      addNotification(errorMessage, 'error');
-      throw apiError; // Re-throw to be caught by AddEditChangePanel if needed
-    }
-  };
-
-  const handleDeleteChange = async (changeId) => {
-    if (!portfolio || !portfolio.portfolio_id) {
-      addNotification('Portfolio not loaded. Cannot delete change.', 'error');
-      return;
-    }
-    if (!changeId) {
-      addNotification('Change ID missing. Cannot delete change.', 'error');
-      return;
-    }
-
-    try {
-      await portfolioService.deletePlannedChange(portfolio.portfolio_id, changeId);
-      if (refreshPortfolio) {
-        await refreshPortfolio();
-      }
-      addNotification(SUCCESS_PLANNED_CHANGE_DELETED, 'success');
-      if (selectedChangeId === changeId) setSelectedChangeId(null); // Clear selection if deleted
-    } catch (apiError) {
-      const errorMessage = apiError.message || ERROR_PLANNED_CHANGE_DELETE_FALLBACK;
-      addNotification(errorMessage, 'error');
+  // Wrapper for delete to match expected signature if any, or to handle UI logic like clearing selection
+  const handleDeleteChangeWrapper = async (changeId) => {
+    const success = await deletePlannedChange(changeId);
+    if (success && selectedChangeId === changeId) {
+      setSelectedChangeId(null); // Clear selection if deleted item was selected
     }
   };
 
@@ -216,7 +170,7 @@ const ChangesView = () => {
           selectedChangeId={selectedChangeId}
           onSelectChange={handleSelectChange}
           onEdit={handleOpenEditPanel}
-          onDelete={handleDeleteChange}
+          onDelete={handleDeleteChangeWrapper}
           itemRefs={itemRefs}
           assetIdToNameMap={assetIdToNameMap}
         />
@@ -227,7 +181,7 @@ const ChangesView = () => {
         isOpen={isPanelOpen}
         onClose={handleClosePanel}
         initialData={editingChangeData}
-        onSave={handleSaveChanges}
+        onSave={savePlannedChange}
         onPreviewRequest={handleRequestPreview}
       />
     </div>

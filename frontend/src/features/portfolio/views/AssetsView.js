@@ -1,28 +1,31 @@
 import React, { useState } from 'react';
 import { usePortfolio } from '../state/PortfolioContext';
-import portfolioService from '../../../api/portfolioService'; // Import the service
 import EditAssetModal from '../components/EditAssetModal'; // Import the modal
 import ConfirmationModal from '../../../components/Modal/ConfirmationModal'; // Import the confirmation modal
 import AddAssetForm from '../components/AddAssetForm'; // Import the new form component
 import AssetList from '../components/AssetList'; // Import the new list component
 import { ASSET_TYPE_OPTIONS } from '../../../constants/portfolioConstants';
 import {
-  SUCCESS_ASSET_DELETED,
-  SUCCESS_ASSET_UPDATED,
   CONFIRM_DELETE_ASSET_TITLE,
   CONFIRM_DELETE_ASSET_BUTTON,
   CONFIRM_DELETE_ASSET_MESSAGE,
-  ERROR_ASSET_DELETE_FALLBACK,
   HEADING_EXISTING_ASSETS,
 } from '../../../constants/textConstants';
 import useNotification from '../../../hooks/useNotification'; // Import the hook
 import Spinner from '../../../components/Spinner/Spinner'; // Import Spinner
+import { useAssetCRUD } from '../hooks/useAssetCRUD'; // Import the new hook
 
 function AssetsView() {
   const { portfolio, refreshPortfolio, portfolioId } = usePortfolio();
   const { addNotification } = useNotification(); // Use the hook
 
-  const [deletingAssetId, setDeletingAssetId] = useState(null); // State for delete loading indicator on the row
+  // Instantiate the CRUD hook
+  const {
+    deleteAsset,
+    isDeletingAsset, // Replaces deletingAssetId state
+    handleAssetUpdateSuccess,
+  } = useAssetCRUD({ portfolioId, refreshPortfolio, addNotification });
+
   const [editingAsset, setEditingAsset] = useState(null); // State for asset being edited
 
   // State for confirmation modal
@@ -37,28 +40,16 @@ function AssetsView() {
     setIsConfirmModalOpen(true);
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDeleteWrapper = async () => {
     if (!assetToDeleteId) return;
-
-    // setDeleteError(null); // Removed
-    setDeletingAssetId(assetToDeleteId);
-    setIsConfirmModalOpen(false);
-
-    try {
-      await portfolioService.deleteAssetFromPortfolio(portfolioId, assetToDeleteId);
-      if (refreshPortfolio) {
-        refreshPortfolio();
-      }
-      addNotification(SUCCESS_ASSET_DELETED, 'success'); // Use notification
-    } catch (error) {
-      const detailMessage = error.response?.data?.detail;
-      const generalApiMessage = error.response?.data?.message;
-      const errorMessage = detailMessage || generalApiMessage || error.message || ERROR_ASSET_DELETE_FALLBACK;
-      addNotification(errorMessage, 'error'); // Use notification
-    } finally {
-      setDeletingAssetId(null);
-      setAssetToDeleteId(null);
+    // Call deleteAsset from the hook
+    const success = await deleteAsset(assetToDeleteId);
+    setIsConfirmModalOpen(false); // Close modal regardless of success, notification handles feedback
+    if (success) {
+      // Optionally, if any UI state depends on assetToDeleteId specifically beyond modal
+      setAssetToDeleteId(null); 
     }
+    // No need to manage deletingAssetId or error state here, hook does it
   };
 
   const handleCancelDelete = () => {
@@ -76,12 +67,11 @@ function AssetsView() {
     setEditingAsset(null);
   };
 
-  const handleSaveEdit = () => {
-    if (refreshPortfolio) {
-      refreshPortfolio();
-    }
+  const handleSaveEditWrapper = () => {
+    // The actual save is done by EditAssetModal. We just handle post-success actions.
+    handleAssetUpdateSuccess(); // Call the hook's success handler
     handleCloseEditModal();
-    addNotification(SUCCESS_ASSET_UPDATED, 'success'); // Use notification
+    // addNotification(SUCCESS_ASSET_UPDATED, 'success'); // Moved to hook
   };
 
   if (!portfolio) {
@@ -107,7 +97,7 @@ function AssetsView() {
           <AssetList
             assets={portfolio.assets}
             editingAsset={editingAsset}
-            deletingAssetId={deletingAssetId}
+            deletingAssetId={isDeletingAsset} // Pass isDeletingAsset from hook
             onEdit={handleOpenEditModal}
             onDelete={handleDeleteRequest}
           />
@@ -124,17 +114,17 @@ function AssetsView() {
         isOpen={editingAsset !== null}
         onClose={handleCloseEditModal}
         asset={editingAsset}
-        onSave={handleSaveEdit}
-        onError={setEditError} /* Keep passing onError for now */
+        onSave={handleSaveEditWrapper} // Use the wrapper
+        onError={setEditError} 
       />
 
       <ConfirmationModal
         isOpen={isConfirmModalOpen}
         onClose={handleCancelDelete}
-        onConfirm={handleConfirmDelete}
+        onConfirm={handleConfirmDeleteWrapper} // Use the wrapper
         title={CONFIRM_DELETE_ASSET_TITLE}
         confirmText={CONFIRM_DELETE_ASSET_BUTTON}
-        isConfirming={deletingAssetId !== null && deletingAssetId === assetToDeleteId}
+        isConfirming={isDeletingAsset === assetToDeleteId} // Compare hook state with targeted ID
       >
         {CONFIRM_DELETE_ASSET_MESSAGE}
       </ConfirmationModal>

@@ -1,6 +1,6 @@
 import datetime
 from decimal import Decimal, InvalidOperation
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Callable
 import logging # Added logging
 from app.models import PlannedFutureChange # Assuming PlannedFutureChange is used here
 from app.enums import ChangeType # Assuming ChangeType is used here
@@ -21,21 +21,54 @@ def _apply_monthly_growth(
         total_value_pre_cashflow += value_i_pre_cashflow[asset_id]
     return value_i_pre_cashflow, total_value_pre_cashflow
 
+# --- Cash Flow Effect Handlers for Change Types ---
+CashFlowEffectHandler = Callable[[Decimal], Decimal]
+
+def _handle_contribution_effect(amount: Decimal) -> Decimal:
+    return amount
+
+def _handle_withdrawal_effect(amount: Decimal) -> Decimal:
+    return -amount
+
+def _handle_dividend_effect(amount: Decimal) -> Decimal:
+    # Assuming dividends are treated as positive cash inflow to the portfolio total
+    return amount
+
+def _handle_interest_effect(amount: Decimal) -> Decimal:
+    # Assuming interest is treated as positive cash inflow to the portfolio total
+    return amount
+
+# Configuration for how different change types affect net cash flow
+# Types not listed (e.g., REALLOCATION) are assumed to have no direct net cash flow effect here.
+CHANGE_TYPE_CASH_FLOW_EFFECTS: Dict[ChangeType, CashFlowEffectHandler] = {
+    ChangeType.CONTRIBUTION: _handle_contribution_effect,
+    ChangeType.WITHDRAWAL: _handle_withdrawal_effect,
+    ChangeType.DIVIDEND: _handle_dividend_effect, 
+    ChangeType.INTEREST: _handle_interest_effect,
+}
+
 def _calculate_net_monthly_change(
     current_date: datetime.date,
     changes_by_month: dict[tuple[int, int], list[PlannedFutureChange]]
 ) -> Decimal:
-    """Calculates the net cash flow (contributions - withdrawals) for the month."""
+    """Calculates the net cash flow for the month using a configurable approach."""
     net_change_month = Decimal('0.0')
     current_month_key = (current_date.year, current_date.month)
     month_changes = changes_by_month.get(current_month_key, [])
 
     for change in month_changes:
-        change_amount = Decimal(change.amount) # Ensure Decimal
-        if change.change_type == ChangeType.CONTRIBUTION:
-            net_change_month += change_amount
-        elif change.change_type == ChangeType.WITHDRAWAL:
-            net_change_month -= change_amount
+        try:
+            change_amount = Decimal(change.amount) # Ensure Decimal
+        except (InvalidOperation, TypeError) as e:
+            logger.warning(f"Invalid amount '{change.amount}' for change type {change.change_type} on {change.change_date}. Skipping this amount. Error: {e}")
+            continue
+            
+        handler = CHANGE_TYPE_CASH_FLOW_EFFECTS.get(change.change_type)
+        if handler:
+            net_change_month += handler(change_amount)
+        # else: change types not in the map (e.g., REALLOCATION) have no direct cash flow impact here
+            # logger.debug(f"Change type {change.change_type} has no defined cash flow effect for net monthly change calculation.")
+
     return net_change_month
 
 def _distribute_cash_flow(

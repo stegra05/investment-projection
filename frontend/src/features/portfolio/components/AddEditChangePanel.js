@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes } from 'react-icons/fa';
 import { usePortfolio } from '../state/PortfolioContext';
@@ -6,9 +6,9 @@ import PropTypes from 'prop-types';
 import RecurrenceSettingsForm from './RecurrenceSettingsForm';
 import TargetAllocationInput from './TargetAllocationInput';
 import { usePlannedChangeForm } from '../hooks/usePlannedChangeForm';
-import { prepareFinalPlannedChangeData } from '../utils/plannedChangeUtils';
 import Spinner from '../../../components/Spinner/Spinner';
 import AlertMessage from '../../../components/AlertMessage/AlertMessage';
+import { useChangePanelActions } from '../hooks/useChangePanelActions';
 
 const CHANGE_TYPE_OPTIONS = [
   { value: 'Contribution', label: 'Contribution' },
@@ -33,11 +33,23 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
     handleRecurrenceDataChange,
   } = usePlannedChangeForm(initialData, portfolio, isOpen);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
-
-  const [isPreviewing, setIsPreviewing] = useState(false);
-  const [previewError, setPreviewError] = useState(null);
+  const {
+    handleSubmit,
+    handlePreview,
+    isSubmitting,
+    submitError,
+    setSubmitError,
+    isPreviewing,
+    previewError,
+    setPreviewError,
+  } = useChangePanelActions({
+    formData,
+    allocationSum,
+    targetAllocationsDisplay,
+    onSave,
+    onPreviewRequest,
+    onClose,
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -45,51 +57,7 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
       setPreviewError(null);
       setTimeout(() => firstFieldRef.current?.focus(), 0);
     }
-  }, [isOpen, initialData]);
-
-  const handleSubmit = async e => {
-    e.preventDefault();
-    setSubmitError(null);
-    const { error, data: dataToSave } = prepareFinalPlannedChangeData(formData, allocationSum, targetAllocationsDisplay);
-
-    if (error) {
-      setSubmitError(error);
-      return;
-    }
-    if (!dataToSave) return;
-
-    setIsSubmitting(true);
-    try {
-      await onSave(dataToSave);
-      onClose();
-    } catch (error) {
-      console.error('Submission failed:', error);
-      setSubmitError(error.message || 'Failed to save planned change. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handlePreview = async () => {
-    setPreviewError(null);
-    const { error, data: dataForPreview } = prepareFinalPlannedChangeData(formData, allocationSum, targetAllocationsDisplay);
-
-    if (error) {
-      setPreviewError(error);
-      return;
-    }
-    if (!dataForPreview) return;
-    
-    setIsPreviewing(true);
-    try {
-      await onPreviewRequest(dataForPreview);
-    } catch (error) {
-      console.error('Preview request failed:', error);
-      setPreviewError(error.message || 'Failed to request preview. Please try again.');
-    } finally {
-      setIsPreviewing(false);
-    }
-  };
+  }, [isOpen, initialData, setSubmitError, setPreviewError]);
 
   if (!formData) {
     return null;

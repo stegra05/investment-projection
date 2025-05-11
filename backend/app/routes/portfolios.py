@@ -338,8 +338,3 @@ def update_allocations(portfolio_id, portfolio, validated_data):
         # Rollback handled by decorator
         current_app.logger.error(f"Error during allocation database update: {e}", exc_info=True)
         raise ApplicationException(message=f"An internal error occurred while updating allocations: {e}", status_code=500, logging_level="exception")
-
-
-# --- Asset Routes (Task 5.4) ---
-
-# --- Planned Future Change Routes (Task 5.5) --- 

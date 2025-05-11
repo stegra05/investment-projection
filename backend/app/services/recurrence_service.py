@@ -1,7 +1,7 @@
 import datetime
 from dateutil import rrule
 import logging
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Callable, Optional
 
 # Import models from app.models (adjust path if necessary, assuming models are accessible)
 from app.models import PlannedFutureChange
@@ -29,9 +29,83 @@ def _map_ordinal_day_to_rrule_weekdays(ordinal_day_enum: OrdinalDayType | None) 
     if ordinal_day_enum == OrdinalDayType.SUNDAY: return [rrule.SU]
     if ordinal_day_enum == OrdinalDayType.WEEKDAY: return [rrule.MO, rrule.TU, rrule.WE, rrule.TH, rrule.FR]
     if ordinal_day_enum == OrdinalDayType.WEEKEND_DAY: return [rrule.SA, rrule.SU]
-    # OrdinalDayType.DAY is handled by bymonthday directly in _expand_single_recurring_change
+    # OrdinalDayType.DAY is handled by bymonthday directly
     return None
 
+# --- Frequency Specific Parameter Handlers ---
+def _apply_weekly_rrule_params(change: PlannedFutureChange, rrule_params: dict) -> None:
+    """Applies rrule parameters specific to WEEKLY frequency."""
+    mapped_days = _map_days_of_week_to_rrule(change.days_of_week)
+    if mapped_days:
+        rrule_params['byweekday'] = mapped_days
+
+def _apply_monthly_rrule_params(change: PlannedFutureChange, rrule_params: dict) -> None:
+    """Applies rrule parameters specific to MONTHLY frequency."""
+    if change.day_of_month:
+        rrule_params['bymonthday'] = change.day_of_month
+    elif change.month_ordinal and change.month_ordinal_day:
+        month_ordinal_map_setpos = {
+            MonthOrdinalType.FIRST: 1, MonthOrdinalType.SECOND: 2,
+            MonthOrdinalType.THIRD: 3, MonthOrdinalType.FOURTH: 4,
+            MonthOrdinalType.LAST: -1
+        }
+        if change.month_ordinal_day == OrdinalDayType.DAY:
+            if change.month_ordinal == MonthOrdinalType.LAST:
+                rrule_params['bymonthday'] = -1
+            elif change.month_ordinal == MonthOrdinalType.FIRST:
+                rrule_params['bymonthday'] = 1
+        else:
+            mapped_ordinal_weekdays = _map_ordinal_day_to_rrule_weekdays(change.month_ordinal_day)
+            if mapped_ordinal_weekdays and change.month_ordinal in month_ordinal_map_setpos:
+                rrule_params['byweekday'] = mapped_ordinal_weekdays
+                rrule_params['bysetpos'] = month_ordinal_map_setpos[change.month_ordinal]
+
+def _apply_yearly_rrule_params(change: PlannedFutureChange, rrule_params: dict) -> None:
+    """Applies rrule parameters specific to YEARLY frequency."""
+    if change.month_of_year:
+        rrule_params['bymonth'] = change.month_of_year
+
+    if change.day_of_month:
+        rrule_params['bymonthday'] = change.day_of_month
+    elif change.month_ordinal and change.month_ordinal_day:
+        month_ordinal_map_setpos = {
+            MonthOrdinalType.FIRST: 1, MonthOrdinalType.SECOND: 2,
+            MonthOrdinalType.THIRD: 3, MonthOrdinalType.FOURTH: 4,
+            MonthOrdinalType.LAST: -1
+        }
+        if change.month_ordinal_day == OrdinalDayType.DAY:
+            if change.month_ordinal == MonthOrdinalType.LAST:
+                rrule_params['bymonthday'] = -1
+            elif change.month_ordinal == MonthOrdinalType.FIRST:
+                rrule_params['bymonthday'] = 1
+        else:
+            mapped_ordinal_weekdays = _map_ordinal_day_to_rrule_weekdays(change.month_ordinal_day)
+            if mapped_ordinal_weekdays and change.month_ordinal in month_ordinal_map_setpos:
+                rrule_params['byweekday'] = mapped_ordinal_weekdays
+                rrule_params['bysetpos'] = month_ordinal_map_setpos[change.month_ordinal]
+
+# --- Frequency Configuration ---
+# Type alias for the parameter applying function
+ParamApplier = Callable[[PlannedFutureChange, dict], None]
+
+FREQUENCY_CONFIG: Dict[FrequencyType, Dict[str, Optional[ParamApplier] | rrule.asters]] = {
+    FrequencyType.DAILY: {
+        "rrule_const": rrule.DAILY,
+        "param_func": None  # No specific params beyond generic ones
+    },
+    FrequencyType.WEEKLY: {
+        "rrule_const": rrule.WEEKLY,
+        "param_func": _apply_weekly_rrule_params
+    },
+    FrequencyType.MONTHLY: {
+        "rrule_const": rrule.MONTHLY,
+        "param_func": _apply_monthly_rrule_params
+    },
+    FrequencyType.YEARLY: {
+        "rrule_const": rrule.YEARLY,
+        "param_func": _apply_yearly_rrule_params
+    },
+}
 
 def _expand_single_recurring_change(
     change: PlannedFutureChange,
@@ -46,149 +120,84 @@ def _expand_single_recurring_change(
     occurrences: list[PlannedFutureChange] = []
 
     if not change.is_recurring:
-        if change.change_date >= projection_start_date and change.change_date <= projection_end_date:
+        # Ensure change_date is a date object for comparison
+        change_event_date = change.change_date
+        if isinstance(change_event_date, datetime.datetime):
+            change_event_date = change_event_date.date()
+            
+        if change_event_date >= projection_start_date and change_event_date <= projection_end_date:
             occurrences.append(change)
         return occurrences
 
     # --- Construct rrule parameters ---
     rrule_params = {}
-    rrule_freq_map = {
-        FrequencyType.DAILY: rrule.DAILY,
-        FrequencyType.WEEKLY: rrule.WEEKLY,
-        FrequencyType.MONTHLY: rrule.MONTHLY,
-        FrequencyType.YEARLY: rrule.YEARLY,
-    }
-    if change.frequency not in rrule_freq_map:
+    
+    frequency_details = FREQUENCY_CONFIG.get(change.frequency)
+    if not frequency_details:
+        logger.warning(
+            f"Unsupported frequency type: {change.frequency} for PortfolioID '{change.portfolio_id}', "
+            f"ChangeID '{change.change_id if change.change_id else 'unknown'}'. Skipping."
+        )
         return []
 
-    rrule_params['freq'] = rrule_freq_map[change.frequency]
-    rrule_params['dtstart'] = datetime.datetime.combine(change.change_date, datetime.datetime.min.time())
+    rrule_params['freq'] = frequency_details["rrule_const"]
+    
+    # Ensure change.change_date is datetime for dtstart
+    dtstart_datetime = change.change_date
+    if isinstance(dtstart_datetime, datetime.date) and not isinstance(dtstart_datetime, datetime.datetime):
+        dtstart_datetime = datetime.datetime.combine(dtstart_datetime, datetime.datetime.min.time())
+    rrule_params['dtstart'] = dtstart_datetime
+
     rrule_params['interval'] = change.interval if change.interval and change.interval > 0 else 1
 
     # End conditions
-    # The overall 'until' for the rrule is the projection_end_date to avoid generating dates too far out.
-    # This can be further restricted by the change's own end condition.
     rrule_until = datetime.datetime.combine(projection_end_date, datetime.datetime.max.time())
     if change.ends_on_type == EndsOnType.AFTER_OCCURRENCES and change.ends_on_occurrences:
         rrule_params['count'] = change.ends_on_occurrences
     elif change.ends_on_type == EndsOnType.ON_DATE and change.ends_on_date:
-        # rrule 'until' parameter is inclusive. If the change ends on a specific date,
-        # use the minimum of that date and the overall projection_end_date.
-        # Ensure max time for the day to include any occurrences on that end date.
-        specific_end_date_dt = datetime.datetime.combine(change.ends_on_date, datetime.datetime.max.time())
+        specific_end_date_dt = change.ends_on_date
+        if isinstance(specific_end_date_dt, datetime.date) and not isinstance(specific_end_date_dt, datetime.datetime):
+             specific_end_date_dt = datetime.datetime.combine(specific_end_date_dt, datetime.datetime.max.time())
         rrule_until = min(rrule_until, specific_end_date_dt)
 
     rrule_params['until'] = rrule_until
-
-    # Frequency-specific parameters
-    if change.frequency == FrequencyType.WEEKLY:
-        # byweekday: Used for WEEKLY frequency to specify days of the week.
-        # Accepts a list of rrule weekday constants (MO, TU, etc.).
-        mapped_days = _map_days_of_week_to_rrule(change.days_of_week)
-        if mapped_days:
-            rrule_params['byweekday'] = mapped_days
-
-    elif change.frequency == FrequencyType.MONTHLY:
-        if change.day_of_month:
-            # bymonthday: Used for MONTHLY or YEARLY to specify day(s) of the month.
-            # For MONTHLY, if day_of_month (e.g., 15) is set, it means the 15th of every month.
-            rrule_params['bymonthday'] = change.day_of_month
-        elif change.month_ordinal and change.month_ordinal_day:
-            # For ordinal days (e.g., first Monday, last day of the month):
-            # byweekday: Specifies the day type (e.g., Monday, Weekday).
-            # bysetpos: Specifies the occurrence within the month (e.g., 1st, -1 for last).
-            month_ordinal_map_setpos = {
-                MonthOrdinalType.FIRST: 1, MonthOrdinalType.SECOND: 2,
-                MonthOrdinalType.THIRD: 3, MonthOrdinalType.FOURTH: 4,
-                MonthOrdinalType.LAST: -1
-            }
-            month_ordinal_map_monthday = { # For OrdinalDayType.DAY (e.g. last day of month)
-                MonthOrdinalType.LAST: -1 # first day is bymonthday = 1
-            }
-
-            if change.month_ordinal_day == OrdinalDayType.DAY:
-                # If it's for the Nth (e.g. last) day of the month. For first day, bymonthday=1 is used.
-                # For other Nth days (2nd, 3rd..30th), direct bymonthday is used.
-                # LAST day is handled via bymonthday = -1.
-                if change.month_ordinal == MonthOrdinalType.LAST:
-                     rrule_params['bymonthday'] = month_ordinal_map_monthday[MonthOrdinalType.LAST]
-                elif change.month_ordinal == MonthOrdinalType.FIRST: # first day of month
-                    rrule_params['bymonthday'] = 1
-                # Note: Other ordinals for DAY (e.g. 2nd day, 3rd day) are not directly supported by bysetpos
-                # and would typically be handled by bymonthday directly (e.g. bymonthday=2 for 2nd day).
-                # The current model structure implies a single day_of_month or an ordinal rule.
-
-            else: # Specific day (Mon, Tue), Weekday, or Weekend_day
-                mapped_ordinal_weekdays = _map_ordinal_day_to_rrule_weekdays(change.month_ordinal_day)
-                if mapped_ordinal_weekdays and change.month_ordinal in month_ordinal_map_setpos:
-                    rrule_params['byweekday'] = mapped_ordinal_weekdays
-                    rrule_params['bysetpos'] = month_ordinal_map_setpos[change.month_ordinal]
-
-    elif change.frequency == FrequencyType.YEARLY:
-        if change.month_of_year:
-            # bymonth: Specifies the month(s) for YEARLY recurrence.
-            rrule_params['bymonth'] = change.month_of_year
-
-        if change.day_of_month:
-            # bymonthday: For YEARLY, if day_of_month (e.g. 15) and bymonth (e.g. July) are set,
-            # it means July 15th every year.
-            rrule_params['bymonthday'] = change.day_of_month
-        elif change.month_ordinal and change.month_ordinal_day:
-            # For ordinal days within a specific month of the year (e.g., last Sunday of March):
-            # byweekday + bysetpos combination is used, similar to MONTHLY.
-            # bymonth must also be set for this to be applied to the correct month annually.
-            month_ordinal_map_setpos = {
-                MonthOrdinalType.FIRST: 1, MonthOrdinalType.SECOND: 2,
-                MonthOrdinalType.THIRD: 3, MonthOrdinalType.FOURTH: 4,
-                MonthOrdinalType.LAST: -1
-            }
-            if change.month_ordinal_day == OrdinalDayType.DAY:
-                # For Nth day of a specific month (e.g. last day of March, first day of June)
-                # bymonthday: used with bymonth. E.g., LAST day of March (bymonth=3, bymonthday=-1)
-                if change.month_ordinal == MonthOrdinalType.LAST:
-                    rrule_params['bymonthday'] = -1
-                elif change.month_ordinal == MonthOrdinalType.FIRST:
-                     rrule_params['bymonthday'] = 1
-            else:
-                mapped_ordinal_weekdays = _map_ordinal_day_to_rrule_weekdays(change.month_ordinal_day)
-                if mapped_ordinal_weekdays and change.month_ordinal in month_ordinal_map_setpos:
-                    rrule_params['byweekday'] = mapped_ordinal_weekdays
-                    rrule_params['bysetpos'] = month_ordinal_map_setpos[change.month_ordinal]
+    
+    # Apply frequency-specific parameters using the config
+    param_func = frequency_details.get("param_func")
+    if param_func:
+        param_func(change, rrule_params)
 
     # Generate dates
     try:
         rule = rrule.rrule(**rrule_params)
         proj_start_dt = datetime.datetime.combine(projection_start_date, datetime.datetime.min.time())
+        
+        # Ensure change.change_date (original start of recurrence) is a date object for comparison below
+        original_change_start_date = change.change_date
+        if isinstance(original_change_start_date, datetime.datetime):
+            original_change_start_date = original_change_start_date.date()
 
-        # rrule.between(dtstart, dtend, inc=True) includes occurrences on dtstart and dtend if they match the rule.
-        # The dtstart for the rule object (rule._dtstart) might be before our projection_start_date.
-        # We iterate from the rule's actual start, but only include dates within our projection window.
         for occ_datetime in rule.between(proj_start_dt, rrule_params['until'], inc=True):
             occurrence_date = occ_datetime.date()
-            # Ensure the generated date is not before the change's original start date (dtstart of the rule)
-            # and also within the overall projection window.
-            # The `rule.between` already respects the `proj_start_dt` as its lower bound for generation.
-            if occurrence_date >= change.change_date and occurrence_date <= projection_end_date:
+            if occurrence_date >= original_change_start_date and occurrence_date <= projection_end_date:
                 new_occurrence = PlannedFutureChange(
-                    portfolio_id=change.portfolio_id, # Keep original portfolio_id
+                    portfolio_id=change.portfolio_id, 
                     change_type=change.change_type,
-                    change_date=occurrence_date, # Key: use the actual occurrence date
+                    change_date=occurrence_date, 
                     amount=change.amount,
                     target_allocation_json=change.target_allocation_json,
                     description=f"{change.description} (Recurring Instance)" if change.description else "Recurring Instance",
-                    is_recurring=False,
-                    frequency=FrequencyType.ONE_TIME,
+                    is_recurring=False, # Expanded instances are one-time conceptual events
+                    frequency=FrequencyType.ONE_TIME, # Mark as ONE_TIME
                     interval=1,
-                    # Other recurrence fields are not relevant for this single instance
                     days_of_week=None,
                     day_of_month=None,
                     month_ordinal=None,
                     month_ordinal_day=None,
                     month_of_year=None,
-                    ends_on_type=EndsOnType.NEVER,
+                    ends_on_type=EndsOnType.NEVER, # Recurrence definition not relevant for instance
                     ends_on_occurrences=None,
                     ends_on_date=None,
-                    # original change_id is not copied, this is a new conceptual instance
                 )
                 occurrences.append(new_occurrence)
     except Exception as e:
@@ -214,7 +223,12 @@ def expand_and_group_changes(
     
     changes_by_month: Dict[Tuple[int, int], List[PlannedFutureChange]] = {}
     for change_instance in all_individual_changes:
-        key = (change_instance.change_date.year, change_instance.change_date.month)
+        # Ensure change_instance.change_date is a date object for keying
+        instance_event_date = change_instance.change_date
+        if isinstance(instance_event_date, datetime.datetime):
+            instance_event_date = instance_event_date.date()
+
+        key = (instance_event_date.year, instance_event_date.month)
         changes_by_month.setdefault(key, []).append(change_instance)
         
     return changes_by_month 
