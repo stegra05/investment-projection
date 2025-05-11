@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Input from '../../../components/Input/Input';
 import Select from '../../../components/Select/Select';
@@ -32,17 +32,21 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
   const [error, setError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
 
+  const firstFieldRef = useRef(null);
+
   useEffect(() => {
-    if (asset) {
+    if (isOpen && asset) {
       setAssetType(asset.asset_type || '');
       setNameOrTicker(asset.name || '');
       setAllocationPercentage(asset.allocation_percentage || '');
       setManualExpectedReturn(asset.manual_expected_return || '');
       setError(null);
       setFieldErrors({});
-      document.getElementById('editAssetType-button')?.focus();
+      firstFieldRef.current?.focus();
+    } else if (isOpen) {
+      firstFieldRef.current?.focus();
     }
-  }, [asset]);
+  }, [isOpen, asset]);
 
   useEffect(() => {
     const handleEsc = event => {
@@ -188,6 +192,7 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
               options={assetTypeOptions}
               required
               className="mb-0"
+              ref={firstFieldRef}
             />
             {fieldErrors.assetType && (
               <p className="mt-1 text-xs text-red-600">{fieldErrors.assetType}</p>

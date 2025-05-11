@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes } from 'react-icons/fa';
 import { usePortfolio } from '../state/PortfolioContext';
@@ -20,6 +20,8 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
   const isEditing = initialData != null;
   const title = isEditing ? 'Edit Planned Change' : 'Add New Planned Change';
 
+  const firstFieldRef = useRef(null);
+
   const {
     formData,
     targetAllocationsDisplay,
@@ -39,6 +41,7 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
     if (isOpen) {
       setSubmitError(null);
       setPreviewError(null);
+      setTimeout(() => firstFieldRef.current?.focus(), 0);
     }
   }, [isOpen, initialData]);
 
@@ -132,6 +135,7 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
                   value={formData.changeType}
                   onChange={handleFormChange}
                   required
+                  ref={firstFieldRef}
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm"
                 >
                   {CHANGE_TYPE_OPTIONS.map(option => (

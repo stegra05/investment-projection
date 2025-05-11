@@ -14,7 +14,7 @@ const Input = ({
   placeholder,
   helperText,
   ...props
-}) => {
+}, ref) => {
   const inputId = id || name;
   const isPassword = type === 'password';
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -44,6 +44,7 @@ const Input = ({
           autoComplete={autoComplete}
           placeholder={placeholder}
           {...props}
+          ref={ref}
           className={`mt-1 block w-full px-3 py-2 h-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${isPassword ? 'pr-16' : ''}`}
         />
         {isPassword && (
@@ -76,4 +77,6 @@ Input.propTypes = {
   helperText: PropTypes.string,
 };
 
-export default Input;
+const ForwardedInput = React.forwardRef(Input);
+
+export default ForwardedInput;

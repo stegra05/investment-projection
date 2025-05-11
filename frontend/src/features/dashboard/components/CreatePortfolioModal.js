@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Input from '../../../components/Input/Input'; // Assuming path is correct
 import Button from '../../../components/Button/Button'; // Assuming path is correct
@@ -12,6 +12,15 @@ function CreatePortfolioModal({
 }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const nameInputRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setName('');
+      setDescription('');
+      setTimeout(() => nameInputRef.current?.focus(), 0);
+    }
+  }, [isOpen]);
 
   const handleInternalSubmit = e => {
     e.preventDefault();
@@ -39,12 +48,14 @@ function CreatePortfolioModal({
             <Input
               label="Portfolio Name"
               id="portfolioName"
+              name="portfolioName"
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="e.g., Retirement Savings"
               required
               disabled={isLoading}
+              ref={nameInputRef}
             />
           </div>
           <div className="mb-6">
