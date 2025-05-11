@@ -9,6 +9,7 @@ import logging
 from pydantic import BaseModel, Field, validator
 from typing import Optional
 from sqlalchemy import desc, asc
+from sqlalchemy.orm import selectinload # Add import for selectinload
 
 # Import Pydantic Schemas
 from app.schemas.portfolio_schemas import (
@@ -162,8 +163,8 @@ def get_user_portfolios():
     except ValueError as e: # Handles Pydantic validation errors
         return jsonify({"errors": str(e)}), 400 # Or use a more structured error response
 
-    # Base query - REMOVED joinedload for assets and planned_changes
-    query = Portfolio.query.filter_by(user_id=current_user_id)
+    # Base query - Add selectinload for assets
+    query = Portfolio.query.options(selectinload(Portfolio.assets)).filter_by(user_id=current_user_id)
 
     # Apply filtering
     if query_params.filter_name:
