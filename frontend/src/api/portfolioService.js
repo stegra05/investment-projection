@@ -62,6 +62,24 @@ const portfolioService = {
     }
   },
 
+  /**
+   * Adds an asset to a specific portfolio.
+   * @param {string|number} portfolioId - The ID of the portfolio.
+   * @param {object} assetData - The data for the new asset.
+   * @returns {Promise<object>} A promise that resolves to the newly added asset object.
+   * @throws {Error} Throws an error if the API request fails.
+   */
+  addAssetToPortfolio: async (portfolioId, assetData) => {
+    try {
+      const endpoint = ENDPOINTS.PORTFOLIO.ADD_ASSET(portfolioId);
+      const response = await instance.post(endpoint, assetData);
+      return response.data; // Assuming API returns the newly added asset
+    } catch (error) {
+      console.error(`Error adding asset to portfolio ${portfolioId}:`, error);
+      throw error;
+    }
+  },
+
   // Projection Preview
   /**
    * Requests a projection preview with temporary planned changes.
@@ -82,6 +100,25 @@ const portfolioService = {
       return response.data;
     } catch (error) {
       console.error(`Error fetching projection preview for portfolio ${portfolioId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Updates a specific planned change for a portfolio.
+   * @param {string|number} portfolioId - The ID of the portfolio.
+   * @param {string|number} changeId - The ID of the planned change to update.
+   * @param {object} changeData - The data to update the planned change with.
+   * @returns {Promise<object>} A promise that resolves to the updated planned change object.
+   * @throws {Error} Throws an error if the API request fails.
+   */
+  updatePlannedChange: async (portfolioId, changeId, changeData) => {
+    try {
+      const endpoint = ENDPOINTS.PORTFOLIO.UPDATE_PLANNED_CHANGE(portfolioId, changeId);
+      const response = await instance.put(endpoint, changeData);
+      return response.data; // Assuming API returns the updated planned change object
+    } catch (error) {
+      console.error(`Error updating planned change ${changeId} for portfolio ${portfolioId}:`, error);
       throw error;
     }
   },
