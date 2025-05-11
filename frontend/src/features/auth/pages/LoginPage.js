@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import useAuthStore from '../../../store/authStore';
 import LoginForm from '../components/LoginForm';
 import Layout from '../../../components/Layout/Layout';
@@ -8,18 +8,10 @@ const LoginPage = () => {
   const login = useAuthStore(state => state.login);
   const isLoading = useAuthStore(state => state.isLoading);
   const error = useAuthStore(state => state.error);
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
-  const navigate = useNavigate();
 
   const handleLogin = async credentials => {
     await login(credentials);
   };
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
-    }
-  }, [isAuthenticated, navigate]);
 
   let errorMessage = null;
   if (error) {

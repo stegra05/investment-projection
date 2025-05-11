@@ -19,72 +19,99 @@ function useProjectionTask() {
   const [projectionResults, setProjectionResults] = useState(null);
   const [projectionError, setProjectionError] = useState(null);
 
-  // Effect for polling task status
-  useEffect(() => {
+  const checkStatus = useCallback(async (isMountedRef, currentTimeoutIdRef) => {
     if (!projectionTaskId) return;
 
-    let isMounted = true;
-    let timeoutId = null;
+    try {
+      const statusData = await projectionService.getProjectionTaskStatus(projectionTaskId);
 
-    const checkStatus = async () => {
-      if (!isMounted) return;
+      if (!isMountedRef.current) return;
 
-      try {
-        const status = await projectionService.getProjectionTaskStatus(projectionTaskId);
+      const currentStatus = statusData.status.toLowerCase();
 
-        if (!isMounted) return;
-
-        switch (status.status) {
-        case 'COMPLETED':
+      // Only update if the status has actually changed or if it's an error that needs reporting
+      if (currentStatus !== projectionStatus || (currentStatus === 'error' && projectionStatus !== 'error')) {
+        switch (currentStatus) {
+        case 'completed':
           setProjectionStatus('completed');
-          if (status.result?.data) {
-            const chartData = transformProjectionData(status.result.data);
+          if (statusData.result?.data) {
+            const chartData = transformProjectionData(statusData.result.data);
             setProjectionResults(chartData);
           } else {
             setProjectionResults([]);
           }
+          setProjectionError(null);
           break;
-        case 'FAILED':
+        case 'failed': // Treat 'failed' as 'error'
           setProjectionStatus('error');
-          setProjectionError(status.error || 'Projection calculation failed');
+          setProjectionError(statusData.error || 'Projection calculation failed');
+          setProjectionResults(null);
           break;
-        case 'PROCESSING':
+        case 'processing':
           setProjectionStatus('processing');
-          timeoutId = setTimeout(checkStatus, 5000);
+          // No need to set timeout here, useEffect will handle it
           break;
-        case 'PENDING': // Assuming PENDING is a valid status from backend before PROCESSING
+        case 'pending':
           setProjectionStatus('pending');
-          timeoutId = setTimeout(checkStatus, 5000);
+          // No need to set timeout here, useEffect will handle it
           break;
         default:
           setProjectionStatus('error');
-          setProjectionError('Unknown task status: ' + status.status);
-        }
-      } catch (error) {
-        if (!isMounted) return;
-
-        console.error('Error checking task status:', error);
-        if (error.response?.status === 429) {
-          timeoutId = setTimeout(checkStatus, 10000); // Longer delay for rate limiting
-        } else {
-          setProjectionStatus('error');
-          setProjectionError(error.message || 'Error checking task status');
+          setProjectionError('Unknown task status: ' + statusData.status);
+          setProjectionResults(null);
         }
       }
-    };
+      // If still processing or pending, the useEffect will schedule the next check
+    } catch (error) {
+      if (!isMountedRef.current) return;
 
-    if (projectionStatus === 'submitted' || projectionStatus === 'processing' || projectionStatus === 'pending') {
-      checkStatus(); // Initial check if task was just submitted or is still processing/pending
+      console.error('Error checking task status:', error);
+      // Only set error status if it's not already 'error' to avoid loops on repeated errors
+      if (projectionStatus !== 'error') {
+        setProjectionStatus('error');
+        setProjectionError(error.message || 'Error checking task status');
+        setProjectionResults(null);
+      }
+      // For 429, the useEffect will handle the longer delay
+    }
+  }, [projectionTaskId, projectionStatus, setProjectionStatus, setProjectionResults, setProjectionError]);
+
+  // Effect for polling task status
+  useEffect(() => {
+    if (!projectionTaskId || !['submitted', 'processing', 'pending'].includes(projectionStatus)) {
+      return;
+    }
+
+    let isMountedRef = { current: true };
+    let timeoutId = null;
+
+    const performCheck = async () => {
+      await checkStatus(isMountedRef, { current: timeoutId }); // Pass refs
+
+      if (!isMountedRef.current) return;
+
+      // Schedule next check if still in a polling state
+      if (['processing', 'pending'].includes(projectionStatus)) {
+        const delay = projectionError && projectionError.includes('429') ? 10000 : 5000;
+        timeoutId = setTimeout(performCheck, delay);
+      }
+    };
+    
+    // If status is 'submitted', we transition it to 'pending' to start the polling,
+    // or directly call performCheck if it's already a polling status.
+    if (projectionStatus === 'submitted') {
+      setProjectionStatus('pending'); // This will re-trigger the useEffect for 'pending' state
+    } else {
+      performCheck(); // Initial check for 'processing' or 'pending'
     }
 
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectionTaskId, projectionStatus]); // Add projectionStatus to allow re-triggering based on it if needed
+  }, [projectionTaskId, projectionStatus, checkStatus, projectionError]); // Added projectionError for 429 handling
 
   const startNewProjection = useCallback(async (portfolioId, params) => {
     // Reset state for a new projection

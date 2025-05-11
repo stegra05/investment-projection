@@ -24,10 +24,15 @@ ProtectedRoute.propTypes = {
 };
 
 function App() {
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/login"
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+        />
         <Route path="/register" element={<RegisterPage />} />
         <Route
           path="/dashboard"
