@@ -4,6 +4,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 from app.services.task_service import get_task_status
 from app.models import UserCeleryTask
 from app import db
+from werkzeug.exceptions import HTTPException
 
 tasks_bp = Blueprint('tasks', __name__)
 
@@ -34,8 +35,12 @@ def get_task_by_id(task_id):
 
         return jsonify(task_info), 200
     except Exception as e:
-        current_app.logger.error(f"[tasks.py] UNCAUGHT EXCEPTION in get_task_by_id for task_id {task_id}: {str(e)}", exc_info=True)
-        # Return a generic 500 error, but the logs will have the details
+        # Check if the exception is a Werkzeug HTTPException (like the 404 from first_or_404)
+        # If it is, re-raise it to let Flask handle it correctly.
+        if isinstance(e, HTTPException):
+            raise e
+        # For any other unexpected exceptions, log and return 500
+        current_app.logger.error(f"[tasks.py] UNEXPECTED EXCEPTION in get_task_by_id for task_id {task_id}: {str(e)}", exc_info=True)
         abort(500, description="An unexpected error occurred while fetching task status.")
 
 # Example route for initiating a task (replace with your actual task initiation logic)
@@ -56,6 +61,9 @@ def run_example_task_route():
         current_app.logger.info(f"[tasks.py] Example task {task_id} dispatched for user {user_id}.")
         return jsonify({"message": "Example task initiated", "task_id": task_id}), 202
     except Exception as e:
-        current_app.logger.error(f"[tasks.py] UNCAUGHT EXCEPTION in run_example_task_route: {str(e)}", exc_info=True)
+        # Also apply similar logic here if needed, though less critical for this example route
+        if isinstance(e, HTTPException):
+            raise e
+        current_app.logger.error(f"[tasks.py] UNEXPECTED EXCEPTION in run_example_task_route: {str(e)}", exc_info=True)
         db.session.rollback()
         abort(500, description="An unexpected error occurred while initiating example task.") 

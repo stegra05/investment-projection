@@ -10,5 +10,13 @@ class UserCeleryTask(db.Model):
 
     user = db.relationship('User', backref=db.backref('celery_tasks', lazy=True))
 
+    @classmethod
+    def create_task_for_user(cls, user_id, task_id):
+        """Creates a new record linking a user to a Celery task ID."""
+        new_record = cls(user_id=user_id, task_id=task_id)
+        db.session.add(new_record)
+        # Note: The commit should happen in the calling function after this.
+        return new_record
+
     def __repr__(self):
         return f'<UserCeleryTask {self.task_id} (User {self.user_id})>' 

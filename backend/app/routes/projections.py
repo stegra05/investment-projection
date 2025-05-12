@@ -6,7 +6,7 @@ from decimal import Decimal, InvalidOperation
 import datetime
 
 from app.services.projection_engine import calculate_projection
-from app.models import Portfolio
+from app.models import Portfolio, UserCeleryTask
 from app import db 
 from app.schemas.portfolio_schemas import PlannedChangeCreateSchema, OrmBaseModel 
 from app.background_workers import run_projection_task
@@ -155,6 +155,18 @@ def create_portfolio_projection(portfolio_id):
         )
         task_id = task.id
         current_app.logger.info(f"Projection task {task_id} dispatched for portfolio {portfolio_id}.")
+
+        # --- Create UserCeleryTask Record IMMEDIATELY --- 
+        try:
+            UserCeleryTask.create_task_for_user(user_id=current_user_id, task_id=task_id)
+            db.session.commit()
+            current_app.logger.info(f"UserCeleryTask record created for task {task_id}, user {current_user_id}")
+        except Exception as db_error:
+            db.session.rollback()
+            current_app.logger.error(f"Database error creating UserCeleryTask for task {task_id}, user {current_user_id}: {db_error}", exc_info=True)
+            # Even if DB record fails, the task is already dispatched. Return 500, but client might still poll later.
+            raise ApplicationException("Failed to record projection task status. Please try again later.", status_code=500)
+        # --------------------------------------------------
 
         return jsonify({
             "message": "Projection task accepted",
