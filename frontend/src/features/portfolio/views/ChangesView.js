@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePortfolio } from '../state/PortfolioContext'; // Corrected path
 import TimelineView from '../components/TimelineView'; // Import TimelineView
 import AddEditChangePanel from '../components/AddEditChangePanel'; // Import the new panel

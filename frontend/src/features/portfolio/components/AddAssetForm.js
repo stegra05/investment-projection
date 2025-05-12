@@ -3,6 +3,7 @@ import Input from '../../../components/Input/Input';
 import Select from '../../../components/Select/Select';
 import Button from '../../../components/Button/Button';
 import portfolioService from '../../../api/portfolioService';
+import PropTypes from 'prop-types';
 
 function AddAssetForm({ portfolioId, refreshPortfolio, assetTypeOptions }) {
   const [assetType, setAssetType] = useState('');
@@ -224,5 +225,16 @@ function AddAssetForm({ portfolioId, refreshPortfolio, assetTypeOptions }) {
     </div>
   );
 }
+
+AddAssetForm.propTypes = {
+  portfolioId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  refreshPortfolio: PropTypes.func.isRequired,
+  assetTypeOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+};
 
 export default AddAssetForm; 

@@ -1,6 +1,7 @@
 import React from 'react';
-import Input from '../../../components/Input/Input'; // Assuming Input is a shared component
-import { CHANGE_TYPES } from '../../../constants/portfolioConstants'; // Assuming this path is correct
+import PropTypes from 'prop-types';
+import Input from '../../../components/Input/Input'; 
+import { CHANGE_TYPES } from '../../../constants/portfolioConstants';
 
 const ChangeFilters = ({ filters, onFilterChange }) => {
   return (
@@ -74,6 +75,16 @@ const ChangeFilters = ({ filters, onFilterChange }) => {
       </div>
     </div>
   );
+};
+
+ChangeFilters.propTypes = {
+  filters: PropTypes.shape({
+    type: PropTypes.string,
+    startDate: PropTypes.string,
+    endDate: PropTypes.string,
+    description: PropTypes.string,
+  }).isRequired,
+  onFilterChange: PropTypes.func.isRequired,
 };
 
 export default ChangeFilters; 

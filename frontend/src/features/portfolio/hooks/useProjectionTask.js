@@ -19,7 +19,7 @@ function useProjectionTask() {
   const [projectionResults, setProjectionResults] = useState(null);
   const [projectionError, setProjectionError] = useState(null);
 
-  const checkStatus = useCallback(async (isMountedRef, currentTimeoutIdRef) => {
+  const checkStatus = useCallback(async (isMountedRef) => {
     if (!projectionTaskId) return;
 
     try {
@@ -86,7 +86,7 @@ function useProjectionTask() {
     let timeoutId = null;
 
     const performCheck = async () => {
-      await checkStatus(isMountedRef, { current: timeoutId }); // Pass refs
+      await checkStatus(isMountedRef); // Pass only isMountedRef
 
       if (!isMountedRef.current) return;
 

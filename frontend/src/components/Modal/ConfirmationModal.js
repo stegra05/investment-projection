@@ -41,7 +41,7 @@ function ConfirmationModal({
       aria-modal="true"
       aria-labelledby="confirmation-modal-title"
     >
-      <div className={styles.modalContent} role="document"> // Use CSS module class
+      <div className={styles.modalContent} role="document"> 
         <h2 id="confirmation-modal-title" className={styles.modalTitle}>
           {title}
         </h2>
@@ -58,7 +58,6 @@ function ConfirmationModal({
             {isConfirming ? (
               <>
                 <Spinner size="h-4 w-4" color="text-white" className="mr-2" />
-                {/* TODO: Consider a shorter text like "Confirming..." if confirmText is long */}
                 {confirmText}
               </>
             ) : (

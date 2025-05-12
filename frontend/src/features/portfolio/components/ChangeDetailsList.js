@@ -1,5 +1,6 @@
 import React from 'react';
-import ChangeItemCard from './ChangeItemCard'; // Assuming ChangeItemCard is in the same directory
+import PropTypes from 'prop-types';
+import ChangeItemCard from './ChangeItemCard';
 
 const ChangeDetailsList = ({
   displayedChanges,
@@ -40,6 +41,23 @@ const ChangeDetailsList = ({
       )}
     </div>
   );
+};
+
+ChangeDetailsList.propTypes = {
+  displayedChanges: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      // Add other shape properties as needed based on the 'change' object structure
+    })
+  ).isRequired,
+  selectedChangeId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onSelectChange: PropTypes.func.isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  itemRefs: PropTypes.shape({
+    current: PropTypes.object, // Ideally, refine this if the structure is known
+  }),
+  assetIdToNameMap: PropTypes.objectOf(PropTypes.string).isRequired,
 };
 
 export default ChangeDetailsList; 

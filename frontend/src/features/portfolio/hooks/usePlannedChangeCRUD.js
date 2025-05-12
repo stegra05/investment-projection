@@ -22,7 +22,7 @@ export const usePlannedChangeCRUD = ({ portfolioId, refreshPortfolio, addNotific
         const changeId = dataToSend.id;
         await portfolioService.updatePlannedChange(portfolioId, changeId, dataToSend);
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        // eslint-disable-next-line no-unused-vars
         const { id, ...addData } = dataToSend; // Remove ID for add operations
         await portfolioService.addPlannedChange(portfolioId, addData);
       }

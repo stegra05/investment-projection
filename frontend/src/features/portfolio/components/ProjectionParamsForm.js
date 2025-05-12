@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import Input from '../../../components/Input/Input';
 import Button from '../../../components/Button/Button';
 
@@ -94,5 +95,16 @@ function ProjectionParamsForm({
     </div>
   );
 }
+
+ProjectionParamsForm.propTypes = {
+  startDate: PropTypes.string.isRequired,
+  setStartDate: PropTypes.func.isRequired,
+  endDate: PropTypes.string.isRequired,
+  projectionHorizonYears: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  setProjectionHorizonYears: PropTypes.func.isRequired,
+  initialValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  setInitialValue: PropTypes.func.isRequired,
+  isProjectionRunning: PropTypes.bool.isRequired,
+};
 
 export default ProjectionParamsForm; 

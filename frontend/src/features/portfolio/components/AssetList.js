@@ -11,6 +11,7 @@ import {
   ARIA_LABEL_DELETE_ASSET,
 } from '../../../constants/textConstants';
 import Spinner from '../../../components/Spinner/Spinner';
+import PropTypes from 'prop-types';
 
 function AssetList({ assets, editingAsset, deletingAssetId, onEdit, onDelete }) {
   if (!assets || assets.length === 0) {
@@ -102,5 +103,20 @@ function AssetList({ assets, editingAsset, deletingAssetId, onEdit, onDelete }) 
     </div>
   );
 }
+
+AssetList.propTypes = {
+  assets: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      name: PropTypes.string.isRequired,
+      asset_type: PropTypes.string.isRequired,
+      allocation_percentage: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    })
+  ),
+  editingAsset: PropTypes.object, // Could be more specific if shape is known
+  deletingAssetId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onEdit: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+};
 
 export default AssetList; 

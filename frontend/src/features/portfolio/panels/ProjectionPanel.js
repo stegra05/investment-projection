@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { usePortfolio } from '../state/PortfolioContext';
 import useProjectionTask from '../hooks/useProjectionTask';
-import Input from '../../../components/Input/Input';
 import Button from '../../../components/Button/Button';
 import ProjectionChart from '../components/ProjectionChart';
 import ProjectionSummaryMetrics from '../components/ProjectionSummaryMetrics';

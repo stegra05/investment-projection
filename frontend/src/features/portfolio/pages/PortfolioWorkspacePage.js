@@ -21,8 +21,6 @@ function PortfolioWorkspacePage() {
   const { 
     portfolio: rawPortfolioData, 
     loading: portfolioLoading, 
-    fetchPortfolio, 
-    clearPortfolioError, 
   } = usePortfolio();
   const [sizes, setSizes] = useState(defaultSizes);
   const [activeMainView, setActiveMainView] = useState(() => {
