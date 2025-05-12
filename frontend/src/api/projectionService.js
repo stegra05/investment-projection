@@ -12,25 +12,21 @@ const projectionService = {
    * @throws {Error} Throws an error if the API request fails.
    */
   startProjection: async (portfolioId, params) => {
-    try {
-      const response = await instance.post(`/portfolios/${portfolioId}/projections`, params, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+    const response = await instance.post(`/portfolios/${portfolioId}/projections`, params, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-      if (response.status !== 200 && response.status !== 202) {
-        throw new Error(`Unexpected status code: ${response.status}`);
-      }
-
-      if (!response.data?.task_id) {
-        throw new Error('Task ID not found in response');
-      }
-
-      return response.data.task_id;
-    } catch (error) {
-      throw error;
+    if (response.status !== 200 && response.status !== 202) {
+      throw new Error(`Unexpected status code: ${response.status}`);
     }
+
+    if (!response.data?.task_id) {
+      throw new Error('Task ID not found in response');
+    }
+
+    return response.data.task_id;
   },
 
   /**
@@ -40,16 +36,12 @@ const projectionService = {
    * @throws {Error} Throws an error if the API request fails.
    */
   getProjectionTaskStatus: async taskId => {
-    try {
-      const response = await instance.get(`/tasks/${taskId}`, {
-        headers: {
-          Accept: 'application/json',
-        },
-      });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await instance.get(`/tasks/${taskId}`, {
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+    return response.data;
   },
 
   /**
@@ -61,33 +53,29 @@ const projectionService = {
    * @throws {Error} Throws an error if the API request fails.
    */
   runPreviewProjection: async (portfolioId, params, draftChange) => {
-    try {
-      const payload = {
-        projection_params: params,
-        draft_change: draftChange,
-      };
+    const payload = {
+      projection_params: params,
+      draft_change: draftChange,
+    };
 
-      // Assuming the preview endpoint is /portfolios/{portfolioId}/projections/preview
-      const response = await instance.post(
-        `/portfolios/${portfolioId}/projections/preview`,
-        payload,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (response.status !== 200) {
-        throw new Error(`Error running preview projection: Status ${response.status}`);
+    // Assuming the preview endpoint is /portfolios/{portfolioId}/projections/preview
+    const response = await instance.post(
+      `/portfolios/${portfolioId}/projections/preview`,
+      payload,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
       }
+    );
 
-      // ProjectionPanel.js expects resultData.data to be the timeseries.
-      // We assume the API for preview returns an object structured like: { data: { "date1": value1, ... } }
-      return response.data;
-    } catch (error) {
-      throw error; // Rethrow the original error to be handled by the caller
+    if (response.status !== 200) {
+      throw new Error(`Error running preview projection: Status ${response.status}`);
     }
+
+    // ProjectionPanel.js expects resultData.data to be the timeseries.
+    // We assume the API for preview returns an object structured like: { data: { "date1": value1, ... } }
+    return response.data;
   },
 };
 

@@ -1,0 +1,113 @@
+services:
+  db:
+    image: postgres:13-alpine
+    container_name: investment_projection_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # ports:
+    #   - "${DB_PORT_ON_HOST:-5433}:5432" # Expose DB port to host (use port from .env or default 5433)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  redis:
+    image: redis:alpine
+    container_name: investment_projection_redis
+    # ports: # Uncomment if direct host access to Redis is needed
+    #   - "${REDIS_PORT_ON_HOST:-6379}:6379"
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: investment_projection_backend
+    ports:
+      - "${FLASK_PORT_ON_HOST:-5000}:5000" # Expose Flask port to host (use port from .env or default 5000)
+    volumes:
+      - ./backend:/usr/src/app # Mount local backend code for hot-reloading
+      - ./backend/logs:/usr/src/app/logs # Mount logs directory (optional)
+    environment:
+      FLASK_APP: run.py
+      FLASK_ENV: ${FLASK_ENV}
+      FLASK_CONFIG: ${FLASK_CONFIG}
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+      PYTHONUNBUFFERED: ${PYTHONUNBUFFERED:-1}
+    command: flask run --host=0.0.0.0 --port=5000
+    depends_on:
+      db:
+        condition: service_healthy # Wait for DB to be ready
+      redis:
+        condition: service_started # Wait for Redis to start
+    networks:
+      - app-network
+
+  celeryworker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: investment_projection_celeryworker
+    volumes:
+      - ./backend:/usr/src/app # Mount local backend code
+      - ./backend/logs:/usr/src/app/logs # Mount logs directory (optional)
+    environment:
+      FLASK_ENV: ${FLASK_ENV}
+      FLASK_CONFIG: ${FLASK_CONFIG}
+      DATABASE_URL: ${DATABASE_URL} # Celery tasks might need DB access
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+      PYTHONUNBUFFERED: ${PYTHONUNBUFFERED:-1}
+    # Use the celery_worker.py script to start Celery
+    # Adjust concurrency (-c) as needed for development (e.g., 1)
+    command: celery -A celery_worker.app_celery worker --loglevel=info --concurrency=1
+    depends_on:
+      redis:
+        condition: service_started # Must wait for Redis
+      db: # Optional, depends if tasks need DB immediately at startup
+        condition: service_healthy
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: investment_projection_frontend
+    ports:
+      - "${REACT_PORT_ON_HOST:-3000}:3000" # Expose React port to host (use port from .env or default 3000)
+    volumes:
+      - ./frontend:/usr/src/app # Mount local frontend code for hot-reloading
+      # Use an anonymous volume for node_modules to prevent local overriding container install
+      - /usr/src/app/node_modules
+    environment:
+      # Helps with hot-reloading file watching inside Docker
+      CHOKIDAR_USEPOLLING: "true"
+      # Pass the API base URL to the React app
+      REACT_APP_API_BASE_URL: ${REACT_APP_API_BASE_URL:-http://localhost:5000/api/v1}
+    # Required for Create React App interactive terminal
+    stdin_open: true
+    tty: true
+    depends_on:
+      - backend # Frontend might depend on backend being available
+    networks:
+      - app-network
+
+volumes:
+  postgres_data: # Define the named volume for persistent DB data
+
+networks:
+  app-network: # Define the custom bridge network
+    driver: bridge 

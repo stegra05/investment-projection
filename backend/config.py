@@ -169,7 +169,10 @@ class Config:
 class DevelopmentConfig(Config):
     """Development configuration."""
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or 'postgresql:///investment_projection_dev'
+    # Prioritize DATABASE_URL (from Docker), then DEV_DATABASE_URL, then hardcoded default
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+                              os.environ.get('DEV_DATABASE_URL') or \
+                              'postgresql:///investment_projection_dev' # Consider changing this default if needed
     # Allow HTTP during development (Talisman)
     TALISMAN_FORCE_HTTPS = False
     TALISMAN_SESSION_COOKIE_SECURE = False

@@ -1,0 +1,31 @@
+# Bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+
+# Logs and Databases
+logs/
+*.log
+*.db
+dev-app.db
+
+# Test artifacts
+.pytest_cache/
+.coverage
+
+# Version Control
+.git
+.gitignore
+
+# Docker specific files
+Dockerfile
+.dockerignore
+
+# OS-specific
+.DS_Store
+
+# Add any other project-specific ignores here 
