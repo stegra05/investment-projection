@@ -145,6 +145,25 @@ const portfolioService = {
     }
   },
 
+  /**
+   * Adds a new planned change to a portfolio.
+   * @param {string|number} portfolioId - The ID of the portfolio.
+   * @param {object} changeData - The data for the new planned change.
+   * @returns {Promise<object>} A promise that resolves to the newly created planned change object.
+   * @throws {Error} Throws an error if the API request fails.
+   */
+  addPlannedChange: async (portfolioId, changeData) => {
+    try {
+      // Assuming endpoint is defined like: ADD_PLANNED_CHANGE: (portfolioId) => `portfolios/${portfolioId}/planned-changes`,
+      const endpoint = ENDPOINTS.PORTFOLIO.ADD_PLANNED_CHANGE(portfolioId);
+      const response = await instance.post(endpoint, changeData);
+      return response.data; // Assuming API returns the newly created planned change object
+    } catch (error) {
+      console.error(`Error adding planned change to portfolio ${portfolioId}:`, error);
+      throw error;
+    }
+  },
+
   // Add other portfolio-related API calls here in the future
   // e.g., updatePortfolio, deletePortfolio
 };
