@@ -6,6 +6,8 @@ const Button = ({
   children,
   onClick,
   variant = 'primary',
+  size = 'default',
+  isActive = false,
   disabled = false,
   fullWidth = false,
   className = '',
@@ -13,7 +15,9 @@ const Button = ({
 }) => {
   const buttonClasses = `
     ${styles.button} 
-    ${styles[variant]} 
+    ${styles[variant]}
+    ${styles[size] || styles['default']}
+    ${isActive && styles[`${variant}Active`] ? styles[`${variant}Active`] : ''}
     ${fullWidth ? styles.fullWidth : ''} 
     ${className}
   `.trim();
@@ -28,7 +32,9 @@ const Button = ({
 Button.propTypes = {
   children: PropTypes.node.isRequired,
   onClick: PropTypes.func,
-  variant: PropTypes.oneOf(['primary', 'secondary', 'danger']),
+  variant: PropTypes.oneOf(['primary', 'secondary', 'danger', 'outline-select']),
+  size: PropTypes.oneOf(['default', 'small']),
+  isActive: PropTypes.bool,
   disabled: PropTypes.bool,
   fullWidth: PropTypes.bool,
   className: PropTypes.string,

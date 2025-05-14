@@ -5,6 +5,7 @@ import Button from '../../../components/Button/Button';
 import ProjectionChart from '../components/ProjectionChart';
 import ProjectionSummaryMetrics from '../components/ProjectionSummaryMetrics';
 import ProjectionParamsForm from '../components/ProjectionParamsForm';
+import useNotification from '../../../hooks/useNotification';
 import {
   DEFAULT_PROJECTION_HORIZON_YEARS,
   DEFAULT_INITIAL_VALUE,
@@ -53,6 +54,7 @@ function ProjectionPanel() {
     startNewProjection,
     isProjectionRunning,
   } = useProjectionTask();
+  const { addNotification } = useNotification();
 
   // Effect to update end date when start date or horizon changes
   useEffect(() => {
@@ -62,6 +64,18 @@ function ProjectionPanel() {
       setEndDate(formatDate(newEndDate));
     }
   }, [startDate, projectionHorizonYears]);
+
+  // New useEffect for notifications
+  useEffect(() => {
+    if (projectionStatus === 'completed') {
+      addNotification(STATUS_PROJECTION_COMPLETED, 'success');
+    } else if (projectionStatus === 'error' && projectionError) {
+      addNotification(projectionError || ERROR_PROJECTION_FALLBACK, 'error');
+    }
+    // We don't want to include addNotification, STATUS_PROJECTION_COMPLETED, ERROR_PROJECTION_FALLBACK in dependency array
+    // as they are stable. If addNotification isn't memoized, it could cause infinite loops.
+    // Assuming addNotification is stable (e.g. from useCallback in useNotification hook)
+  }, [projectionStatus, projectionError]);
 
   const getStatusMessage = () => {
     switch (projectionStatus) {
@@ -103,18 +117,6 @@ function ProjectionPanel() {
         isProjectionRunning={isProjectionRunning}
       />
 
-      {getStatusMessage() && (
-        <div
-          className={`my-4 p-3 rounded ${
-            projectionStatus === 'error'
-              ? 'bg-red-50 text-red-700 border border-red-200'
-              : 'bg-blue-50 text-blue-700 border border-blue-200'
-          }`}
-        >
-          {getStatusMessage()}
-        </div>
-      )}
-
       {/* Chart Area & Summary */}
       <div className="flex-grow flex flex-col bg-gray-50 rounded border border-gray-200 mb-4 min-h-0">
         <div className="flex-grow min-h-0">
@@ -141,7 +143,7 @@ function ProjectionPanel() {
         <Button
           onClick={handleRunProjection}
           disabled={isProjectionRunning}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          variant="primary"
         >
           {isProjectionRunning ? BUTTON_PROCESSING_PROJECTION : BUTTON_RUN_PROJECTION}
         </Button>

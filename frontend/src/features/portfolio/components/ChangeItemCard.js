@@ -58,16 +58,20 @@ const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected, 
       tabIndex={0}
       aria-pressed={isSelected} // Indicate selected state for accessibility
     >
-      <div className="flex justify-between items-start mb-2">
+      <div className="flex justify-between items-start mb-3">
         <div className="flex items-center min-w-0">
           {' '}
           {/* Added min-w-0 for better truncation */}
           {getChangeTypeIcon(change.changeType)}
           <h4
             className="text-md font-semibold text-gray-800 truncate"
-            title={typeof change.description === 'string' ? change.description : undefined}
+            title={change.description || undefined}
           >
-            {change.description || 'No Description'}
+            {change.description ? (
+              change.description
+            ) : (
+              <span className="italic text-gray-500">No description provided</span>
+            )}
           </h4>
         </div>
         <div className="flex space-x-2 flex-shrink-0">
@@ -96,10 +100,13 @@ const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected, 
         </div>
       </div>
 
-      <div className="text-sm text-gray-600 space-y-1">
+      <div className="text-sm text-gray-600 space-y-2">
         <div className="flex items-center">
           <FaCalendarAlt className="mr-2 text-gray-400 flex-shrink-0" />
-          <span>Date: {formatDate(change.changeDate)}</span>
+          <span>
+            <span className="font-semibold text-gray-700 mr-1">Date:</span>
+            {formatDate(change.changeDate)}
+          </span>
         </div>
         {change.changeType !== 'REALLOCATION' && (
           <div className="flex items-center">
@@ -107,7 +114,7 @@ const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected, 
               className={`mr-2 flex-shrink-0 ${change.amount >= 0 ? 'text-green-400' : 'text-red-400'}`}
             />
             <span>
-              Amount:{' '}
+              <span className="font-semibold text-gray-700 mr-1">Amount:</span>
               {change.amount?.toLocaleString(undefined, { style: 'currency', currency: portfolioCurrency || 'USD' }) ||
                 'N/A'}
             </span>

@@ -37,3 +37,26 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Size Variants */
+.default {
+  /* Uses base .button padding: 0.5rem 1rem; */
+}
+
+.small {
+  padding: 0.25rem 0.75rem; /* Equivalent to py-1 px-3 */
+  font-size: 0.875rem; /* text-sm */
+}
+
+/* Outline Select Variant */
+.outline-select {
+  @apply border border-gray-300 bg-white text-gray-700;
+}
+
+.outline-select:hover {
+  @apply bg-gray-100 border-gray-400;
+}
+
+.outline-selectActive {
+  @apply bg-primary-100 border-primary-300 text-primary-700;
+}

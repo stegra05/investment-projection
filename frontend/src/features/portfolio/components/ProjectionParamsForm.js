@@ -66,12 +66,9 @@ function ProjectionParamsForm({
               key={years}
               onClick={() => setProjectionHorizonYears(years)}
               disabled={isProjectionRunning}
-              className={`py-1 px-3 border border-gray-300 rounded-md text-sm font-medium
-                          text-gray-700 hover:bg-gray-100 hover:border-gray-400
-                          focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500
-                          focus:border-primary-500
-                          disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150
-                          ${parseInt(projectionHorizonYears, 10) === years ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white'}`}
+              variant="outline-select"
+              size="small"
+              isActive={parseInt(projectionHorizonYears, 10) === years}
             >
               {years}Y
             </Button>
@@ -82,7 +79,7 @@ function ProjectionParamsForm({
         <div className="w-full md:w-auto md:max-w-xs">
           <Input
             name="initialValue"
-            label="Initial Total Value ($)"
+            label="Initial Value ($)"
             id="initial-value"
             type="number"
             placeholder="e.g., 100000"

@@ -16,7 +16,7 @@ const ChangeDetailsList = ({
       className="md:col-span-2 bg-white p-4 rounded-lg shadow overflow-y-auto"
       style={{ maxHeight: 'calc(100vh - 250px)' }}
     >
-      <h3 className="text-md font-semibold text-gray-700 mb-3">
+      <h3 className="text-md font-semibold text-gray-700 mb-3 pl-4">
         Change Details ({displayedChanges.length})
       </h3>
       {displayedChanges.length > 0 ? (
