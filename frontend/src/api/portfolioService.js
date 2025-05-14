@@ -164,6 +164,26 @@ const portfolioService = {
     }
   },
 
+  /**
+   * Deletes a specific planned change from a portfolio.
+   * @param {string|number} portfolioId - The ID of the portfolio.
+   * @param {string|number} changeId - The ID of the planned change to delete.
+   * @returns {Promise<void>} A promise that resolves when the deletion is successful.
+   * @throws {Error} Throws an error if the API request fails.
+   */
+  deletePlannedChange: async (portfolioId, changeId) => {
+    try {
+      // Ensure ENDPOINTS.PORTFOLIO.DELETE_PLANNED_CHANGE is defined in your config, e.g.:
+      // DELETE_PLANNED_CHANGE: (portfolioId, changeId) => `portfolios/${portfolioId}/planned-changes/${changeId}`,
+      const endpoint = ENDPOINTS.PORTFOLIO.DELETE_PLANNED_CHANGE(portfolioId, changeId);
+      await instance.delete(endpoint);
+      // DELETE requests often return 204 No Content, so no specific data to return beyond success.
+    } catch (error) {
+      console.error(`Error deleting planned change ${changeId} from portfolio ${portfolioId}:`, error);
+      throw error;
+    }
+  },
+
   // Add other portfolio-related API calls here in the future
   // e.g., updatePortfolio, deletePortfolio
 };

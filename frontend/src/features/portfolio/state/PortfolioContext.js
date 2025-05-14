@@ -30,7 +30,6 @@ export const PortfolioProvider = ({ children }) => {
 
   // Extracted function to fetch portfolio data
   const fetchPortfolioData = useCallback(async () => {
-    console.log('PortfolioContext: fetchPortfolioData called with portfolioId:', portfolioId); // Diagnostic log
     if (!portfolioId) {
       setError(new Error('Portfolio ID is missing.'));
       setIsLoading(false);
@@ -65,10 +64,6 @@ export const PortfolioProvider = ({ children }) => {
 
   // Effect to fetch portfolio data initially and when portfolioId changes
   useEffect(() => {
-    console.log(
-      'PortfolioContext: useEffect for fetchPortfolioData - portfolioId from useParams:',
-      portfolioId
-    ); // Diagnostic log
     fetchPortfolioData();
   }, [fetchPortfolioData, portfolioId]); // useEffect dependency on the memoized function
 
@@ -123,13 +118,11 @@ export const PortfolioProvider = ({ children }) => {
 
   // Function to set a draft change for projection preview
   const setDraftChangeForPreview = useCallback(changeData => {
-    console.log('Context: Setting draft change for preview:', changeData);
     setDraftChangeForPreviewState(changeData);
   }, []);
 
   // Function to clear the draft change
   const clearDraftChangeForPreview = useCallback(() => {
-    console.log('Context: Clearing draft change for preview.');
     setDraftChangeForPreviewState(null);
   }, []);
 

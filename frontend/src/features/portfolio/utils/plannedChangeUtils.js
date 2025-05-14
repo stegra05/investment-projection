@@ -201,9 +201,9 @@ const _processRecurringChange = (data) => {
     if (currentError) return currentError;
     // Store the potentially parsed integer back if valid and specific_day
     if (data.monthly_type === 'specific_day' && !isNaN(parseInt(data.day_of_month, 10))) {
-       data.day_of_month = parseInt(data.day_of_month, 10);
+      data.day_of_month = parseInt(data.day_of_month, 10);
     } else if (data.monthly_type !== 'specific_day') {
-       data.day_of_month = null; // Ensure it's null if not specific_day
+      data.day_of_month = null; // Ensure it's null if not specific_day
     } // If specific_day but invalid, day_of_month remains the original string or null (error already returned)
 
   } else if (data.frequency === 'YEARLY') {
@@ -216,12 +216,12 @@ const _processRecurringChange = (data) => {
     if (currentError) return currentError;
     // Store the potentially parsed integer back if valid and specific_day
     if (data.monthly_type === 'specific_day' && !isNaN(parseInt(data.day_of_month, 10))) {
-       data.day_of_month = parseInt(data.day_of_month, 10);
+      data.day_of_month = parseInt(data.day_of_month, 10);
     } else if (data.monthly_type !== 'specific_day') {
-       data.day_of_month = null; // Ensure it's null if not specific_day
+      data.day_of_month = null; // Ensure it's null if not specific_day
     }
     if (!data.month_of_year) { // Add check for missing month_of_year after parsing attempt
-       return 'Please specify the month for yearly recurrence.';
+      return 'Please specify the month for yearly recurrence.';
     }
   }
 
@@ -229,7 +229,7 @@ const _processRecurringChange = (data) => {
   if (data.ends_on_type === 'AFTER_OCCURRENCES' && data.ends_on_occurrences) {
     const occurrences = parseInt(data.ends_on_occurrences, 10);
     if (!isNaN(occurrences)) {
-        data.ends_on_occurrences = occurrences;
+      data.ends_on_occurrences = occurrences;
     } // Let _handleEndsOnLogic catch the error if parsing fails or value < 1
   }
 
@@ -238,7 +238,7 @@ const _processRecurringChange = (data) => {
 
   // Clean up monthly_type ONLY if it's not relevant (frequency isn't MONTHLY or YEARLY)
   if (data.frequency !== 'MONTHLY' && data.frequency !== 'YEARLY') {
-      delete data.monthly_type;
+    delete data.monthly_type;
   }
 
 

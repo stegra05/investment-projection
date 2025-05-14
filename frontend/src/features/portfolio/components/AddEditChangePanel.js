@@ -18,7 +18,6 @@ const CHANGE_TYPE_OPTIONS = [
 
 const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewRequest }) => {
   const { portfolio } = usePortfolio();
-  console.log('AddEditChangePanel (render): portfolio context:', portfolio);
   const isEditing = initialData != null;
   const title = isEditing ? 'Edit Planned Change' : 'Add New Planned Change';
 
