@@ -2,6 +2,7 @@ import React from 'react';
 import RiskProfileDisplay from '../components/RiskProfileDisplay';
 import AssetsView from '../views/AssetsView'; // Import the actual component
 import ChangesView from '../views/ChangesView'; // Import the new ChangesView
+import OverviewSettingsView from '../views/OverviewSettingsView'; // Import the actual OverviewSettingsView
 import PropTypes from 'prop-types'; // Import PropTypes
 import {
   HEADING_PORTFOLIO_OVERVIEW,
@@ -14,30 +15,6 @@ import {
   BUTTON_OVERVIEW_SETTINGS,
   LOADING_PORTFOLIO_CONTENT,
 } from '../../../constants/textConstants';
-
-const OverviewSettingsView = () => (
-  <div className="space-y-6">
-    <div className="bg-white p-4 rounded-lg shadow">
-      <h2 className="text-lg font-semibold mb-4">{HEADING_PORTFOLIO_OVERVIEW}</h2>
-      <div className="space-y-4">
-        <div>{PLACEHOLDER_PORTFOLIO_SUMMARY}</div>
-      </div>
-    </div>
-
-    <div className="bg-white p-4 rounded-lg shadow">
-      <h2 className="text-lg font-semibold mb-4">{HEADING_RISK_ANALYSIS}</h2>
-      <RiskProfileDisplay />
-    </div>
-
-    <div className="bg-white p-4 rounded-lg shadow">
-      <h2 className="text-lg font-semibold mb-4">{HEADING_PORTFOLIO_SETTINGS}</h2>
-      <div className="space-y-4">
-        {/* Placeholder for settings content */}
-        <div>{PLACEHOLDER_PORTFOLIO_SETTINGS}</div>
-      </div>
-    </div>
-  </div>
-);
 
 function MainContentPanel({ activeView, setActiveView, portfolioLoaded }) {
 

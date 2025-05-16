@@ -102,6 +102,28 @@ const portfolioService = {
     }
   },
 
+  /**
+   * Updates specific details of a portfolio (e.g., name, description).
+   * @param {string|number} portfolioId - The ID of the portfolio to update.
+   * @param {object} portfolioUpdateData - An object containing the fields to update.
+   * @param {string} [portfolioUpdateData.name] - The new name of the portfolio.
+   * @param {string} [portfolioUpdateData.description] - The new description of the portfolio.
+   * @returns {Promise<object>} A promise that resolves to the updated portfolio object.
+   * @throws {Error} Throws an error if the API request fails.
+   */
+  updatePortfolioDetails: async (portfolioId, portfolioUpdateData) => {
+    try {
+      const endpoint = ENDPOINTS.PORTFOLIO.DETAIL(portfolioId);
+      // Using PUT as per project guidelines for simplicity with PortfolioUpdateSchema
+      const response = await instance.put(endpoint, portfolioUpdateData);
+      return response.data; // Assuming API returns the updated portfolio object
+    } catch (error) {
+      console.error(`Error updating portfolio details for ID ${portfolioId}:`, error);
+      // Re-throw for the caller (e.g., view component) to handle
+      throw error;
+    }
+  },
+
   // Projection Preview
   /**
    * Requests a projection preview with temporary planned changes.
