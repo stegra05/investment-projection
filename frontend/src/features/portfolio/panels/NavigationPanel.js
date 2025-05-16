@@ -34,10 +34,10 @@ function NavigationPanel() {
           onClick={() => navigate('/portfolio/new')}
           className={`w-full flex items-center justify-center px-4 py-2 rounded font-semibold focus:outline-none focus:ring-2 transition-colors group
             ${
-              theme === 'high-contrast'
-                ? 'bg-primary-500 hover:bg-primary-400 text-white focus:ring-primary-300'
-                : 'bg-primary-600 hover:bg-primary-700 text-white focus:ring-primary-500'
-            }`}
+    theme === 'high-contrast'
+      ? 'bg-primary-500 hover:bg-primary-400 text-white focus:ring-primary-300'
+      : 'bg-primary-600 hover:bg-primary-700 text-white focus:ring-primary-500'
+    }`}
         >
           <FaPlus className={`mr-2 h-4 w-4 ${theme === 'high-contrast' ? 'text-white' : 'text-white'}`} /> 
           {BUTTON_CREATE_NEW_PORTFOLIO}
