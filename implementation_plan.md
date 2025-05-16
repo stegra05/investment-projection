@@ -44,9 +44,9 @@ The "Overview & Settings" area aims to be an intuitive hub, providing a clear po
 **Context:** This section should be clearly delineated from the portfolio-specific overview (e.g., distinct card or sub-area).
 
 1.  **Inflation Rate Input (`SH-INF1`)**
-    *   `[ ]` Create a clearly labeled input field for the user to specify and save a default annual inflation rate.
-    *   `[ ]` Implement saving functionality for this setting, persisting it for the user.
-    *   `[ ]` Ensure this rate is available for projection calculations to show 'real terms' values, providing a more realistic financial outlook.
+    *   `[x]` Create a clearly labeled input field for the user to specify and save a default annual inflation rate.
+    *   `[x]` Implement saving functionality for this setting, persisting it for the user.
+    *   `[x]` Ensure this rate is available for projection calculations to show 'real terms' values, providing a more realistic financial outlook.
     *   **Relevant Files & Context:**
         *   Main Component: `frontend/src/features/portfolio/views/OverviewSettingsView.js`
         *   Input Component: `frontend/src/components/Input/Input.js` (Assumed to exist within `Input/` directory)

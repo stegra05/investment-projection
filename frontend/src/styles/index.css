@@ -6,6 +6,82 @@
   body {
     @apply bg-gray-50 text-gray-900;
   }
+
+  .theme-default {
+    /* Default body styles are already applied via @layer base body */
+    /* You can add specific default overrides here if needed */
+  }
+
+  .theme-high-contrast {
+    @apply bg-gray-900 text-gray-100;
+
+    /* Override common background/text colors */
+    .bg-white, .bg-gray-50, .bg-gray-100 {
+      @apply bg-gray-800;
+    }
+    .text-gray-900, .text-gray-800, .text-gray-700 {
+      @apply text-gray-50;
+    }
+    .text-gray-600, .text-gray-500, .text-gray-400 {
+      @apply text-gray-300;
+    }
+
+    /* Borders */
+    .border-gray-200, .border-gray-300 {
+      @apply border-gray-600;
+    }
+
+    /* Primary colors - ensure sufficient contrast or adjust */
+    /* Example: Make primary text on primary buttons lighter if needed */
+    .bg-primary-600 {
+        @apply bg-primary-500; /* Slightly lighter for dark bg */
+    }
+    .text-primary-600 {
+        @apply text-primary-400;
+    }
+
+    /* Input fields */
+    input,
+    textarea,
+    select {
+      @apply bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400;
+    }
+    input:focus,
+    textarea:focus,
+    select:focus {
+      @apply ring-primary-500 border-primary-500;
+    }
+
+    /* Buttons */
+    .button-default, button:not([class*="bg-"]):not([class*="text-"]) { /* very basic default for unstyled buttons */
+        @apply bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-100;
+    }
+
+    /* Links */
+    a {
+        @apply text-primary-400 hover:text-primary-300;
+    }
+
+    /* Ensure spinners are visible */
+    .spinner-dot {
+      @apply bg-gray-100; 
+    }
+
+    /* Scrollbars (for Webkit browsers) */
+    ::-webkit-scrollbar {
+        @apply w-2 h-2;
+    }
+    ::-webkit-scrollbar-track {
+        @apply bg-gray-800;
+    }
+    ::-webkit-scrollbar-thumb {
+        @apply bg-gray-600 rounded;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        @apply bg-gray-500;
+    }
+
+  }
 }
 
 @layer components {

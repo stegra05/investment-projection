@@ -3,6 +3,7 @@ from .. import db
 # from werkzeug.security import generate_password_hash, check_password_hash
 import bcrypt
 from sqlalchemy.sql import func
+from sqlalchemy import Numeric
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -13,6 +14,7 @@ class User(db.Model):
     # Ensure the hash length accommodates bcrypt (String(128) is sufficient, often String(60) is used)
     password_hash = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
+    default_inflation_rate = db.Column(db.Numeric(5, 4), nullable=True)
 
     # Relationship
     portfolios = db.relationship('Portfolio', back_populates='user', lazy='dynamic')

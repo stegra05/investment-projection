@@ -1,15 +1,15 @@
 import React from 'react';
-import RiskProfileDisplay from '../components/RiskProfileDisplay';
+// import RiskProfileDisplay from '../components/RiskProfileDisplay'; // Removed unused import
 import AssetsView from '../views/AssetsView'; // Import the actual component
 import ChangesView from '../views/ChangesView'; // Import the new ChangesView
 import OverviewSettingsView from '../views/OverviewSettingsView'; // Import the actual OverviewSettingsView
 import PropTypes from 'prop-types'; // Import PropTypes
 import {
-  HEADING_PORTFOLIO_OVERVIEW,
-  PLACEHOLDER_PORTFOLIO_SUMMARY,
-  HEADING_RISK_ANALYSIS,
-  HEADING_PORTFOLIO_SETTINGS,
-  PLACEHOLDER_PORTFOLIO_SETTINGS,
+  // HEADING_PORTFOLIO_OVERVIEW, // Removed unused import
+  // PLACEHOLDER_PORTFOLIO_SUMMARY, // Removed unused import
+  // HEADING_RISK_ANALYSIS, // Removed unused import
+  // HEADING_PORTFOLIO_SETTINGS, // Removed unused import
+  // PLACEHOLDER_PORTFOLIO_SETTINGS, // Removed unused import
   BUTTON_ASSETS,
   BUTTON_PLANNED_CHANGES,
   BUTTON_OVERVIEW_SETTINGS,

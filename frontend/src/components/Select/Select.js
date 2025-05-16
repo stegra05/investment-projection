@@ -192,7 +192,6 @@ const ForwardedSelect = React.forwardRef(({
           id={labelId}
           htmlFor={buttonId} // Points to the button
           className="block text-sm font-medium text-gray-700 mb-1 cursor-pointer"
-          onClick={() => { if (!disabled && buttonRef.current) { buttonRef.current.focus(); } handleToggle(); }}
         >
           {label}
           {required && <span className="text-red-500"> *</span>}
@@ -239,12 +238,19 @@ const ForwardedSelect = React.forwardRef(({
                   id={`${buttonId}-option-${option.value}`}
                   role="option"
                   aria-selected={option.value === value}
+                  tabIndex={-1}
                   className={`relative px-3 py-2 cursor-pointer 
                               ${index === highlightedIndex ? 'bg-primary-600 text-white' : 'text-gray-900 hover:bg-gray-100'}
                               ${option.value === value && index !== highlightedIndex ? 'bg-primary-100 text-primary-700 font-semibold' : ''}
                               ${option.value === value && index === highlightedIndex ? 'font-semibold' : ''}
                             `}
                   onClick={() => handleSelectOption(option.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleSelectOption(option.value);
+                    }
+                  }}
                   onMouseEnter={() => setHighlightedIndex(index)}
                 >
                   <span className="block truncate">{option.label}</span>

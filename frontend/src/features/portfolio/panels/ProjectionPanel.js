@@ -12,8 +12,6 @@ import {
 } from '../../../constants/portfolioConstants';
 import {
   HEADING_PROJECTION_SETUP,
-  STATUS_PROJECTION_PENDING,
-  STATUS_PROJECTION_SUBMITTED,
   STATUS_PROJECTION_PROCESSING,
   STATUS_PROJECTION_COMPLETED,
   ERROR_PROJECTION_FALLBACK,
@@ -79,24 +77,7 @@ function ProjectionPanel() {
     // We don't want to include addNotification, STATUS_PROJECTION_COMPLETED, ERROR_PROJECTION_FALLBACK in dependency array
     // as they are stable. If addNotification isn't memoized, it could cause infinite loops.
     // Assuming addNotification is stable (e.g. from useCallback in useNotification hook)
-  }, [projectionStatus, projectionError]);
-
-  const getStatusMessage = () => {
-    switch (projectionStatus) {
-    case 'pending':
-      return STATUS_PROJECTION_PENDING;
-    case 'submitted':
-      return STATUS_PROJECTION_SUBMITTED;
-    case 'processing':
-      return STATUS_PROJECTION_PROCESSING;
-    case 'completed':
-      return STATUS_PROJECTION_COMPLETED;
-    case 'error':
-      return projectionError || ERROR_PROJECTION_FALLBACK;
-    default:
-      return null;
-    }
-  };
+  }, [projectionStatus, projectionError, addNotification]);
 
   const handleRunProjection = useCallback(() => {
     if (projectionHorizonYears === '') {

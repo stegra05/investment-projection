@@ -60,7 +60,7 @@ export const PortfolioProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [portfolioId, portfolioCache]); // Add portfolioCache to dependency array
+  }, [portfolioId]); // Add portfolioCache to dependency array
 
   // Effect to fetch portfolio data initially and when portfolioId changes
   useEffect(() => {

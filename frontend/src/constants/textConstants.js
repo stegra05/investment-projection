@@ -67,4 +67,11 @@ export const BREADCRUMB_PORTFOLIO_PREFIX = 'Portfolio'; // Used when name is loa
 export const INFO_PORTFOLIO_DATA_UNAVAILABLE = 'Portfolio data not available.';
 export const INFO_LOADING_PORTFOLIO_DATA = 'Loading portfolio data...';
 
+// Overview & Settings View - Application Settings specific
+export const HEADING_APPLICATION_SETTINGS = 'Application Settings';
+export const LABEL_DEFAULT_INFLATION_RATE = 'Default Annual Inflation Rate (%)';
+export const HELPER_TEXT_INFLATION_RATE = 'This rate will be used to adjust future values in projections for inflation, providing a \'real terms\' outlook. Enter as a percentage (e.g., 2.5). Leave blank or set to 0 to see nominal projections.';
+export const TEXT_SAVING_SETTINGS = 'Saving...';
+export const BUTTON_SAVE_SETTINGS = 'Save Settings';
+
 // Add more constants as identified 

@@ -10,7 +10,7 @@ const analyticsService = {
   getRiskProfile: async portfolioId => {
     try {
       const response = await instance.get(
-        `/api/v1/portfolios/${portfolioId}/analytics/risk-profile`
+        `/portfolios/${portfolioId}/analytics/risk-profile`
       );
       return response.data;
     } catch (error) {
@@ -33,7 +33,7 @@ const analyticsService = {
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
 
-      const url = `/api/v1/portfolios/${portfolioId}/analytics/performance${
+      const url = `/portfolios/${portfolioId}/analytics/performance${
         params.toString() ? `?${params.toString()}` : ''
       }`;
 

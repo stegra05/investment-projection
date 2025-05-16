@@ -170,6 +170,9 @@ def create_app(config_name='default'):
     from app.routes.tasks import tasks_bp
     app.register_blueprint(tasks_bp, url_prefix='/api/v1/tasks')
 
+    from app.routes.user_settings_routes import user_settings_bp # Import the new blueprint
+    app.register_blueprint(user_settings_bp) # Register the new blueprint
+
     # Register custom error handlers
     register_error_handlers(app, db)
 
