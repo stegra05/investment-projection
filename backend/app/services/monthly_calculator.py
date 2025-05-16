@@ -48,15 +48,12 @@ CHANGE_TYPE_CASH_FLOW_EFFECTS: Dict[ChangeType, CashFlowEffectHandler] = {
 }
 
 def _calculate_net_monthly_change(
-    current_date: datetime.date,
-    changes_by_month: dict[tuple[int, int], list[PlannedFutureChange]]
+    monthly_changes: list[PlannedFutureChange]
 ) -> Decimal:
     """Calculates the net cash flow for the month using a configurable approach."""
     net_change_month = Decimal('0.0')
-    current_month_key = (current_date.year, current_date.month)
-    month_changes = changes_by_month.get(current_month_key, [])
 
-    for change in month_changes:
+    for change in monthly_changes:
         try:
             change_amount = Decimal(change.amount) # Ensure Decimal
         except (InvalidOperation, TypeError) as e:
@@ -120,7 +117,7 @@ def calculate_single_month(
     current_date: datetime.date,
     current_asset_values: dict[int, Decimal],
     monthly_asset_returns: dict[int, Decimal],
-    changes_by_month: dict[tuple[int, int], list[PlannedFutureChange]]
+    monthly_changes: list[PlannedFutureChange]
 ) -> tuple[dict[int, Decimal], Decimal]: # Added return type hint
     """Calculates the projection for a single month by orchestrating sub-steps."""
 
@@ -131,7 +128,7 @@ def calculate_single_month(
 
     # 2. Calculate Net Cash Flow for the Month
     net_change_month = _calculate_net_monthly_change(
-        current_date, changes_by_month
+        monthly_changes
     )
 
     # 3. Distribute Cash Flow and Finalize Monthly Values

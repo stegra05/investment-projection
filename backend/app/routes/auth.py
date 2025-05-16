@@ -84,7 +84,13 @@ def register(validated_data):
     # Rely on global 500 handler for other unexpected errors
 
     # Return the created user data (excluding password) using the schema
-    return jsonify(UserSchema.from_orm(new_user).model_dump(exclude={'password_hash'})), 201
+    # Old Pydantic v1 style: return jsonify(UserSchema.from_orm(new_user).model_dump(exclude={'password_hash'})), 201
+    # Pydantic v2 style:
+    # UserSchema is already configured with from_attributes = True via OrmBaseModel
+    # model_dump by default only includes fields defined in the schema.
+    # password_hash is not in UserSchema, so it won't be included anyway.
+    # Explicit exclude isn't strictly necessary if password_hash isn't a field in UserSchema.
+    return jsonify(UserSchema.model_validate(new_user).model_dump()), 201
 
 @auth_bp.route('/login', methods=['POST'])
 @limiter.limit("10/minute") # Apply rate limit

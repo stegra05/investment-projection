@@ -6,7 +6,7 @@ import functools
 from app.utils.decorators import handle_api_errors # Keep it for create/update
 from decimal import Decimal 
 import logging
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from sqlalchemy import desc, asc
 from sqlalchemy.orm import selectinload # Add import for selectinload
@@ -137,14 +137,16 @@ class PortfolioQueryArgs(BaseModel):
     sort_order: str = Field('desc', description="Sort order. Allowed values: asc, desc.")
     filter_name: Optional[str] = Field(None, min_length=1, max_length=100, description="Filter portfolios by name (case-insensitive, partial match).")
 
-    @validator('sort_by')
+    @field_validator('sort_by')
+    @classmethod
     def validate_sort_by(cls, value):
         allowed_fields = ['name', 'created_at', 'updated_at']
         if value not in allowed_fields:
             raise ValueError(f"Invalid sort_by field. Allowed fields: {', '.join(allowed_fields)}")
         return value
 
-    @validator('sort_order')
+    @field_validator('sort_order')
+    @classmethod
     def validate_sort_order(cls, value):
         allowed_orders = ['asc', 'desc']
         if value.lower() not in allowed_orders:
@@ -161,11 +163,11 @@ def get_user_portfolios():
     # Parse and validate query parameters
     try:
         query_params = PortfolioQueryArgs(
-            page=request.args.get('page', default=1, type=int),
-            per_page=request.args.get('per_page', default=10, type=int),
-            sort_by=request.args.get('sort_by', default='created_at', type=str),
-            sort_order=request.args.get('sort_order', default='desc', type=str),
-            filter_name=request.args.get('filter_name', default=None, type=str)
+            page=request.args.get('page'),  # Let Pydantic handle default and type validation
+            per_page=request.args.get('per_page'), # Let Pydantic handle default and type validation
+            sort_by=request.args.get('sort_by'), # Let Pydantic handle default
+            sort_order=request.args.get('sort_order'), # Let Pydantic handle default
+            filter_name=request.args.get('filter_name') # Let Pydantic handle default
         )
     except ValueError as e: # Handles Pydantic validation errors
         return jsonify({"errors": str(e)}), 400 # Or use a more structured error response

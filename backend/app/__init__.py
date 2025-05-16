@@ -7,7 +7,7 @@ from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_talisman import Talisman
-from config import Config, config, create_file_handler, detailed_formatter, console_handler
+from config import Config, config as config_dict, create_file_handler, detailed_formatter, console_handler
 import logging
 from celery import Celery
 from werkzeug.exceptions import HTTPException
@@ -56,8 +56,8 @@ from app.error_handlers import register_error_handlers
 
 def create_app(config_name='default'):
     app = Flask(__name__) # This is the Flask app instance
-    app.config.from_object(config[config_name])
-    current_config = config[config_name]
+    app.config.from_object(config_dict[config_name])
+    current_config = config_dict[config_name]
 
     # --- Logging Setup ---
     # Clear any default handlers Flask might add

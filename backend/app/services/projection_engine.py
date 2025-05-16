@@ -11,12 +11,12 @@ from app import db
 from sqlalchemy.orm import joinedload
 
 # Import the Enums!
-from app.enums import ChangeType
+from app.enums import ChangeType, EndsOnType
 # Import Pydantic schema for type hinting draft changes
 from app.schemas.portfolio_schemas import PlannedChangeCreateSchema
 
 # Import the new recurrence service
-from .recurrence_service import expand_and_group_changes
+from .recurrence_service import get_occurrences_for_month
 # Import the new monthly calculator service
 from .monthly_calculator import calculate_single_month
 # Import the new projection initializer service
@@ -90,18 +90,31 @@ def calculate_projection(
     # --- 2. Determine Effective Planned Changes ---
     effective_planned_changes: List[PlannedFutureChange] = [] 
     if draft_changes_input is not None:
-        for pydantic_change_schema in draft_changes_input:
+        # Create unique IDs for draft changes if they don't have one, for state tracking
+        # This assumes draft_changes_input Pydantic models might not have an ID yet.
+        # For simplicity, we use object id() as a key for draft changes for now.
+        # A more robust solution might involve assigning temporary unique string IDs.
+        for i, pydantic_change_schema in enumerate(draft_changes_input):
             change_data_dict = pydantic_change_schema.model_dump()
             if 'portfolio_id' not in change_data_dict or change_data_dict['portfolio_id'] is None:
                  change_data_dict['portfolio_id'] = portfolio_id
+            # If the schema has an id field and it's None, consider how to handle for rule_generated_counts keying
+            # For now, PlannedFutureChange instances from Pydantic will be used as objects.
             temp_change_instance = PlannedFutureChange(**change_data_dict)
+            # Assign a temporary ID if it's a draft and doesn't have one for tracking AFTER_OCCURRENCES
+            if temp_change_instance.change_id is None: # Assuming change_id can be None for new drafts
+                temp_change_instance.change_id = f"draft_{i}" # Create a temporary unique ID
             effective_planned_changes.append(temp_change_instance)
     else:
         if portfolio.planned_changes:
             effective_planned_changes = portfolio.planned_changes
     
-    # --- 3. Prepare & Expand Changes for Projection ---
-    changes_by_month = expand_and_group_changes(effective_planned_changes, start_date, end_date)
+    # --- 3. Prepare & Expand Changes for Projection --- (This step is now done IN-LOOP)
+    # changes_by_month = expand_and_group_changes(effective_planned_changes, start_date, end_date)
+
+    # Initialize a dictionary to keep track of generated counts for rules with AFTER_OCCURRENCES
+    rule_generated_counts: Dict[any, int] = {}
+    # The key for this dict ideally is change_rule.change_id. Drafts need a temp stable ID.
 
     # --- 4. Initialize Projection State (using 'assets' from step 1) ---
     current_asset_values, monthly_asset_returns, current_total_value = \
@@ -117,11 +130,32 @@ def calculate_projection(
         month_end_date = current_date + relativedelta(months=1) - relativedelta(days=1)
         actual_month_end = min(month_end_date, end_date)
 
+        # --- Generate changes for the current month on-the-fly ---
+        actual_changes_for_this_month: List[PlannedFutureChange] = []
+        for rule in effective_planned_changes:
+            # Use rule.change_id as key if it exists and is persistent.
+            # For draft changes, we assigned a temporary unique change_id.
+            rule_key = rule.change_id if rule.change_id is not None else id(rule)
+
+            candidate_occurrences = get_occurrences_for_month(rule, current_date.year, current_date.month)
+            
+            if rule.is_recurring and rule.ends_on_type == EndsOnType.AFTER_OCCURRENCES and rule.ends_on_occurrences is not None and rule.ends_on_occurrences > 0:
+                already_generated = rule_generated_counts.get(rule_key, 0)
+                needed = rule.ends_on_occurrences - already_generated
+                
+                if needed > 0:
+                    to_add_this_month = candidate_occurrences[:needed]
+                    actual_changes_for_this_month.extend(to_add_this_month)
+                    rule_generated_counts[rule_key] = already_generated + len(to_add_this_month)
+            else:
+                actual_changes_for_this_month.extend(candidate_occurrences)
+        # --- End of on-the-fly change generation for the month ---
+
         next_asset_values, next_total_value = calculate_single_month(
             current_date,
             current_asset_values,
             monthly_asset_returns,
-            changes_by_month
+            actual_changes_for_this_month # Pass the list of changes for the current month
         )
 
         current_asset_values = next_asset_values

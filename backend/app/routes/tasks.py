@@ -24,8 +24,8 @@ def get_task_by_id(task_id):
         current_app.logger.debug(f"[tasks.py] current_user.id: {current_user.id} for task_id: {task_id}")
 
         # Ensure the task belongs to the current user
-        current_app.logger.debug(f"[tasks.py] Querying UserCeleryTask for task_id: {task_id}, user_id: {str(current_user.id)}")
-        user_task = UserCeleryTask.query.filter_by(task_id=task_id, user_id=str(current_user.id)).first_or_404(
+        current_app.logger.debug(f"[tasks.py] Querying UserCeleryTask for task_id: {task_id}, user_id: {current_user.id}")
+        user_task = UserCeleryTask.query.filter_by(task_id=task_id, user_id=current_user.id).first_or_404(
             description=f"Task with ID {task_id} not found for the current user or query failed."
         )
         current_app.logger.debug(f"[tasks.py] UserCeleryTask found: {user_task} for task_id: {task_id}")

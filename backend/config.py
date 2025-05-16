@@ -187,15 +187,25 @@ class TestingConfig(Config):
     """Testing configuration."""
     TESTING = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
-        'sqlite:///:memory:' # Use in-memory SQLite for tests
+        'sqlite:///file:testdb?mode=memory&cache=shared' # Use shared in-memory SQLite for tests
     WTF_CSRF_ENABLED = False # Disable CSRF for tests
-    # SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-    #     'sqlite:///' + os.path.join(basedir, 'app.db') # THIS LINE IS REDUNDANT AND OVERWRITES IN-MEMORY DB
     DEBUG = True # Enable debug for more detailed error messages in tests
+    RATELIMIT_ENABLED = False # Disable rate limiting for tests
+    
+    # Flask specific settings for testing
+    SERVER_NAME = 'localhost.test' # Dummy server name for testing
+    APPLICATION_ROOT = '/'
+    PREFERRED_URL_SCHEME = 'http'
+
+    # Celery settings for testing:
+    # Execute tasks eagerly (synchronously) for predictable testing
+    CELERY_TASK_ALWAYS_EAGER = True
+    # Ensure results of eager tasks are stored in the backend
+    CELERY_TASK_STORE_EAGER_RESULT = True
+
     # Disable Talisman HTTPS enforcement for tests
     TALISMAN_FORCE_HTTPS = False
     TALISMAN_SESSION_COOKIE_SECURE = False
-    # TALISMAN_HSTS_PRELOAD = True # Not relevant for local testing
     LOG_LEVEL = logging.DEBUG # Keep logs verbose for testing
     CONSOLE_LOG_LEVEL = logging.DEBUG # Keep console verbose for testing
 
