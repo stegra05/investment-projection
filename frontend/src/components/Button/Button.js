@@ -32,7 +32,7 @@ const Button = ({
 Button.propTypes = {
   children: PropTypes.node.isRequired,
   onClick: PropTypes.func,
-  variant: PropTypes.oneOf(['primary', 'secondary', 'danger', 'outline-select']),
+  variant: PropTypes.oneOf(['primary', 'secondary', 'danger', 'outline-select', 'tertiary']),
   size: PropTypes.oneOf(['default', 'small']),
   isActive: PropTypes.bool,
   disabled: PropTypes.bool,

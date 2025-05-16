@@ -126,6 +126,16 @@ export const PortfolioProvider = ({ children }) => {
     setDraftChangeForPreviewState(null);
   }, []);
 
+  // Function to clear the main portfolio loading error
+  const clearPortfolioError = useCallback(() => {
+    setError(null);
+  }, []);
+
+  // Function to clear the analytics loading error
+  const clearAnalyticsError = useCallback(() => {
+    setAnalyticsError(null);
+  }, []);
+
   // The value provided to consuming components
   const value = {
     portfolioId,
@@ -144,6 +154,9 @@ export const PortfolioProvider = ({ children }) => {
     draftChangeForPreview,
     setDraftChangeForPreview,
     clearDraftChangeForPreview,
+    // Functions to clear errors
+    clearPortfolioError,
+    clearAnalyticsError,
   };
 
   return <PortfolioContext.Provider value={value}>{children}</PortfolioContext.Provider>;

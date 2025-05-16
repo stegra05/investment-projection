@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import zxcvbn from 'zxcvbn';
 import Button from '../../../components/Button/Button';
 import Input from '../../../components/Input/Input';
+import AlertMessage from '../../../components/AlertMessage/AlertMessage';
 
 const RegisterForm = ({ onSubmit, isLoading, error, clearMessages }) => {
   const [formData, setFormData] = useState({
@@ -64,11 +65,7 @@ const RegisterForm = ({ onSubmit, isLoading, error, clearMessages }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-md border border-red-200">
-          {error}
-        </div>
-      )}
+      <AlertMessage type="error" message={error} />
       <Input
         label="Username"
         id="username"
@@ -126,14 +123,9 @@ const RegisterForm = ({ onSubmit, isLoading, error, clearMessages }) => {
         onChange={handleChange}
         required
         autoComplete="new-password"
-        aria-describedby={passwordMismatchError ? 'password-mismatch-error' : undefined}
         placeholder="Confirm your password"
+        error={passwordMismatchError}
       />
-      {passwordMismatchError && (
-        <p id="password-mismatch-error" className="text-xs text-red-600 mt-1" role="alert">
-          {passwordMismatchError}
-        </p>
-      )}
       <Button type="submit" disabled={isSubmitDisabled} fullWidth>
         {isLoading ? 'Registering...' : 'Register'}
       </Button>

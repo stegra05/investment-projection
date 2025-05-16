@@ -5,6 +5,7 @@ import ChangesView from '../views/ChangesView'; // Import the new ChangesView
 import OverviewSettingsView from '../views/OverviewSettingsView'; // Import the actual OverviewSettingsView
 import PropTypes from 'prop-types'; // Import PropTypes
 import useTheme from '../../../hooks/useTheme'; // Import useTheme
+import Button from '../../../components/Button/Button'; // Import Button component
 import {
   // HEADING_PORTFOLIO_OVERVIEW, // Removed unused import
   // PLACEHOLDER_PORTFOLIO_SUMMARY, // Removed unused import
@@ -18,7 +19,7 @@ import {
 } from '../../../constants/textConstants';
 
 function MainContentPanel({ activeView, setActiveView, portfolioLoaded }) {
-  const { theme } = useTheme(); // Get theme state
+  const { theme } = useTheme(); // Get theme state, will be used for wrapper, not button directly for now
 
   const views = {
     assets: <AssetsView />,
@@ -26,58 +27,41 @@ function MainContentPanel({ activeView, setActiveView, portfolioLoaded }) {
     overview: <OverviewSettingsView />,
   };
 
-  const getButtonClass = viewName => {
-    const baseStyle =
-      'py-2 px-4 text-sm font-medium focus:outline-none focus:z-10 focus:ring-2'; // Focus ring color will be added conditionally
-    
-    let activeStyle = '';
-    let inactiveStyle = '';
-    let focusRingStyle = '';
-
-    if (theme === 'high-contrast') {
-      focusRingStyle = 'focus:ring-primary-400';
-      activeStyle = 'bg-primary-500 text-white border border-primary-500';
-      inactiveStyle = 'bg-gray-700 text-gray-100 border border-gray-600 hover:bg-gray-600';
-    } else {
-      focusRingStyle = 'focus:ring-primary-300';
-      activeStyle = 'bg-primary-100 text-primary-700 border border-primary-300';
-      inactiveStyle = 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50';
-    }
-
-    // Apply specific border radius based on position
-    let roundedStyle = '';
-    if (viewName === 'assets') roundedStyle = 'rounded-l-lg';
-    else if (viewName === 'overview') roundedStyle = 'rounded-r-lg';
-    else roundedStyle = ''; // Middle button has no rounding on sides
-
-    return `${baseStyle} ${focusRingStyle} ${roundedStyle} ${activeView === viewName ? activeStyle : inactiveStyle}`;
-  };
+  // The getButtonClass function is no longer needed as we use the Button component
+  // High-contrast theme specific styling for these buttons will be deferred for now.
 
   return (
     <div className={`flex flex-col h-full p-4 rounded shadow ${theme === 'high-contrast' ? 'bg-gray-800' : 'bg-white'}`}>
-      {portfolioLoaded && ( // Only show tabs if portfolio is loaded
+      {portfolioLoaded && (
         <div className="inline-flex rounded-md shadow-sm mb-4" role="group">
-          <button
-            type="button"
-            className={getButtonClass('assets')}
+          <Button
+            variant="outline-select"
+            size="default" // Using default size for py-2 px-4 padding
             onClick={() => setActiveView('assets')}
+            isActive={activeView === 'assets'}
+            // Apply specific rounding and remove Button's default rounding for group effect
+            className="rounded-r-none -mr-px focus:z-10"
           >
             {BUTTON_ASSETS}
-          </button>
-          <button
-            type="button"
-            className={getButtonClass('changes')}
+          </Button>
+          <Button
+            variant="outline-select"
+            size="default"
             onClick={() => setActiveView('changes')}
+            isActive={activeView === 'changes'}
+            className="rounded-none -mr-px focus:z-10"
           >
             {BUTTON_PLANNED_CHANGES}
-          </button>
-          <button
-            type="button"
-            className={getButtonClass('overview')}
+          </Button>
+          <Button
+            variant="outline-select"
+            size="default"
             onClick={() => setActiveView('overview')}
+            isActive={activeView === 'overview'}
+            className="rounded-l-none focus:z-10"
           >
             {BUTTON_OVERVIEW_SETTINGS}
-          </button>
+          </Button>
         </div>
       )}
 

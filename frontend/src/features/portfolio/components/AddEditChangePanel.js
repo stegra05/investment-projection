@@ -9,8 +9,11 @@ import { usePlannedChangeForm } from '../hooks/usePlannedChangeForm';
 import Spinner from '../../../components/Spinner/Spinner';
 import AlertMessage from '../../../components/AlertMessage/AlertMessage';
 import { useChangePanelActions } from '../hooks/useChangePanelActions';
+import Button from '../../../components/Button/Button';
+import Input from '../../../components/Input/Input';
+import Select from '../../../components/Select/Select';
 
-const CHANGE_TYPE_OPTIONS = [
+const CHANGE_TYPE_OPTIONS_FOR_SELECT = [
   { value: 'Contribution', label: 'Contribution' },
   { value: 'Withdrawal', label: 'Withdrawal' },
   { value: 'Reallocation', label: 'Reallocation' },
@@ -91,68 +94,39 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
 
           <form id="addEditChangeForm" onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
             <div className="flex-1 overflow-y-auto p-6 space-y-6 min-h-0">
-              <div>
-                <label
-                  htmlFor="changeType"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Change Type <span className="text-red-500">*</span>
-                </label>
-                <select
-                  id="changeType"
-                  name="changeType"
-                  value={formData.changeType}
-                  onChange={handleFormChange}
-                  required
-                  ref={firstFieldRef}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm"
-                >
-                  {CHANGE_TYPE_OPTIONS.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                label="Change Type"
+                id="changeType"
+                name="changeType"
+                value={formData.changeType}
+                onChange={handleFormChange}
+                options={CHANGE_TYPE_OPTIONS_FOR_SELECT}
+                required
+                ref={firstFieldRef}
+              />
 
-              <div>
-                <label
-                  htmlFor="changeDate"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Date <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  id="changeDate"
-                  name="changeDate"
-                  value={formData.changeDate}
-                  onChange={handleFormChange}
-                  required
-                  className="mt-1 block w-full pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm"
-                />
-              </div>
+              <Input
+                label="Date"
+                type="date"
+                id="changeDate"
+                name="changeDate"
+                value={formData.changeDate}
+                onChange={handleFormChange}
+                required
+              />
 
               {(formData.changeType === 'Contribution' || formData.changeType === 'Withdrawal') && (
-                <div>
-                  <label
-                    htmlFor="changeAmount"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Amount <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    id="changeAmount"
-                    name="changeAmount"
-                    value={formData.changeAmount}
-                    onChange={handleFormChange}
-                    required
-                    placeholder="e.g., 1000.00"
-                    step="0.01"
-                    className="mt-1 block w-full pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm"
-                  />
-                </div>
+                <Input
+                  label="Amount"
+                  type="number"
+                  id="changeAmount"
+                  name="changeAmount"
+                  value={formData.changeAmount}
+                  onChange={handleFormChange}
+                  required
+                  placeholder="e.g., 1000.00"
+                  step="0.01"
+                />
               )}
 
               {formData.changeType === 'Reallocation' && (
@@ -164,23 +138,16 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
                 />
               )}
 
-              <div>
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleFormChange}
-                  rows={3}
-                  placeholder="Optional: e.g., Monthly savings contribution"
-                  className="mt-1 block w-full pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm"
-                />
-              </div>
+              <Input
+                label="Description"
+                type="textarea"
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleFormChange}
+                rows={3}
+                placeholder="Optional: e.g., Monthly savings contribution"
+              />
 
               <div className="pt-6 border-t border-gray-200 mt-6">
                 <h3 className="text-md font-semibold text-gray-700 mb-2">Recurrence</h3>
@@ -239,11 +206,12 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
                 />
               )}
               <div className="flex justify-end space-x-3">
-                <button
+                <Button
                   type="button"
+                  variant="tertiary"
+                  size="default"
                   onClick={handlePreview}
                   disabled={isSubmitting || isPreviewing || !portfolio?.portfolio_id}
-                  className="px-4 py-2 text-sm font-medium text-primary-700 bg-primary-100 border border-primary-300 rounded-md shadow-sm hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 flex items-center justify-center"
                 >
                   {isPreviewing ? (
                     <>
@@ -253,20 +221,22 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
                   ) : (
                     'Preview Impact'
                   )}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="outline-select"
+                  size="default"
                   onClick={onClose}
                   disabled={isSubmitting || isPreviewing}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
+                  variant="primary"
+                  size="default"
                   form="addEditChangeForm"
                   disabled={isSubmitting || isPreviewing || !portfolio?.portfolio_id}
-                  className="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:bg-primary-400 flex items-center justify-center"
                 >
                   {isSubmitting ? (
                     <>
@@ -278,7 +248,7 @@ const AddEditChangePanel = ({ isOpen, onClose, initialData, onSave, onPreviewReq
                   ) : (
                     'Add Change'
                   )}
-                </button>
+                </Button>
               </div>
             </div>
           </form>

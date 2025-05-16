@@ -51,12 +51,9 @@ function DashboardPage() {
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">My Portfolios</h1>
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out"
-        >
+        <Button variant="danger" onClick={handleLogout}>
           Logout
-        </button>
+        </Button>
       </div>
 
       {isLoadingList && (

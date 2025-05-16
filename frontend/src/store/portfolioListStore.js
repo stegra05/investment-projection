@@ -23,6 +23,11 @@ const usePortfolioListStore = create(set => ({
     }
   },
 
+  /**
+   * Clears the error message from the store state.
+   */
+  clearError: () => set({ error: null }),
+
   // Potential future actions: addPortfolio, deletePortfolio, updatePortfolio, etc.
 }));
 

@@ -4,6 +4,7 @@ import Input from '../../../components/Input/Input'; // Assuming path is correct
 import Button from '../../../components/Button/Button'; // Assuming path is correct
 import Spinner from '../../../components/Spinner/Spinner'; // Import Spinner
 import AlertMessage from '../../../components/AlertMessage/AlertMessage'; // Import AlertMessage
+import styles from '../../../components/Modal/Modal.module.css'; // Import common modal styles
 
 function CreatePortfolioModal({
   isOpen = false,
@@ -24,6 +25,22 @@ function CreatePortfolioModal({
     }
   }, [isOpen]);
 
+  // Effect to handle Escape key press for closing the modal
+  useEffect(() => {
+    const handleEsc = event => {
+      if (event.keyCode === 27) {
+        onClose();
+      }
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleEsc);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, [isOpen, onClose]);
+
   const handleInternalSubmit = e => {
     e.preventDefault();
     if (!name.trim()) {
@@ -41,9 +58,16 @@ function CreatePortfolioModal({
   return (
     // Basic Modal structure (overlay + content box)
     // Consider using a dedicated Modal component if available
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-        <h2 className="text-xl font-semibold mb-4">Create New Portfolio</h2>
+    <div
+      className={styles.modalOverlay} // Use CSS module class
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="create-portfolio-modal-title"
+    >
+      <div className={styles.modalContent} role="document"> {/* Use CSS module class */}
+        <h2 id="create-portfolio-modal-title" className={styles.modalTitle}>{/* Use CSS module class */}
+          Create New Portfolio
+        </h2>
         <form onSubmit={handleInternalSubmit}>
           <div className="mb-4">
             <Input
@@ -75,7 +99,7 @@ function CreatePortfolioModal({
           {/* Use AlertMessage for error display */}
           <AlertMessage type="error" message={error} className="mb-4" />
 
-          <div className="flex justify-end space-x-3">
+          <div className={styles.modalFooter}> {/* Use CSS module class */}
             <Button type="button" variant="secondary" onClick={onClose} disabled={isLoading}>
               Cancel
             </Button>

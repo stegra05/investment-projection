@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import Input from '../../../components/Input/Input';
 
 const TargetAllocationInput = ({ 
   portfolioAssets, 
@@ -29,7 +30,7 @@ const TargetAllocationInput = ({
                 {allocItem.assetName}
               </label>
               <div className="relative col-span-1">
-                <input
+                <Input
                   type="number"
                   id={`asset-${allocItem.assetId}-perc`}
                   name={`alloc-${allocItem.assetId}`}
@@ -41,7 +42,7 @@ const TargetAllocationInput = ({
                   min="0"
                   max="100"
                   step="0.01"
-                  className="mt-1 block w-full pl-3 pr-7 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm text-right"
+                  className="pr-7 text-right -mb-4"
                 />
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                   <span className="text-gray-500 sm:text-sm">%</span>

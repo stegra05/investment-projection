@@ -26,7 +26,7 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
   const { portfolioId } = usePortfolio();
 
   const [assetType, setAssetType] = useState('');
-  const [nameOrTicker, setNameOrTicker] = useState('');
+  const [name, setName] = useState('');
   const [allocationMode, setAllocationMode] = useState('percentage'); 
   const [allocationPercentage, setAllocationPercentage] = useState('');
   const [allocationValue, setAllocationValue] = useState(''); 
@@ -41,7 +41,7 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
   useEffect(() => {
     if (isOpen && asset) {
       setAssetType(asset.asset_type || '');
-      setNameOrTicker(asset.name || asset.name_or_ticker || ''); 
+      setName(asset.name || asset.name_or_ticker || '');
       
       // Determine allocation mode and set values
       if (asset.allocation_value !== null && asset.allocation_value !== undefined && parseFloat(asset.allocation_value) > 0) {
@@ -85,8 +85,8 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
     case 'assetType':
       setAssetType(value);
       break;
-    case 'nameOrTicker':
-      setNameOrTicker(value);
+    case 'name':
+      setName(value);
       break;
     case 'allocationPercentage':
       setAllocationPercentage(value);
@@ -132,7 +132,7 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
     // API spec for PUT shows name_or_ticker, manual_expected_return etc.
     const updatedAssetData = {
       asset_type: assetType,
-      name_or_ticker: nameOrTicker, // Sending name_or_ticker
+      name_or_ticker: name,
       ...(manualExpectedReturn !== '' &&
         manualExpectedReturn !== null && {
         manual_expected_return: parseFloat(manualExpectedReturn),
@@ -151,7 +151,7 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
     let currentFieldErrors = {};
     if (!updatedAssetData.asset_type) currentFieldErrors.assetType = 'Asset type is required.';
     if (!updatedAssetData.name_or_ticker)
-      currentFieldErrors.nameOrTicker = 'Name or Ticker is required.';
+      currentFieldErrors.name = 'Name or Ticker is required.';
     
     if (allocationMode === 'percentage') {
       if (
@@ -191,7 +191,7 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
         const newFieldErrors = {};
         validationErrors.forEach(valErr => {
           let fieldName = valErr.loc?.[1]; // Assuming loc[1] is field name
-          if (fieldName === 'name_or_ticker') fieldName = 'nameOrTicker';
+          if (fieldName === 'name_or_ticker') fieldName = 'name';
           else if (fieldName === 'asset_type') fieldName = 'assetType';
           else if (fieldName === 'allocation_percentage') fieldName = 'allocationPercentage';
           else if (fieldName === 'allocation_value') fieldName = 'allocationValue'; // Handle new field error
@@ -228,39 +228,30 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Asset Type */}
-          <div>
-            <Select
-              label="Asset Type"
-              id="editAssetType"
-              name="assetType"
-              value={assetType}
-              onChange={handleInputChange}
-              options={assetTypeOptions}
-              required
-              className="mb-0"
-              ref={firstFieldRef}
-            />
-            {fieldErrors.assetType && (
-              <p className="mt-1 text-xs text-red-600">{fieldErrors.assetType}</p>
-            )}
-          </div>
+          <Select
+            label="Asset Type"
+            id="editAssetType"
+            name="assetType"
+            value={assetType}
+            onChange={handleInputChange}
+            options={assetTypeOptions}
+            required
+            ref={firstFieldRef}
+            error={fieldErrors.assetType || fieldErrors.asset_type}
+          />
 
           {/* Name / Ticker */}
-          <div>
-            <Input
-              label="Name / Ticker"
-              id="editNameOrTicker"
-              name="nameOrTicker"
-              value={nameOrTicker}
-              onChange={handleInputChange}
-              required
-              placeholder="e.g., Apple Inc. or AAPL"
-              className="mb-0"
-            />
-            {fieldErrors.nameOrTicker && (
-              <p className="mt-1 text-xs text-red-600">{fieldErrors.nameOrTicker}</p>
-            )}
-          </div>
+          <Input
+            label="Name / Ticker"
+            id="editNameOrTicker"
+            name="name"
+            value={name}
+            onChange={handleInputChange}
+            required
+            placeholder="e.g., Apple Inc. or AAPL"
+            error={fieldErrors.name || fieldErrors.name_or_ticker}
+            disabled={isSaving}
+          />
 
           {/* Allocation Mode Selection */}
           <fieldset className="mb-4">
@@ -304,75 +295,60 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
 
           {/* Allocation Percentage */}
           {allocationMode === 'percentage' && (
-            <div>
-              <Input
-                label="Allocation Percentage (%)"
-                id="editAllocationPercentage"
-                name="allocationPercentage"
-                type="number"
-                value={allocationPercentage}
-                onChange={handleInputChange}
-                required={allocationMode === 'percentage'}
-                placeholder="e.g., 25"
-                min="0"
-                max="100"
-                step="0.01"
-                className="mb-0"
-                disabled={allocationMode !== 'percentage'}
-              />
-              {fieldErrors.allocationPercentage && (
-                <p className="mt-1 text-xs text-red-600">{fieldErrors.allocationPercentage}</p>
-              )}
-            </div>
+            <Input
+              label="Allocation Percentage (%)"
+              id="editAllocationPercentage"
+              name="allocationPercentage"
+              type="number"
+              value={allocationPercentage}
+              onChange={handleInputChange}
+              required={allocationMode === 'percentage'}
+              placeholder="e.g., 25"
+              min="0"
+              max="100"
+              step="0.01"
+              disabled={allocationMode !== 'percentage'}
+              error={fieldErrors.allocationPercentage || fieldErrors.allocation_percentage}
+            />
           )}
 
           {/* Allocation Value */}
           {allocationMode === 'value' && (
-            <div>
-              <Input
-                label="Allocation Value ($)"
-                id="editAllocationValue"
-                name="allocationValue"
-                type="number"
-                value={allocationValue}
-                onChange={handleInputChange}
-                required={allocationMode === 'value'}
-                placeholder="e.g., 5000"
-                min="0"
-                step="0.01"
-                className="mb-0"
-                disabled={allocationMode !== 'value'}
-              />
-              {fieldErrors.allocationValue && (
-                <p className="mt-1 text-xs text-red-600">{fieldErrors.allocationValue}</p>
-              )}
-            </div>
+            <Input
+              label="Allocation Value ($)"
+              id="editAllocationValue"
+              name="allocationValue"
+              type="number"
+              value={allocationValue}
+              onChange={handleInputChange}
+              required={allocationMode === 'value'}
+              placeholder="e.g., 5000"
+              min="0"
+              step="0.01"
+              disabled={allocationMode !== 'value'}
+              error={fieldErrors.allocationValue || fieldErrors.allocation_value}
+            />
           )}
 
           {/* Manual Expected Return */}
-          <div>
-            <Input
-              label="Manual Expected Return (%)"
-              id="editManualExpectedReturn"
-              name="manualExpectedReturn"
-              type="number"
-              value={manualExpectedReturn}
-              onChange={handleInputChange}
-              placeholder="Optional, e.g., 8.5"
-              step="0.01"
-              helperText="Leave blank to use default market estimates (if available)."
-              className="mb-0"
-            />
-            {fieldErrors.manualExpectedReturn && (
-              <p className="mt-1 text-xs text-red-600">{fieldErrors.manualExpectedReturn}</p>
-            )}
-          </div>
+          <Input
+            label="Manual Expected Return (%)"
+            id="editManualExpectedReturn"
+            name="manualExpectedReturn"
+            type="number"
+            value={manualExpectedReturn}
+            onChange={handleInputChange}
+            placeholder="Optional, e.g., 8.5"
+            step="0.01"
+            helperText="Leave blank to use default market estimates (if available)."
+            error={fieldErrors.manualExpectedReturn || fieldErrors.manual_expected_return}
+          />
 
           {/* General error message */}
-          <AlertMessage type="error" message={error} />
+          <AlertMessage type="error" message={error} className="mb-4" />
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-3 pt-3">
+          <div className={styles.modalFooter}>
             <Button type="button" variant="secondary" onClick={onClose} disabled={isSaving}>
               Cancel
             </Button>

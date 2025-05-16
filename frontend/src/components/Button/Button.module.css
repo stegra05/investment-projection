@@ -73,3 +73,17 @@
 .outline-selectActive {
   @apply bg-primary-100 border-primary-300 text-primary-700;
 }
+
+/* Tertiary Variant for specific outline-like primary actions */
+.tertiary {
+  @apply text-primary-700 bg-primary-100 border border-primary-300 shadow-sm;
+}
+
+.tertiary:hover {
+  @apply bg-primary-200;
+}
+
+/* If an active state for tertiary is needed, define .tertiaryActive here */
+.tertiaryActive {
+  @apply bg-primary-200 border-primary-400 text-primary-800; /* Example active state */
+}

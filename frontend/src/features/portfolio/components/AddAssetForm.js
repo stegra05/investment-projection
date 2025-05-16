@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Input from '../../../components/Input/Input';
 import Select from '../../../components/Select/Select';
 import Button from '../../../components/Button/Button';
+import AlertMessage from '../../../components/AlertMessage/AlertMessage';
 import portfolioService from '../../../api/portfolioService';
 import PropTypes from 'prop-types';
 import { FaPercent, FaDollarSign } from 'react-icons/fa';
@@ -170,43 +171,32 @@ function AddAssetForm({ portfolioId, refreshPortfolio, assetTypeOptions }) {
     <div className="border-t pt-6">
       <h3 className={`text-lg font-semibold mb-4 ${theme === 'high-contrast' ? 'text-gray-100' : 'text-gray-900'}`}>Add New Asset</h3>
       <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
-        <div>
-          <Select
-            label="Asset Type"
-            id="assetType"
-            name="assetType"
-            value={assetType}
-            onChange={handleInputChange}
-            options={assetTypeOptions}
-            required
-            placeholder="Select asset type..."
-            className="mb-0"
-          />
-          {(fieldErrors.asset_type || fieldErrors.assetType) && (
-            <p className="mt-1 text-xs text-red-600">
-              {fieldErrors.asset_type || fieldErrors.assetType}
-            </p>
-          )}
-        </div>
-        <div>
-          <Input
-            label="Name / Ticker"
-            id="nameOrTicker"
-            name="nameOrTicker"
-            value={nameOrTicker}
-            onChange={handleInputChange}
-            required
-            placeholder="e.g., Apple Inc. or AAPL"
-            className="mb-0"
-          />
-          {(fieldErrors.name_or_ticker || fieldErrors.nameOrTicker) && (
-            <p className="mt-1 text-xs text-red-600">
-              {fieldErrors.name_or_ticker || fieldErrors.nameOrTicker}
-            </p>
-          )}
-        </div>
+        <AlertMessage type="error" message={addError} />
+        <AlertMessage type="success" message={addSuccessMessage} />
 
-        {/* Allocation Mode Selection */}
+        <Select
+          label="Asset Type"
+          id="assetType"
+          name="assetType"
+          value={assetType}
+          onChange={handleInputChange}
+          options={assetTypeOptions}
+          required
+          placeholder="Select asset type..."
+          error={fieldErrors.asset_type || fieldErrors.assetType}
+        />
+        
+        <Input
+          label="Name / Ticker"
+          id="nameOrTicker"
+          name="nameOrTicker"
+          value={nameOrTicker}
+          onChange={handleInputChange}
+          required
+          placeholder="e.g., Apple Inc. or AAPL"
+          error={fieldErrors.name_or_ticker || fieldErrors.nameOrTicker}
+        />
+
         <fieldset className="mb-4">
           <legend className={`block text-sm font-medium mb-1 ${theme === 'high-contrast' ? 'text-gray-200' : 'text-gray-700'}`}>Allocation Type</legend>
           <div className="inline-flex rounded-md shadow-sm pt-1" role="group">
@@ -243,81 +233,53 @@ function AddAssetForm({ portfolioId, refreshPortfolio, assetTypeOptions }) {
         </fieldset>
 
         {allocationMode === 'percentage' && (
-          <div>
-            <Input
-              label="Allocation Percentage (%)"
-              id="allocationPercentage"
-              name="allocationPercentage"
-              type="number"
-              value={allocationPercentage}
-              onChange={handleInputChange}
-              required={allocationMode === 'percentage'}
-              placeholder="e.g., 25"
-              min="0"
-              max="100"
-              step="0.01"
-              className="mb-0"
-              disabled={allocationMode !== 'percentage'}
-            />
-            {(fieldErrors.allocation_percentage || fieldErrors.allocationPercentage) && (
-              <p className="mt-1 text-xs text-red-600">
-                {fieldErrors.allocation_percentage || fieldErrors.allocationPercentage}
-              </p>
-            )}
-          </div>
+          <Input
+            label="Allocation Percentage (%)"
+            id="allocationPercentage"
+            name="allocationPercentage"
+            type="number"
+            value={allocationPercentage}
+            onChange={handleInputChange}
+            required={allocationMode === 'percentage'}
+            placeholder="e.g., 25"
+            min="0"
+            max="100"
+            step="0.01"
+            disabled={allocationMode !== 'percentage'}
+            error={fieldErrors.allocation_percentage || fieldErrors.allocationPercentage}
+          />
         )}
 
         {allocationMode === 'value' && (
-          <div>
-            <Input
-              label="Allocation Value ($)"
-              id="allocationValue"
-              name="allocationValue"
-              type="number"
-              value={allocationValue}
-              onChange={handleInputChange}
-              required={allocationMode === 'value'}
-              placeholder="e.g., 5000"
-              min="0"
-              step="0.01"
-              className="mb-0"
-              disabled={allocationMode !== 'value'}
-            />
-            {(fieldErrors.allocation_value || fieldErrors.allocationValue) && (
-              <p className="mt-1 text-xs text-red-600">
-                {fieldErrors.allocation_value || fieldErrors.allocationValue}
-              </p>
-            )}
-          </div>
+          <Input
+            label="Allocation Value ($)"
+            id="allocationValue"
+            name="allocationValue"
+            type="number"
+            value={allocationValue}
+            onChange={handleInputChange}
+            required={allocationMode === 'value'}
+            placeholder="e.g., 5000"
+            min="0"
+            step="0.01"
+            disabled={allocationMode !== 'value'}
+            error={fieldErrors.allocation_value || fieldErrors.allocationValue}
+          />
         )}
 
-        <div>
-          <Input
-            label="Manual Expected Return (%)"
-            id="manualExpectedReturn"
-            name="manualExpectedReturn"
-            type="number"
-            value={manualExpectedReturn}
-            onChange={handleInputChange}
-            placeholder="Optional, e.g., 8.5"
-            step="0.01"
-            helperText="Leave blank to use default market estimates (if available)."
-            className="mb-0"
-          />
-          {fieldErrors.manual_expected_return && (
-            <p className="mt-1 text-xs text-red-600">{fieldErrors.manual_expected_return}</p>
-          )}
-        </div>
-        {addError && (
-          <div className="text-red-600 text-sm p-3 my-2 bg-red-100 border border-red-400 rounded">
-            {addError}
-          </div>
-        )}
-        {addSuccessMessage && (
-          <div className="text-green-600 text-sm p-3 my-2 bg-green-100 border border-green-400 rounded">
-            {addSuccessMessage}
-          </div>
-        )}
+        <Input
+          label="Manual Expected Return (%)"
+          id="manualExpectedReturn"
+          name="manualExpectedReturn"
+          type="number"
+          value={manualExpectedReturn}
+          onChange={handleInputChange}
+          placeholder="Optional, e.g., 8.5"
+          step="0.01"
+          helperText="Leave blank to use default market estimates (if available)."
+          error={fieldErrors.manual_expected_return}
+        />
+        
         <div className="pt-2">
           <Button type="submit" variant="primary" disabled={isAdding}>
             {isAdding ? 'Adding...' : 'Add Asset'}
