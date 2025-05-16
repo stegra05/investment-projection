@@ -57,7 +57,7 @@ function AddAssetForm({ portfolioId, refreshPortfolio, assetTypeOptions }) {
     if (!assetData.name_or_ticker) currentFieldErrors.nameOrTicker = 'Name or Ticker is required.';
     if (
       isNaN(assetData.allocation_percentage) ||
-      assetData.allocation_percentage <= 0 ||
+      assetData.allocation_percentage < 0 ||
       assetData.allocation_percentage > 100
     ) {
       currentFieldErrors.allocationPercentage = 'Allocation must be between 0 and 100.';

@@ -38,6 +38,7 @@ function ProjectionPanel() {
   const [projectionHorizonYears, setProjectionHorizonYears] = useState(
     DEFAULT_PROJECTION_HORIZON_YEARS
   );
+  const [projectionHorizonError, setProjectionHorizonError] = useState('');
   const [endDate, setEndDate] = useState(() => {
     const initialEndDate = new Date(defaultStartDate);
     initialEndDate.setFullYear(
@@ -58,10 +59,13 @@ function ProjectionPanel() {
 
   // Effect to update end date when start date or horizon changes
   useEffect(() => {
-    if (startDate && projectionHorizonYears > 0) {
+    const horizon = Number(projectionHorizonYears);
+    if (startDate && !isNaN(horizon) && horizon > 0 && Number.isInteger(horizon)) {
       const newEndDate = new Date(startDate);
-      newEndDate.setFullYear(newEndDate.getFullYear() + parseInt(projectionHorizonYears, 10));
+      newEndDate.setFullYear(newEndDate.getFullYear() + horizon);
       setEndDate(formatDate(newEndDate));
+    } else if (projectionHorizonYears === '') {
+      setEndDate(startDate);
     }
   }, [startDate, projectionHorizonYears]);
 
@@ -95,12 +99,38 @@ function ProjectionPanel() {
   };
 
   const handleRunProjection = useCallback(() => {
+    if (projectionHorizonYears === '') {
+      setProjectionHorizonError('Horizon (years) is required to run projection.');
+      return;
+    }
+    const horizonNum = Number(projectionHorizonYears);
+    if (!Number.isInteger(horizonNum) || horizonNum < 1 || horizonNum > 100) {
+      setProjectionHorizonError('Invalid horizon value. Please correct it first.');
+      return;
+    }
+    setProjectionHorizonError('');
+
     startNewProjection(portfolioId, {
       start_date: startDate,
-      end_date: endDate,
-      initial_total_value: initialValue,
+      end_date: (() => {
+        const newEndDate = new Date(startDate);
+        newEndDate.setFullYear(newEndDate.getFullYear() + horizonNum);
+        return formatDate(newEndDate);
+      })(),
+      initial_total_value: Number(initialValue) || 0,
     });
-  }, [portfolioId, startDate, endDate, initialValue, startNewProjection]);
+  }, [
+    portfolioId,
+    startDate,
+    initialValue,
+    startNewProjection,
+    projectionHorizonYears,
+  ]);
+
+  const isRunButtonDisabled = 
+    isProjectionRunning || 
+    !!projectionHorizonError || 
+    !projectionHorizonYears;
 
   return (
     <div className="p-4 bg-white rounded shadow h-full flex flex-col">
@@ -112,6 +142,8 @@ function ProjectionPanel() {
         endDate={endDate}
         projectionHorizonYears={projectionHorizonYears}
         setProjectionHorizonYears={setProjectionHorizonYears}
+        projectionHorizonError={projectionHorizonError}
+        setProjectionHorizonError={setProjectionHorizonError}
         initialValue={initialValue}
         setInitialValue={setInitialValue}
         isProjectionRunning={isProjectionRunning}
@@ -142,7 +174,7 @@ function ProjectionPanel() {
       <div className="flex justify-end">
         <Button
           onClick={handleRunProjection}
-          disabled={isProjectionRunning}
+          disabled={isRunButtonDisabled}
           variant="primary"
         >
           {isProjectionRunning ? BUTTON_PROCESSING_PROJECTION : BUTTON_RUN_PROJECTION}

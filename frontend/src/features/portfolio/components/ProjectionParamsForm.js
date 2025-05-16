@@ -9,6 +9,8 @@ function ProjectionParamsForm({
   endDate,
   projectionHorizonYears,
   setProjectionHorizonYears,
+  projectionHorizonError,
+  setProjectionHorizonError,
   initialValue,
   setInitialValue,
   isProjectionRunning,
@@ -44,16 +46,33 @@ function ProjectionParamsForm({
           placeholder="e.g., 10"
           value={projectionHorizonYears}
           onChange={e => {
-            const val = e.target.value;
-            if (val === '' || (parseInt(val, 10) > 0 && !val.includes('.'))) {
-              setProjectionHorizonYears(val === '' ? '' : parseInt(val, 10));
-            } else if (parseInt(val, 10) <= 0 && val !== '') {
-              setProjectionHorizonYears(1); // Default to 1 if invalid non-empty value
+            const inputValue = e.target.value;
+            setProjectionHorizonYears(inputValue);
+
+            if (inputValue === '') {
+              setProjectionHorizonError('Horizon (years) is required.');
+              return;
+            }
+
+            const num = Number(inputValue);
+
+            if (!Number.isInteger(num)) {
+              setProjectionHorizonError('Horizon must be a whole number (e.g., 10).');
+            } else if (num < 1) {
+              setProjectionHorizonError('Horizon must be at least 1 year.');
+            } else if (num > 100) {
+              setProjectionHorizonError('Horizon cannot exceed 100 years.');
+            }
+            else {
+              setProjectionHorizonError('');
             }
           }}
           min="1"
           disabled={isProjectionRunning}
         />
+        {projectionHorizonError && (
+          <p className="mt-1 text-xs text-red-600">{projectionHorizonError}</p>
+        )}
       </div>
 
       {/* Row 2: Quick Select Buttons & Initial Value Input */}
@@ -99,6 +118,8 @@ ProjectionParamsForm.propTypes = {
   endDate: PropTypes.string.isRequired,
   projectionHorizonYears: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   setProjectionHorizonYears: PropTypes.func.isRequired,
+  projectionHorizonError: PropTypes.string,
+  setProjectionHorizonError: PropTypes.func.isRequired,
   initialValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   setInitialValue: PropTypes.func.isRequired,
   isProjectionRunning: PropTypes.bool.isRequired,

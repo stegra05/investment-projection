@@ -70,7 +70,7 @@ const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected, 
             {change.description ? (
               change.description
             ) : (
-              <span className="italic text-gray-500">No description provided</span>
+              <span className="italic text-gray-500">—</span>
             )}
           </h4>
         </div>
@@ -127,11 +127,11 @@ const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected, 
               className="text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full cursor-help"
               title={
                 change.frequency
-                  ? `This change repeats ${change.frequency}. More specific details (e.g., end date, exact day) can be displayed here when available.`
-                  : 'This is a recurring change. Specific frequency details are not provided in the summary.'
+                  ? `Repeats: ${change.frequency}. Further details like end date or specific day of month may be available elsewhere or can be added in edit mode.`
+                  : 'This is a recurring change. Specific frequency (e.g., monthly, annually) is not detailed here.'
               }
             >
-              Recurring: {change.frequency || 'Enabled'}
+              {change.frequency ? `Repeats: ${change.frequency}` : 'Recurring'}
             </span>
             {/* Future Consideration: For highly detailed recurrence patterns (e.g., custom intervals, end conditions), an expandable section or a details modal could be implemented. The current tooltip provides basic recurrence information. */}
           </div>
