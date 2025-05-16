@@ -55,31 +55,31 @@ The "Overview & Settings" area aims to be an intuitive hub, providing a clear po
         *   Backend Model/Service: `backend/app/models/user.py` (Extend to include user settings, or create a separate user_settings.py file)
 
 2.  **Theme/Appearance (Could-have)**
-    *   `[ ]` If minor theme adjustments (e.g., high-contrast mode for accessibility) are planned, implement controls here. This would be the logical placement for such user preferences.
+    *   `[x]` If minor theme adjustments (e.g., high-contrast mode for accessibility) are planned, implement controls here. This would be the logical placement for such user preferences.
     *   **Relevant Files & Context:**
         *   Main Component: `frontend/src/features/portfolio/views/OverviewSettingsView.js`
         *   Styling: `frontend/tailwind.config.js`, `frontend/src/styles/index.css` (For theme variables, or create theme.js if needed)
         *   Theme Hook: `frontend/src/hooks/useTheme.js` (Create if not existing; If a custom hook is used for managing themes)
 
 3.  **Data Management (Could-have)**
-    *   `[ ]` Implement "Export All Data" (`C-2`) functionality, allowing users to download their information.
-    *   `[ ]` Implement "Delete Account" functionality. This action should be clearly marked and require explicit confirmation due to its significance.
+    *   `[x]` Implement "Export All Data" (`C-2`) functionality, allowing users to download their information.
+    *   `[x]` Implement "Delete Account" functionality. This action should be clearly marked and require explicit confirmation due to its significance.
     *   **Relevant Files & Context:**
         *   Main Component: `frontend/src/features/portfolio/views/OverviewSettingsView.js`
         *   Button Component: `frontend/src/components/Button/Button.js` (Assumed to exist within `Button/` directory)
         *   Modal Component: `frontend/src/components/Modal/ConfirmationModal.js` (For "Delete Account" confirmation)
-        *   API: `frontend/src/api/dataManagementApi.js` (Create if not existing; for export/delete operations)
+        *   API: `frontend/src/api/dataManagementService.js` (Create if not existing; for export/delete operations)
         *   Backend Services: `backend/app/services/export_service.py` (Create if not existing; For data export logic), `backend/app/services/user_service.py` (Create if not existing; For account deletion logic)
 
 ### 1.3. Task Flow Considerations
 
 1.  **Clear Segregation**
-    *   `[ ]` Ensure visual and conceptual distinction between portfolio-specific settings (e.g., name, description) and application-wide settings (e.g., inflation rate). This avoids user confusion.
+    *   `[x]` Ensure visual and conceptual distinction between portfolio-specific settings (e.g., name, description) and application-wide settings (e.g., inflation rate). This avoids user confusion.
     *   **Relevant Files & Context:**
         *   Layout/Design in `frontend/src/features/portfolio/views/OverviewSettingsView.js` (Utilize cards or distinct sections)
 
 2.  **Saving Feedback**
-    *   `[ ]` Implement immediate and clear feedback (e.g., notifications, button state changes) for all save operations. This supports the **Visibility of System Status heuristic**, confirming to the user that actions were processed.
+    *   `[x]` Implement immediate and clear feedback (e.g., notifications, button state changes) for all save operations. This supports the **Visibility of System Status heuristic**, confirming to the user that actions were processed.
     *   **Relevant Files & Context:**
         *   Main Component: `frontend/src/features/portfolio/views/OverviewSettingsView.js`
         *   Feedback Components: `frontend/src/components/Notification/NotificationContainer.js` (Assumed to exist within `Notification/` directory), `frontend/src/components/AlertMessage/AlertMessage.js` (Assumed to exist within `AlertMessage/` directory)
@@ -91,28 +91,28 @@ The "Overview & Settings" area aims to be an intuitive hub, providing a clear po
 ### 2.1. Layout & Structure
 
 1.  **Card-like Containers**
-    *   `[ ]` Use clean, card-like containers for "Portfolio Summary" and "Application Settings" sections to achieve visual separation and organization.
-    *   `[ ]` Employ subtle borders (e.g., `border-gray-200` from `tailwind.config.js`) or background shades (e.g., `bg-gray-50` if main panel is `bg-white`) for separation, aligning with Flat Design principles by avoiding heavy shadows.
+    *   `[x]` Use clean, card-like containers for "Portfolio Summary" and "Application Settings" sections to achieve visual separation and organization.
+    *   `[x]` Employ subtle borders (e.g., `border-gray-200` from `tailwind.config.js`) or background shades (e.g., `bg-gray-50` if main panel is `bg-white`) for separation, aligning with Flat Design principles by avoiding heavy shadows.
     *   **Relevant Files & Context:**
         *   Styling in `frontend/src/features/portfolio/views/OverviewSettingsView.js` (using Tailwind CSS classes)
         *   Tailwind Config: `frontend/tailwind.config.js` (Verify/use `theme.colors.gray`, `theme.extend.backgroundColor`, `theme.borderColor`)
 
 2.  **Information Hierarchy & Whitespace**
-    *   `[ ]` Strategically use whitespace (negative space) to improve readability, create visual balance, and guide the user's eye to important information. This is a hallmark of minimalist-inspired and data-focused design.
-    *   `[ ]` Ensure key data (portfolio name, total value, dates) has visual prominence through size, weight, or placement within the "Portfolio Summary" card.
+    *   `[x]` Strategically use whitespace (negative space) to improve readability, create visual balance, and guide the user's eye to important information. This is a hallmark of minimalist-inspired and data-focused design.
+    *   `[x]` Ensure key data (portfolio name, total value, dates) has visual prominence through size, weight, or placement within the "Portfolio Summary" card.
     *   **Relevant Files & Context:**
         *   Styling in `frontend/src/features/portfolio/views/OverviewSettingsView.js` (using Tailwind CSS margin/padding utilities)
 
 ### 2.2. Typography
 
 1.  **Consistent Font Usage**
-    *   `[ ]` Consistently use the `Inter` sans-serif font family (defined in `tailwind.config.js`) due to its high readability, essential for a data-focused UI.
+    *   `[x]` Consistently use the `Inter` sans-serif font family (defined in `tailwind.config.js`) due to its high readability, essential for a data-focused UI.
     *   **Relevant Files & Context:**
         *   Tailwind Config: `frontend/tailwind.config.js` (Ensure `theme.fontFamily.sans` includes `Inter` and is applied as default)
         *   Global Styles: `frontend/src/styles/global.css` (Ensure `Inter` font is correctly imported and applied body-wide; Create if not existing or ensure part of an equivalent global style setup)
 
 2.  **Typographic Scale**
-    *   `[ ]` Implement a clear and consistent typographic scale for headings (e.g., "Portfolio Overview"), sub-headings (e.g., "Default Inflation Rate"), labels, and data values. This reinforces visual hierarchy and aids scannability (e.g., labels medium weight, data regular weight).
+    *   `[x]` Implement a clear and consistent typographic scale for headings (e.g., "Portfolio Overview"), sub-headings (e.g., "Default Inflation Rate"), labels, and data values. This reinforces visual hierarchy and aids scannability (e.g., labels medium weight, data regular weight).
     *   **Relevant Files & Context:**
         *   Styling in `frontend/src/features/portfolio/views/OverviewSettingsView.js`
         *   Tailwind Config: `frontend/tailwind.config.js` (Verify/use `theme.colors.primary` and its shades)
@@ -120,13 +120,13 @@ The "Overview & Settings" area aims to be an intuitive hub, providing a clear po
 ### 2.3. Color Palette
 
 1.  **Primary Accent Color**
-    *   `[ ]` Use the defined primary blue (e.g., `primary-600` from `tailwind.config.js`) purposefully for key interactive elements (buttons, edit icons) and to subtly highlight main section headings. This aligns with Flat Design's strategic use of bold color.
+    *   `[x]` Use the defined primary blue (e.g., `primary-600` from `tailwind.config.js`) purposefully for key interactive elements (buttons, edit icons) and to subtly highlight main section headings. This aligns with Flat Design's strategic use of bold color.
     *   **Relevant Files & Context:**
         *   Styling in `frontend/src/features/portfolio/views/OverviewSettingsView.js`
         *   Tailwind Config: `frontend/tailwind.config.js` (Verify/use `theme.colors.primary` and its shades)
 
 2.  **Neutral Dominance**
-    *   `[ ]` Dominate the palette with neutral grays (e.g., `text-gray-800` for primary text, `text-gray-600` for labels, `bg-white` or `bg-gray-50` for surfaces) as defined in `tailwind.config.js`. This creates a clean, professional backdrop, allowing data and key actions to stand out, characteristic of data-focused design.
+    *   `[x]` Dominate the palette with neutral grays (e.g., `text-gray-800` for primary text, `text-gray-600` for labels, `bg-white` or `bg-gray-50` for surfaces) as defined in `tailwind.config.js`. This creates a clean, professional backdrop, allowing data and key actions to stand out, characteristic of data-focused design.
     *   **Relevant Files & Context:**
         *   Styling in `frontend/src/features/portfolio/views/OverviewSettingsView.js`
         *   Tailwind Config: `frontend/tailwind.config.js` (Verify/use `theme.colors.gray`, `theme.textColor`, `theme.backgroundColor`)
@@ -134,19 +134,19 @@ The "Overview & Settings" area aims to be an intuitive hub, providing a clear po
 ### 2.4. Interactive Elements & Forms
 
 1.  **In-Place Editing Styling**
-    *   `[ ]` Style input fields for in-place editing with a clean, subtle Flat 2.0 look: light border, with focus state changing border color (e.g., to `primary-500`) or adding a subtle ring.
+    *   `[x]` Style input fields for in-place editing with a clean, subtle Flat 2.0 look: light border, with focus state changing border color (e.g., to `primary-500`) or adding a subtle ring.
     *   **Relevant Files & Context:**
         *   Styling in `frontend/src/features/portfolio/views/OverviewSettingsView.js`
         *   Input Component: `frontend/src/components/Input/Input.js` (Assumed to exist within `Input/` directory; May need variants or prop-based styling for in-place editing context)
 
 2.  **Inflation Rate Input Styling**
-    *   `[ ]` Ensure the inflation rate input field is visually consistent with other input fields across the application (e.g., those in `AddAssetForm.js`, `Select.js`), maintaining a cohesive UI.
+    *   `[x]` Ensure the inflation rate input field is visually consistent with other input fields across the application (e.g., those in `AddAssetForm.js`, `Select.js`), maintaining a cohesive UI.
     *   **Relevant Files & Context:**
         *   Component: `frontend/src/components/Input/Input.js` (Assumed to exist within `Input/` directory; Ensure its default styling is appropriate)
         *   Reference: `frontend/src/features/portfolio/components/AddAssetForm.js` (Assumed to exist or be created), `frontend/src/components/Select/Select.js` (Assumed to exist within `Select/` directory) for styling consistency.
 
 3.  **Button Styling**
-    *   `[ ]` Style "Save" buttons as clear calls-to-action using the primary color (e.g., `bg-primary-600 text-white`), consistent with other primary action buttons in the application.
+    *   `[x]` Style "Save" buttons as clear calls-to-action using the primary color (e.g., `bg-primary-600 text-white`), consistent with other primary action buttons in the application.
     *   **Relevant Files & Context:**
         *   Button Component: `frontend/src/components/Button/Button.js` (Assumed to exist within `Button/` directory; Ensure variants exist for primary actions or can be styled via props)
         *   Tailwind Config: `frontend/tailwind.config.js` (Colors like `primary-600` should be defined)
@@ -154,7 +154,7 @@ The "Overview & Settings" area aims to be an intuitive hub, providing a clear po
 ### 2.5. Flat 2.0 Nuances
 
 1.  **Subtle Shadows (Optional)**
-    *   `[ ]` If necessary to visually lift main content cards, sparingly use very subtle shadows (e.g., `boxShadow.sm` or `md` from `tailwind.config.js`). However, prefer separation via spacing and subtle color differentiation to maintain the clean, flat look.
+    *   `[x]` If necessary to visually lift main content cards, sparingly use very subtle shadows (e.g., `boxShadow.sm` or `md` from `tailwind.config.js`). However, prefer separation via spacing and subtle color differentiation to maintain the clean, flat look.
     *   **Relevant Files & Context:**
         *   Styling in `frontend/src/features/portfolio/views/OverviewSettingsView.js`
         *   Tailwind Config: `frontend/tailwind.config.js` (Verify/use `theme.extend.boxShadow` if shadows are used)
@@ -162,8 +162,8 @@ The "Overview & Settings" area aims to be an intuitive hub, providing a clear po
 ### 2.6. Consistency with Other Views
 
 1.  **Cohesive Styling**
-    *   `[ ]` Ensure styling (fonts, colors, spacing, component appearance) is consistent with `AssetsView.js`, `ChangesView.js`, and other parts of `MainContentPanel.js`. This supports the **Consistency and Standards heuristic**, providing a predictable user experience.
-    *   `[ ]` Use heading styles consistently (e.g., "Portfolio Overview" should match the style of `HEADING_EXISTING_ASSETS` if it's a top-level heading in the panel).
+    *   `[x]` Ensure styling (fonts, colors, spacing, component appearance) is consistent with `AssetsView.js`, `ChangesView.js`, and other parts of `MainContentPanel.js`. This supports the **Consistency and Standards heuristic**, providing a predictable user experience.
+    *   `[x]` Use heading styles consistently (e.g., "Portfolio Overview" should match the style of `HEADING_EXISTING_ASSETS` if it's a top-level heading in the panel).
     *   **Relevant Files & Context:**
         *   Main Component: `frontend/src/features/portfolio/views/OverviewSettingsView.js`
         *   Reference Views: `frontend/src/features/portfolio/views/AssetsView.js` (Assumed to exist or be created), `frontend/src/features/portfolio/views/ChangesView.js` (Assumed to exist or be created)
@@ -177,7 +177,7 @@ The "Overview & Settings" area aims to be an intuitive hub, providing a clear po
 ### 3.1. Loading States for Data
 
 1.  **Subtle Loading Animation**
-    *   `[ ]` Implement a shimmer effect for placeholder text areas or a minimalist spinner during data fetching. This provides **Visibility of System Status** and manages user expectations during delays. Animation should be brief and unobtrusive.
+    *   `[x]` Implement a shimmer effect for placeholder text areas or a minimalist spinner during data fetching. This provides **Visibility of System Status** and manages user expectations during delays. Animation should be brief and unobtrusive.
     *   **Relevant Files & Context:**
         *   Main Component: `frontend/src/features/portfolio/views/OverviewSettingsView.js` (Wrap data display areas with loading state logic)
         *   Spinner: `frontend/src/components/Spinner/Spinner.js` (Assumed to exist within `Spinner/` directory)
@@ -186,7 +186,7 @@ The "Overview & Settings" area aims to be an intuitive hub, providing a clear po
 ### 3.2. In-Place Editing Transitions
 
 1.  **Smooth State Change**
-    *   `[ ]` For in-place editable fields (e.g., portfolio name), implement a quick cross-fade animation (e.g., 150-200ms, ease-out curve) for the text-to-input transition. This makes the state change less jarring for the user.
+    *   `[x]` For in-place editable fields (e.g., portfolio name), implement a quick cross-fade animation (e.g., 150-200ms, ease-out curve) for the text-to-input transition. This makes the state change less jarring for the user.
     *   **Relevant Files & Context:**
         *   Main Component: `frontend/src/features/portfolio/views/OverviewSettingsView.js`
         *   Animation: CSS Transitions/Animations or a library like Framer Motion for smooth visual state changes.
@@ -194,13 +194,13 @@ The "Overview & Settings" area aims to be an intuitive hub, providing a clear po
 ### 3.3. Feedback on Saving Settings
 
 1.  **Button Feedback**
-    *   `[ ]` Implement tactile feedback on "Save Settings" button: a slight press-down effect (e.g., `transform: scale(0.98)`) and a quick color transition on click. This provides immediate interaction confirmation.
+    *   `[x]` Implement tactile feedback on "Save Settings" button: a slight press-down effect (e.g., `transform: scale(0.98)`) and a quick color transition on click. This provides immediate interaction confirmation.
     *   **Relevant Files & Context:**
         *   Button Component: `frontend/src/components/Button/Button.js` (Assumed to exist within `Button/` directory; Enhance with press/active state styling or animation)
         *   Animation: CSS Transitions/Animations (e.g., `transition-transform`, `transition-colors`) or Framer Motion for interactive feedback.
 
 2.  **Save Success Animation**
-    *   `[ ]` Briefly display a checkmark icon on the button or a fade-in success message/notification upon successful save. This reinforces the successful action and aligns with providing clear success confirmation (related to the **Error Prevention heuristic**).
+    *   `[x]` Briefly display a checkmark icon on the button or a fade-in success message/notification upon successful save. This reinforces the successful action and aligns with providing clear success confirmation (related to the **Error Prevention heuristic**). (Implemented fade-in notification)
     *   **Relevant Files & Context:**
         *   Main Component: `frontend/src/features/portfolio/views/OverviewSettingsView.js` (Trigger based on API response)
         *   Notification: `frontend/src/components/Notification/Notification.js` (Assumed to exist within `Notification/` directory; For success messages)
@@ -210,7 +210,8 @@ The "Overview & Settings" area aims to be an intuitive hub, providing a clear po
 ### 3.4. Transitions Between Sub-Sections (If Applicable)
 
 1.  **Smooth Sub-section Transitions**
-    *   `[ ]` If "Portfolio Summary" and "Application Settings" are distinct, switchable sub-sections (e.g., tabs), use a quick fade or subtle slide animation (e.g., 200-300ms). This helps maintain user context during the state change.
+    *   [N/A] If "Portfolio Summary" and "Application Settings" are distinct, switchable sub-sections (e.g., tabs), use a quick fade or subtle slide animation (e.g., 200-300ms). This helps maintain user context during the state change.
+        *   Note: Marked N/A as current layout uses stacked sections, not switchable tabs.
     *   **Relevant Files & Context:**
         *   Main Component: `frontend/src/features/portfolio/views/OverviewSettingsView.js` (If using tabs or similar switchable UI)
         *   Animation: Framer Motion or CSS for fade/slide transitions between content blocks.
@@ -218,7 +219,7 @@ The "Overview & Settings" area aims to be an intuitive hub, providing a clear po
 ### 3.5. Error State Animations
 
 1.  **Gentle Error Indication**
-    *   `[ ]` Animate error messages (e.g., from `AlertMessage.js`) with a subtle shake or soft pop to gently draw attention. This aids the **Help Users Recognize, Diagnose, and Recover from Errors heuristic**.
+    *   `[x]` Animate error messages (e.g., from `AlertMessage.js`) with a subtle shake or soft pop to gently draw attention. This aids the **Help Users Recognize, Diagnose, and Recover from Errors heuristic**.
     *   **Relevant Files & Context:**
         *   Alert Component: `frontend/src/components/AlertMessage/AlertMessage.js` (Assumed to exist within `AlertMessage/` directory; Enhance with a subtle animation on appearance)
         *   Animation: Framer Motion or CSS (e.g., keyframe animation for shake).
@@ -230,7 +231,7 @@ The "Overview & Settings" area aims to be an intuitive hub, providing a clear po
 ### 4.1. Section Titles
 
 1.  **Clear and Descriptive Titles**
-    *   `[ ]` Use clear, descriptive, and consistent titles for main sections, drawing from `frontend/src/constants/textConstants.js`. Examples: `HEADING_PORTFOLIO_OVERVIEW`, `HEADING_APPLICATION_SETTINGS`.
+    *   `[x]` Use clear, descriptive, and consistent titles for main sections, drawing from `frontend/src/constants/textConstants.js`. Examples: `HEADING_PORTFOLIO_OVERVIEW`, `HEADING_APPLICATION_SETTINGS`.
     *   **Relevant Files & Context:**
         *   Main Component: `frontend/src/features/portfolio/views/OverviewSettingsView.js`
         *   Constants: `frontend/src/constants/textConstants.js` (Create if not existing; Create/update these constants: `HEADING_PORTFOLIO_OVERVIEW`, `HEADING_PORTFOLIO_SETTINGS`, `HEADING_APPLICATION_SETTINGS`, etc. Ensure they are concise and informative.)
@@ -238,18 +239,18 @@ The "Overview & Settings" area aims to be an intuitive hub, providing a clear po
 ### 4.2. Portfolio Summary Content
 
 1.  **Clear Labels**
-    *   `[ ]` Ensure each data point (Portfolio Name, Description, Total Value, Created On, Last Updated) has a clear, concise label. Examples: "Portfolio Name:", "Current Total Value:".
+    *   `[x]` Ensure each data point (Portfolio Name, Description, Total Value, Created On, Last Updated) has a clear, concise label. Examples: "Portfolio Name:", "Current Total Value:".
     *   **Relevant Files & Context:**
         *   Main Component: `frontend/src/features/portfolio/views/OverviewSettingsView.js`
         *   Constants: `frontend/src/constants/textConstants.js` (Create if not existing; Define labels like `LABEL_PORTFOLIO_NAME`, `LABEL_TOTAL_VALUE` for consistency)
 
 2.  **Accessible Edit Prompts**
-    *   `[ ]` Provide `aria-label` for interactive edit icon buttons (e.g., "Edit Portfolio Name", "Edit portfolio description") to ensure accessibility.
+    *   `[x]` Provide `aria-label` for interactive edit icon buttons (e.g., "Edit Portfolio Name", "Edit portfolio description") to ensure accessibility.
     *   **Relevant Files & Context:**
         *   Main Component: `frontend/src/features/portfolio/views/OverviewSettingsView.js` (When implementing edit icons/buttons)
 
 3.  **Empty State Prompts**
-    *   `[ ]` For empty editable fields like description, provide a gentle guiding prompt when the field is empty or in edit mode (e.g., "Add a description to help you remember this portfolio's purpose.").
+    *   `[x]` For empty editable fields like description, provide a gentle guiding prompt when the field is empty or in edit mode (e.g., "Add a description to help you remember this portfolio's purpose.").
     *   **Relevant Files & Context:**
         *   Main Component: `frontend/src/features/portfolio/views/OverviewSettingsView.js`
         *   Constants: `frontend/src/constants/textConstants.js` (Create if not existing; e.g., `PLACEHOLDER_PORTFOLIO_DESCRIPTION`)
@@ -257,15 +258,15 @@ The "Overview & Settings" area aims to be an intuitive hub, providing a clear po
 ### 4.3. Application Settings Content
 
 1.  **Inflation Rate Label & Helper Text**
-    *   `[ ]` Label: "Default Annual Inflation Rate (%)".
-    *   `[ ]` Helper Text/Tooltip: Provide guiding microcopy to explain its impact. Example: "This rate will be used to adjust future values in projections for inflation, providing a 'real terms' outlook. Leave blank or set to 0 to see nominal projections." This clarifies its purpose and usage.
+    *   `[x]` Label: "Default Annual Inflation Rate (%)".
+    *   `[x]` Helper Text/Tooltip: Provide guiding microcopy to explain its impact. Example: "This rate will be used to adjust future values in projections for inflation, providing a 'real terms' outlook. Leave blank or set to 0 to see nominal projections." This clarifies its purpose and usage.
     *   **Relevant Files & Context:**
         *   Main Component: `frontend/src/features/portfolio/views/OverviewSettingsView.js`
         *   Tooltip Component: `frontend/src/components/Tooltip/Tooltip.js` (Create if not existing, or use a simple helper text element)
         *   Constants: `frontend/src/constants/textConstants.js` (Create if not existing; e.g., `LABEL_INFLATION_RATE`, `HELP_TEXT_INFLATION_RATE`)
 
 2.  **Save Button Label**
-    *   `[ ]` Use an action-oriented label like "Save Settings" or "Apply Settings" for buttons that save application-level settings.
+    *   `[x]` Use an action-oriented label like "Save Settings" or "Apply Settings" for buttons that save application-level settings.
     *   **Relevant Files & Context:**
         *   Main Component: `frontend/src/features/portfolio/views/OverviewSettingsView.js`
         *   Constants: `frontend/src/constants/textConstants.js` (Create if not existing; e.g., `BUTTON_SAVE_SETTINGS`)
@@ -273,25 +274,25 @@ The "Overview & Settings" area aims to be an intuitive hub, providing a clear po
 ### 4.4. General Microcopy & Placeholders
 
 1.  **Helpful Placeholders**
-    *   `[ ]` Use placeholder text in input fields to offer hints or examples (e.g., "My Long-Term Growth Plan" for description, "2.5" for inflation rate) but ensure they do not replace persistent labels, aligning with the **Recognition Over Recall heuristic**.
+    *   `[x]` Use placeholder text in input fields to offer hints or examples (e.g., "My Long-Term Growth Plan" for description, "2.5" for inflation rate) but ensure they do not replace persistent labels, aligning with the **Recognition Over Recall heuristic**.
     *   **Relevant Files & Context:**
         *   Main Component: `frontend/src/features/portfolio/views/OverviewSettingsView.js` (Apply to relevant input fields)
         *   Input Component: `frontend/src/components/Input/Input.js` (Assumed to exist within `Input/` directory; Ensure placeholder prop is supported and styled correctly)
 
 2.  **Professional Language**
-    *   `[ ]` Ensure all text is precise, professional, and avoids jargon, maintaining the application's overall tone.
+    *   `[x]` Ensure all text is precise, professional, and avoids jargon, maintaining the application's overall tone.
     *   **Relevant Files & Context:** Review all text content within the feature during development and testing.
 
 ### 4.5. Feedback Messages
 
 1.  **Success Messages**
-    *   `[ ]` Use clear, affirmative messages for successful saves (e.g., "Portfolio details updated successfully.", "Inflation rate saved.").
+    *   `[x]` Use clear, affirmative messages for successful saves (e.g., "Portfolio details updated successfully.", "Inflation rate saved.").
     *   **Relevant Files & Context:**
         *   Notification Component: `frontend/src/components/Notification/Notification.js` (Assumed to exist within `Notification/` directory)
         *   Constants: `frontend/src/constants/textConstants.js` (Create if not existing; e.g., `SUCCESS_PORTFOLIO_UPDATED`, `SUCCESS_SETTINGS_SAVED`)
 
 2.  **Constructive Error Messages**
-    *   `[ ]` Error messages should be constructive, explaining the issue clearly and guiding the user towards resolution (e.g., "Inflation rate must be a valid number between 0 and 100.", "Failed to update portfolio. Please try again.").
+    *   `[x]` Error messages should be constructive, explaining the issue clearly and guiding the user towards resolution (e.g., "Inflation rate must be a valid number between 0 and 100.", "Failed to update portfolio. Please try again.").
     *   **Relevant Files & Context:**
         *   Alert Component: `frontend/src/components/AlertMessage/AlertMessage.js` (Assumed to exist within `AlertMessage/` directory)
         *   Constants: `frontend/src/constants/textConstants.js` (Create if not existing; e.g., `ERROR_INVALID_INFLATION_RATE`, `ERROR_PORTFOLIO_UPDATE_FAILED`)
@@ -307,8 +308,8 @@ These additional suggestions refine the implementation plan with deeper attentio
 ### 5.1. Microinteractions for Custom Select
 
 1.  **Smooth Dropdown Animation**
-    *   `[ ]` Implement a subtle animation (100-150ms) for select dropdown panels when opening/closing, such as a gentle scale/fade from the top. This makes the interaction feel more polished than an instant appearance.
-    *   `[ ]` Ensure the chevron icon rotation is smoothly animated with CSS transitions when dropdown state changes.
+    *   `[x]` Implement a subtle animation (100-150ms) for select dropdown panels when opening/closing, such as a gentle scale/fade from the top. This makes the interaction feel more polished than an instant appearance.
+    *   `[x]` Ensure the chevron icon rotation is smoothly animated with CSS transitions when dropdown state changes.
     *   **Relevant Files & Context:**
         *   Select Component: `frontend/src/components/Select/Select.js` (Assumed to exist within `Select/` directory)
         *   Animation: CSS Transitions/Animations (e.g., `transition-transform`, `transition-opacity`) or consider Framer Motion for more complex animations.
@@ -316,7 +317,7 @@ These additional suggestions refine the implementation plan with deeper attentio
 ### 5.2. Focus State Consistency
 
 1.  **Unified Focus Styling**
-    *   `[ ]` Apply consistent focus ring styles (`ring-2 ring-primary-500 ring-offset-1`) across all interactive elements: form inputs, buttons, select components, and radio buttons.
+    *   `[x]` Apply consistent focus ring styles (`ring-2 ring-primary-500 ring-offset-1`) across all interactive elements: form inputs, buttons, select components, and radio buttons.
     *   **Relevant Files & Context:**
         *   Input Component: `frontend/src/components/Input/Input.js`
         *   Button Component: `frontend/src/components/Button/Button.js`
@@ -327,11 +328,11 @@ These additional suggestions refine the implementation plan with deeper attentio
 ### 5.3. Data-Focused Emphasis in Form Controls
 
 1.  **Visual Data Type Indicators**
-    *   `[ ]` For data input selection components like "Allocation Type" (Percentage vs. Value), add subtle icons within the styled labels to visually hint at the type of input expected.
-    *   `[ ]` This reinforces the data-centric nature of the application and provides visual cues that align with the "Data-Focused Flat 2.0" design philosophy.
+    *   `[x]` For data input selection components like "Allocation Type" (Percentage vs. Value), add subtle icons within the styled labels to visually hint at the type of input expected.
+    *   `[x]` This reinforces the data-centric nature of the application and provides visual cues that align with the "Data-Focused Flat 2.0" design philosophy.
     *   **Relevant Files & Context:**
-        *   Radio Button Component: Form components where users select data types
-        *   Icons: Subtle, minimalist icons representing percentage (%), currency ($), etc.
+        *   Radio Button Component: Form components where users select data types (`frontend/src/features/portfolio/components/AddAssetForm.js`)
+        *   Icons: Subtle, minimalist icons representing percentage (%), currency ($) (e.g., `react-icons/fa` - `FaPercent`, `FaDollarSign`).
 
 ### 5.4. Custom Select Component Alternatives
 

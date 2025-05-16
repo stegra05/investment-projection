@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { motion } from 'framer-motion'; // Import motion
 // Consider adding icons later e.g. from react-icons/fa: FaExclamationCircle, FaCheckCircle, FaInfoCircle
 
 const AlertMessage = ({ type = 'error', message, title, className = '' }) => {
@@ -29,12 +30,30 @@ const AlertMessage = ({ type = 'error', message, title, className = '' }) => {
     break;
   }
 
+  const errorShakeVariants = {
+    initial: { x: 0 },
+    animate: { 
+      x: [0, -5, 5, -5, 5, 0], 
+      transition: { duration: 0.4, times: [0, 0.1, 0.3, 0.5, 0.7, 1] }, 
+    },
+  };
+
+  const motionProps = type === 'error' ? {
+    initial: 'initial',
+    animate: 'animate',
+    variants: errorShakeVariants,
+  } : {};
+
   return (
-    <div className={`${baseClasses} ${typeClasses} ${className}`} role="alert">
+    <motion.div 
+      className={`${baseClasses} ${typeClasses} ${className}`} 
+      role="alert"
+      {...motionProps}
+    >
       {/* IconComponent && <IconComponent className="inline mr-2 h-5 w-5" /> */}
       {title && <strong className="font-bold block mb-1">{title}</strong>}
       {typeof message === 'string' ? <p>{message}</p> : message}
-    </div>
+    </motion.div>
   );
 };
 

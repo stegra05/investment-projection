@@ -141,7 +141,7 @@ const ChangesView = () => {
   return (
     <div className="p-4 space-y-4">
       <header className="flex justify-between items-center">
-        <h1 className="text-xl font-semibold text-gray-800">Planned Changes</h1>
+        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4 border-b border-gray-300 dark:border-gray-600 pb-2">Planned Changes</h2>
         <Button
           variant="primary"
           onClick={handleOpenAddPanel}

@@ -85,7 +85,7 @@ function AssetsView() {
   return (
     <div className="p-1 space-y-8">
       <div>
-        <h2 className="text-xl font-semibold mb-4 border-b pb-2">Assets for {portfolio.name}</h2>
+        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4 border-b border-gray-300 dark:border-gray-600 pb-2">Assets for {portfolio.name}</h2>
         {editError && (
           <div className="text-red-600 text-sm p-3 my-2 bg-red-100 border border-red-400 rounded">
             {editError}
@@ -93,7 +93,7 @@ function AssetsView() {
         )}
 
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3">{HEADING_EXISTING_ASSETS}</h3>
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">{HEADING_EXISTING_ASSETS}</h3>
           <AssetList
             assets={portfolio.assets}
             editingAsset={editingAsset}

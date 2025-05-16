@@ -4,8 +4,11 @@ import Select from '../../../components/Select/Select';
 import Button from '../../../components/Button/Button';
 import portfolioService from '../../../api/portfolioService';
 import PropTypes from 'prop-types';
+import { FaPercent, FaDollarSign } from 'react-icons/fa';
+import useTheme from '../../../hooks/useTheme';
 
 function AddAssetForm({ portfolioId, refreshPortfolio, assetTypeOptions }) {
+  const { theme } = useTheme();
   const [assetType, setAssetType] = useState('');
   const [nameOrTicker, setNameOrTicker] = useState('');
   const [allocationMode, setAllocationMode] = useState('percentage'); 
@@ -165,7 +168,7 @@ function AddAssetForm({ portfolioId, refreshPortfolio, assetTypeOptions }) {
 
   return (
     <div className="border-t pt-6">
-      <h3 className="text-lg font-semibold mb-4">Add New Asset</h3>
+      <h3 className={`text-lg font-semibold mb-4 ${theme === 'high-contrast' ? 'text-gray-100' : 'text-gray-900'}`}>Add New Asset</h3>
       <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
         <div>
           <Select
@@ -205,42 +208,38 @@ function AddAssetForm({ portfolioId, refreshPortfolio, assetTypeOptions }) {
 
         {/* Allocation Mode Selection */}
         <fieldset className="mb-4">
-          <legend className="block text-sm font-medium text-gray-700 mb-1">Allocation Type</legend>
-          <div className="flex pt-1">
-            <label 
-              htmlFor="percentageMode" 
-              className="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-l-md cursor-pointer transition-colors duration-150 bg-white text-gray-700 hover:bg-gray-50 peer-checked:bg-primary-600 peer-checked:text-white peer-checked:border-primary-600 peer-focus:ring-2 peer-focus:ring-primary-500 peer-focus:ring-offset-1 w-1/2 text-center"
+          <legend className={`block text-sm font-medium mb-1 ${theme === 'high-contrast' ? 'text-gray-200' : 'text-gray-700'}`}>Allocation Type</legend>
+          <div className="inline-flex rounded-md shadow-sm pt-1" role="group">
+            <button
+              type="button"
+              onClick={() => handleAllocationModeChange('percentage')}
+              className={`
+                px-4 py-2 text-sm font-medium border focus:z-10 focus:outline-none focus:ring-2 rounded-l-lg 
+                ${theme === 'high-contrast' ? 
+      (allocationMode === 'percentage' ? 'bg-primary-500 text-white border-primary-500' : 'bg-gray-700 text-gray-100 border-gray-600 hover:bg-gray-600 focus:ring-primary-400') : 
+      (allocationMode === 'percentage' ? 'bg-primary-100 text-primary-700 border-primary-300' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 focus:ring-primary-300')
+    }
+              `}
             >
-              <input 
-                type="radio" 
-                id="percentageMode" 
-                name="allocationMode"
-                value="percentage"
-                checked={allocationMode === 'percentage'}
-                onChange={() => handleAllocationModeChange('percentage')}
-                className="sr-only peer"
-              />
-              <span className="text-sm">Percentage (%)</span>
-            </label>
-            <label 
-              htmlFor="valueMode" 
-              className="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-r-md cursor-pointer transition-colors duration-150 bg-white text-gray-700 hover:bg-gray-50 peer-checked:bg-primary-600 peer-checked:text-white peer-checked:border-primary-600 peer-focus:ring-2 peer-focus:ring-primary-500 peer-focus:ring-offset-1 w-1/2 text-center -ml-px" // -ml-px to ensure borders overlap correctly
+              <FaPercent className={`inline mr-2 ${allocationMode === 'percentage' ? (theme === 'high-contrast' ? 'text-white' : 'text-primary-700') : (theme === 'high-contrast' ? 'text-gray-300' : 'text-gray-500') }`} />
+              Percentage
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAllocationModeChange('value')}
+              className={`
+                px-4 py-2 text-sm font-medium border focus:z-10 focus:outline-none focus:ring-2 rounded-r-lg 
+                ${theme === 'high-contrast' ? 
+      (allocationMode === 'value' ? 'bg-primary-500 text-white border-primary-500' : 'bg-gray-700 text-gray-100 border-gray-600 hover:bg-gray-600 focus:ring-primary-400') : 
+      (allocationMode === 'value' ? 'bg-primary-100 text-primary-700 border-primary-300' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 focus:ring-primary-300')
+    }
+              `}
             >
-              <input 
-                type="radio" 
-                id="valueMode" 
-                name="allocationMode"
-                value="value"
-                checked={allocationMode === 'value'}
-                onChange={() => handleAllocationModeChange('value')}
-                className="sr-only peer"
-              />
-              <span className="text-sm">Value ($)</span>
-            </label>
+              <FaDollarSign className={`inline mr-2 ${allocationMode === 'value' ? (theme === 'high-contrast' ? 'text-white' : 'text-primary-700') : (theme === 'high-contrast' ? 'text-gray-300' : 'text-gray-500') }`} />
+              Value
+            </button>
           </div>
-          <p className="mt-2 text-xs text-gray-500">
-            Specify allocation as a percentage of the total portfolio or as a fixed monetary value. Only one can be active.
-          </p>
+          <p className={`mt-2 text-xs ${theme === 'high-contrast' ? 'text-gray-300' : 'text-gray-500'}`}>Specify allocation as a percentage of the total portfolio or as a fixed monetary value. Only one can be active.</p>
         </fieldset>
 
         {allocationMode === 'percentage' && (

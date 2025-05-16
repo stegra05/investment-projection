@@ -10,7 +10,7 @@
     "@testing-library/user-event": "^14.6.1",
     "allotment": "^1.20.3",
     "axios": "^1.9.0",
-    "framer-motion": "^12.10.5",
+    "framer-motion": "^12.12.1",
     "prop-types": "^15.8.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

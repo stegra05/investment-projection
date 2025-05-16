@@ -13,6 +13,7 @@ function ConfirmationModal({
   confirmText = 'Confirm',
   cancelText = 'Cancel',
   isConfirming = false,
+  confirmButtonVariant = 'primary',
 }) {
   // Effect to handle Escape key press for closing the modal
   useEffect(() => {
@@ -51,7 +52,7 @@ function ConfirmationModal({
             {cancelText}
           </Button>
           <Button
-            variant="danger"
+            variant={confirmButtonVariant}
             onClick={onConfirm}
             disabled={isConfirming}
           >
@@ -79,6 +80,7 @@ ConfirmationModal.propTypes = {
   confirmText: PropTypes.string,
   cancelText: PropTypes.string,
   isConfirming: PropTypes.bool, // To show loading state on confirm button
+  confirmButtonVariant: PropTypes.oneOf(['primary', 'secondary', 'danger']), // Add new prop type
 };
 
 export default ConfirmationModal;

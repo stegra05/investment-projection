@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
+import { motion, AnimatePresence } from 'framer-motion';
 
 /**
  * Reusable Select component.
@@ -206,7 +207,7 @@ const ForwardedSelect = React.forwardRef(({
           onKeyDown={handleKeyDown}
           disabled={disabled}
           className={`relative w-full px-3 py-2 text-left border rounded-md shadow-sm 
-                      focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 
+                      focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 
                       sm:text-sm
                       ${disabled ? 'bg-gray-100 cursor-not-allowed text-gray-500' : 'bg-white text-gray-700 cursor-pointer'}
                       ${error ? 'border-red-500' : 'border-gray-300'}`}
@@ -220,50 +221,56 @@ const ForwardedSelect = React.forwardRef(({
           </span>
         </button>
 
-        {isOpen && !disabled && (
-          <ul
-            ref={optionsListRef}
-            className="absolute z-10 mt-1 w-full bg-white shadow-lg border border-gray-200 rounded-md max-h-60 overflow-auto focus:outline-none sm:text-sm"
-            role="listbox"
-            tabIndex={-1}
-            aria-labelledby={labelId || buttonId}
-            aria-activedescendant={highlightedIndex >= 0 && options[highlightedIndex] ? `${buttonId}-option-${options[highlightedIndex].value}` : undefined}
-          >
-            {options.length === 0 ? (
-              <li className="px-3 py-2 text-gray-500 cursor-default">No options available</li>
-            ) : (
-              options.map((option, index) => (
-                <li
-                  key={option.value}
-                  id={`${buttonId}-option-${option.value}`}
-                  role="option"
-                  aria-selected={option.value === value}
-                  tabIndex={-1}
-                  className={`relative px-3 py-2 cursor-pointer 
-                              ${index === highlightedIndex ? 'bg-primary-600 text-white' : 'text-gray-900 hover:bg-gray-100'}
-                              ${option.value === value && index !== highlightedIndex ? 'bg-primary-100 text-primary-700 font-semibold' : ''}
-                              ${option.value === value && index === highlightedIndex ? 'font-semibold' : ''}
-                            `}
-                  onClick={() => handleSelectOption(option.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleSelectOption(option.value);
-                    }
-                  }}
-                  onMouseEnter={() => setHighlightedIndex(index)}
-                >
-                  <span className="block truncate">{option.label}</span>
-                  {option.value === value && (
-                    <span className={`absolute inset-y-0 right-0 flex items-center pr-4 ${index === highlightedIndex ? 'text-white' : 'text-primary-600'}`}>
-                      <CheckIcon />
-                    </span>
-                  )}
-                </li>
-              ))
-            )}
-          </ul>
-        )}
+        <AnimatePresence>
+          {isOpen && !disabled && (
+            <motion.ul
+              ref={optionsListRef}
+              className="absolute z-10 mt-1 w-full bg-white shadow-lg border border-gray-200 rounded-md max-h-60 overflow-auto focus:outline-none sm:text-sm"
+              role="listbox"
+              tabIndex={-1}
+              aria-labelledby={labelId || buttonId}
+              aria-activedescendant={highlightedIndex >= 0 && options[highlightedIndex] ? `${buttonId}-option-${options[highlightedIndex].value}` : undefined}
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.15, ease: 'easeInOut' }}
+            >
+              {options.length === 0 ? (
+                <li className="px-3 py-2 text-gray-500 cursor-default">No options available</li>
+              ) : (
+                options.map((option, index) => (
+                  <li
+                    key={option.value}
+                    id={`${buttonId}-option-${option.value}`}
+                    role="option"
+                    aria-selected={option.value === value}
+                    tabIndex={-1}
+                    className={`relative px-3 py-2 cursor-pointer 
+                                ${index === highlightedIndex ? 'bg-primary-600 text-white' : 'text-gray-900 hover:bg-gray-100'}
+                                ${option.value === value && index !== highlightedIndex ? 'bg-primary-100 text-primary-700 font-semibold' : ''}
+                                ${option.value === value && index === highlightedIndex ? 'font-semibold' : ''}
+                              `}
+                    onClick={() => handleSelectOption(option.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleSelectOption(option.value);
+                      }
+                    }}
+                    onMouseEnter={() => setHighlightedIndex(index)}
+                  >
+                    <span className="block truncate">{option.label}</span>
+                    {option.value === value && (
+                      <span className={`absolute inset-y-0 right-0 flex items-center pr-4 ${index === highlightedIndex ? 'text-white' : 'text-primary-600'}`}>
+                        <CheckIcon />
+                      </span>
+                    )}
+                  </li>
+                ))
+              )}
+            </motion.ul>
+          )}
+        </AnimatePresence>
       </div>
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
       {name && <input type="hidden" name={name} value={value || ''} />}
