@@ -8,7 +8,9 @@ import PropTypes from 'prop-types';
 function AddAssetForm({ portfolioId, refreshPortfolio, assetTypeOptions }) {
   const [assetType, setAssetType] = useState('');
   const [nameOrTicker, setNameOrTicker] = useState('');
+  const [allocationMode, setAllocationMode] = useState('percentage'); 
   const [allocationPercentage, setAllocationPercentage] = useState('');
+  const [allocationValue, setAllocationValue] = useState(''); 
   const [manualExpectedReturn, setManualExpectedReturn] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [addError, setAddError] = useState(null);
@@ -27,11 +29,25 @@ function AddAssetForm({ portfolioId, refreshPortfolio, assetTypeOptions }) {
     case 'allocationPercentage':
       setAllocationPercentage(value);
       break;
+    case 'allocationValue': 
+      setAllocationValue(value);
+      break;
     case 'manualExpectedReturn':
       setManualExpectedReturn(value);
       break;
     default:
       break;
+    }
+  };
+
+  const handleAllocationModeChange = (mode) => {
+    setAllocationMode(mode);
+    if (mode === 'percentage') {
+      setAllocationValue(''); 
+      setFieldErrors(prev => ({ ...prev, allocationValue: undefined, allocation_value: undefined }));
+    } else {
+      setAllocationPercentage(''); 
+      setFieldErrors(prev => ({ ...prev, allocationPercentage: undefined, allocation_percentage: undefined }));
     }
   };
 
@@ -48,20 +64,35 @@ function AddAssetForm({ portfolioId, refreshPortfolio, assetTypeOptions }) {
     const assetData = {
       asset_type: assetType,
       name_or_ticker: nameOrTicker,
-      allocation_percentage: parseFloat(allocationPercentage) || 0,
       ...(manualExpectedReturn && { manual_expected_return: parseFloat(manualExpectedReturn) }),
     };
+
+    if (allocationMode === 'percentage') {
+      assetData.allocation_percentage = parseFloat(allocationPercentage) || 0;
+      assetData.allocation_value = null;
+    } else {
+      assetData.allocation_value = parseFloat(allocationValue) || 0;
+      assetData.allocation_percentage = null;
+    }
 
     let currentFieldErrors = {};
     if (!assetData.asset_type) currentFieldErrors.assetType = 'Asset type is required.';
     if (!assetData.name_or_ticker) currentFieldErrors.nameOrTicker = 'Name or Ticker is required.';
-    if (
-      isNaN(assetData.allocation_percentage) ||
-      assetData.allocation_percentage < 0 ||
-      assetData.allocation_percentage > 100
-    ) {
-      currentFieldErrors.allocationPercentage = 'Allocation must be between 0 and 100.';
+
+    if (allocationMode === 'percentage') {
+      if (
+        isNaN(assetData.allocation_percentage) ||
+        assetData.allocation_percentage < 0 ||
+        assetData.allocation_percentage > 100
+      ) {
+        currentFieldErrors.allocationPercentage = 'Allocation percentage must be between 0 and 100.';
+      }
+    } else {
+      if (isNaN(assetData.allocation_value) || assetData.allocation_value < 0) {
+        currentFieldErrors.allocationValue = 'Allocation value must be a non-negative number.';
+      }
     }
+
     if (Object.keys(currentFieldErrors).length > 0) {
       setFieldErrors(currentFieldErrors);
       return;
@@ -73,7 +104,9 @@ function AddAssetForm({ portfolioId, refreshPortfolio, assetTypeOptions }) {
       await portfolioService.addAssetToPortfolio(portfolioId, assetData);
       setAssetType('');
       setNameOrTicker('');
+      setAllocationMode('percentage'); 
       setAllocationPercentage('');
+      setAllocationValue(''); 
       setManualExpectedReturn('');
       if (refreshPortfolio) {
         refreshPortfolio();
@@ -109,6 +142,7 @@ function AddAssetForm({ portfolioId, refreshPortfolio, assetTypeOptions }) {
             if (fieldName === 'name_or_ticker') uiFieldName = 'nameOrTicker';
             else if (fieldName === 'asset_type') uiFieldName = 'assetType';
             else if (fieldName === 'allocation_percentage') uiFieldName = 'allocationPercentage';
+            else if (fieldName === 'allocation_value') uiFieldName = 'allocationValue'; // Handle new field error
             else if (fieldName === 'manual_expected_return') uiFieldName = 'manualExpectedReturn';
 
             newFieldErrors[uiFieldName] = err.msg;
@@ -168,27 +202,96 @@ function AddAssetForm({ portfolioId, refreshPortfolio, assetTypeOptions }) {
             </p>
           )}
         </div>
-        <div>
-          <Input
-            label="Allocation Percentage (%)"
-            id="allocationPercentage"
-            name="allocationPercentage"
-            type="number"
-            value={allocationPercentage}
-            onChange={handleInputChange}
-            required
-            placeholder="e.g., 25"
-            min="0"
-            max="100"
-            step="0.01"
-            className="mb-0"
-          />
-          {(fieldErrors.allocation_percentage || fieldErrors.allocationPercentage) && (
-            <p className="mt-1 text-xs text-red-600">
-              {fieldErrors.allocation_percentage || fieldErrors.allocationPercentage}
-            </p>
-          )}
-        </div>
+
+        {/* Allocation Mode Selection */}
+        <fieldset className="mb-4">
+          <legend className="block text-sm font-medium text-gray-700 mb-1">Allocation Type</legend>
+          <div className="flex pt-1">
+            <label 
+              htmlFor="percentageMode" 
+              className="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-l-md cursor-pointer transition-colors duration-150 bg-white text-gray-700 hover:bg-gray-50 peer-checked:bg-primary-600 peer-checked:text-white peer-checked:border-primary-600 peer-focus:ring-2 peer-focus:ring-primary-500 peer-focus:ring-offset-1 w-1/2 text-center"
+            >
+              <input 
+                type="radio" 
+                id="percentageMode" 
+                name="allocationMode"
+                value="percentage"
+                checked={allocationMode === 'percentage'}
+                onChange={() => handleAllocationModeChange('percentage')}
+                className="sr-only peer"
+              />
+              <span className="text-sm">Percentage (%)</span>
+            </label>
+            <label 
+              htmlFor="valueMode" 
+              className="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-r-md cursor-pointer transition-colors duration-150 bg-white text-gray-700 hover:bg-gray-50 peer-checked:bg-primary-600 peer-checked:text-white peer-checked:border-primary-600 peer-focus:ring-2 peer-focus:ring-primary-500 peer-focus:ring-offset-1 w-1/2 text-center -ml-px" // -ml-px to ensure borders overlap correctly
+            >
+              <input 
+                type="radio" 
+                id="valueMode" 
+                name="allocationMode"
+                value="value"
+                checked={allocationMode === 'value'}
+                onChange={() => handleAllocationModeChange('value')}
+                className="sr-only peer"
+              />
+              <span className="text-sm">Value ($)</span>
+            </label>
+          </div>
+          <p className="mt-2 text-xs text-gray-500">
+            Specify allocation as a percentage of the total portfolio or as a fixed monetary value. Only one can be active.
+          </p>
+        </fieldset>
+
+        {allocationMode === 'percentage' && (
+          <div>
+            <Input
+              label="Allocation Percentage (%)"
+              id="allocationPercentage"
+              name="allocationPercentage"
+              type="number"
+              value={allocationPercentage}
+              onChange={handleInputChange}
+              required={allocationMode === 'percentage'}
+              placeholder="e.g., 25"
+              min="0"
+              max="100"
+              step="0.01"
+              className="mb-0"
+              disabled={allocationMode !== 'percentage'}
+            />
+            {(fieldErrors.allocation_percentage || fieldErrors.allocationPercentage) && (
+              <p className="mt-1 text-xs text-red-600">
+                {fieldErrors.allocation_percentage || fieldErrors.allocationPercentage}
+              </p>
+            )}
+          </div>
+        )}
+
+        {allocationMode === 'value' && (
+          <div>
+            <Input
+              label="Allocation Value ($)"
+              id="allocationValue"
+              name="allocationValue"
+              type="number"
+              value={allocationValue}
+              onChange={handleInputChange}
+              required={allocationMode === 'value'}
+              placeholder="e.g., 5000"
+              min="0"
+              step="0.01"
+              className="mb-0"
+              disabled={allocationMode !== 'value'}
+            />
+            {(fieldErrors.allocation_value || fieldErrors.allocationValue) && (
+              <p className="mt-1 text-xs text-red-600">
+                {fieldErrors.allocation_value || fieldErrors.allocationValue}
+              </p>
+            )}
+          </div>
+        )}
+
         <div>
           <Input
             label="Manual Expected Return (%)"

@@ -21,18 +21,6 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/api/v1/auth')
 # --- Password Validation Helper ---
 MIN_PASSWORD_LENGTH = 8
 
-def is_password_complex(password):
-    """Checks if the password meets complexity requirements."""
-    if len(password) < MIN_PASSWORD_LENGTH:
-        return False, f"Password must be at least {MIN_PASSWORD_LENGTH} characters long."
-    # Removed specific character type checks (uppercase, lowercase, digit, special character)
-    # Relying on length and pwned password check as primary measures.
-    # The NIST guidelines suggest moving away from strict composition rules when
-    # other measures like length and breached password checks are implemented.
-    # If desired, some minimal complexity (e.g., not all same character) could be added,
-    # but the focus is shifted.
-    return True, ""
-
 def is_password_pwned(password):
     """Checks if the password appears in the Pwned Passwords database using k-anonymity."""
     try:

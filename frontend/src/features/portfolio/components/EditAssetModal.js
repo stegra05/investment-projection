@@ -27,7 +27,9 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
 
   const [assetType, setAssetType] = useState('');
   const [nameOrTicker, setNameOrTicker] = useState('');
+  const [allocationMode, setAllocationMode] = useState('percentage'); 
   const [allocationPercentage, setAllocationPercentage] = useState('');
+  const [allocationValue, setAllocationValue] = useState(''); 
   const [manualExpectedReturn, setManualExpectedReturn] = useState('');
 
   const [isSaving, setIsSaving] = useState(false);
@@ -39,9 +41,20 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
   useEffect(() => {
     if (isOpen && asset) {
       setAssetType(asset.asset_type || '');
-      setNameOrTicker(asset.name || '');
-      setAllocationPercentage(asset.allocation_percentage || '');
-      setManualExpectedReturn(asset.manual_expected_return || '');
+      setNameOrTicker(asset.name || asset.name_or_ticker || ''); 
+      
+      // Determine allocation mode and set values
+      if (asset.allocation_value !== null && asset.allocation_value !== undefined && parseFloat(asset.allocation_value) > 0) {
+        setAllocationMode('value');
+        setAllocationValue(asset.allocation_value.toString());
+        setAllocationPercentage('');
+      } else {
+        setAllocationMode('percentage');
+        setAllocationPercentage(asset.allocation_percentage !== null && asset.allocation_percentage !== undefined ? asset.allocation_percentage.toString() : '');
+        setAllocationValue('');
+      }
+      
+      setManualExpectedReturn(asset.manual_expected_return !== null && asset.manual_expected_return !== undefined ? asset.manual_expected_return.toString() : '');
       setError(null);
       setFieldErrors({});
       firstFieldRef.current?.focus();
@@ -78,11 +91,27 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
     case 'allocationPercentage':
       setAllocationPercentage(value);
       break;
+    case 'allocationValue': 
+      setAllocationValue(value);
+      break;
     case 'manualExpectedReturn':
       setManualExpectedReturn(value);
       break;
     default:
       break;
+    }
+  };
+
+  const handleAllocationModeChange = (mode) => {
+    setAllocationMode(mode);
+    if (mode === 'percentage') {
+      setAllocationValue(''); 
+      setFieldErrors(prev => ({ ...prev, allocationValue: undefined, allocation_value: undefined }));
+      setAllocationPercentage(asset && asset.allocation_percentage !== null && asset.allocation_percentage !== undefined ? asset.allocation_percentage.toString() : '');
+    } else {
+      setAllocationPercentage(''); 
+      setFieldErrors(prev => ({ ...prev, allocationPercentage: undefined, allocation_percentage: undefined }));
+      setAllocationValue(asset && asset.allocation_value !== null && asset.allocation_value !== undefined ? asset.allocation_value.toString() : '');
     }
   };
 
@@ -104,26 +133,40 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
     const updatedAssetData = {
       asset_type: assetType,
       name_or_ticker: nameOrTicker, // Sending name_or_ticker
-      allocation_percentage: parseFloat(allocationPercentage) || 0,
       ...(manualExpectedReturn !== '' &&
         manualExpectedReturn !== null && {
         manual_expected_return: parseFloat(manualExpectedReturn),
       }), // Handle empty string/null
     };
 
+    if (allocationMode === 'percentage') {
+      updatedAssetData.allocation_percentage = parseFloat(allocationPercentage) || 0;
+      updatedAssetData.allocation_value = null;
+    } else { // allocationMode === 'value'
+      updatedAssetData.allocation_value = parseFloat(allocationValue) || 0;
+      updatedAssetData.allocation_percentage = null;
+    }
+
     // Basic Frontend validation (similar to add form)
     let currentFieldErrors = {};
     if (!updatedAssetData.asset_type) currentFieldErrors.assetType = 'Asset type is required.';
     if (!updatedAssetData.name_or_ticker)
       currentFieldErrors.nameOrTicker = 'Name or Ticker is required.';
-    if (
-      isNaN(updatedAssetData.allocation_percentage) ||
-      updatedAssetData.allocation_percentage < 0 ||
-      updatedAssetData.allocation_percentage > 100
-    ) {
-      // Allow 0 allocation, unlike add form perhaps? Check requirements. Assuming >= 0 now.
-      currentFieldErrors.allocationPercentage = 'Allocation must be between 0 and 100.';
+    
+    if (allocationMode === 'percentage') {
+      if (
+        isNaN(updatedAssetData.allocation_percentage) ||
+        updatedAssetData.allocation_percentage < 0 ||
+        updatedAssetData.allocation_percentage > 100
+      ) {
+        currentFieldErrors.allocationPercentage = 'Allocation percentage must be between 0 and 100.';
+      }
+    } else { // allocationMode === 'value'
+      if (isNaN(updatedAssetData.allocation_value) || updatedAssetData.allocation_value < 0) {
+        currentFieldErrors.allocationValue = 'Allocation value must be a non-negative number.';
+      }
     }
+
     if (Object.keys(currentFieldErrors).length > 0) {
       setFieldErrors(currentFieldErrors);
       setIsSaving(false);
@@ -151,6 +194,7 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
           if (fieldName === 'name_or_ticker') fieldName = 'nameOrTicker';
           else if (fieldName === 'asset_type') fieldName = 'assetType';
           else if (fieldName === 'allocation_percentage') fieldName = 'allocationPercentage';
+          else if (fieldName === 'allocation_value') fieldName = 'allocationValue'; // Handle new field error
           else if (fieldName === 'manual_expected_return') fieldName = 'manualExpectedReturn';
 
           if (fieldName) newFieldErrors[fieldName] = valErr.msg;
@@ -218,26 +262,92 @@ function EditAssetModal({ isOpen, onClose, asset, onSave }) {
             )}
           </div>
 
+          {/* Allocation Mode Selection */}
+          <fieldset className="mb-4">
+            <legend className="block text-sm font-medium text-gray-700 mb-1">Allocation Type</legend>
+            <div className="flex pt-1">
+              <label 
+                htmlFor="editPercentageMode" 
+                className="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-l-md cursor-pointer transition-colors duration-150 bg-white text-gray-700 hover:bg-gray-50 peer-checked:bg-primary-600 peer-checked:text-white peer-checked:border-primary-600 peer-focus:ring-2 peer-focus:ring-primary-500 peer-focus:ring-offset-1 w-1/2 text-center"
+              >
+                <input 
+                  type="radio" 
+                  id="editPercentageMode" 
+                  name="editAllocationMode"
+                  value="percentage"
+                  checked={allocationMode === 'percentage'}
+                  onChange={() => handleAllocationModeChange('percentage')}
+                  className="sr-only peer"
+                />
+                <span className="text-sm">Percentage (%)</span>
+              </label>
+              <label 
+                htmlFor="editValueMode" 
+                className="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-r-md cursor-pointer transition-colors duration-150 bg-white text-gray-700 hover:bg-gray-50 peer-checked:bg-primary-600 peer-checked:text-white peer-checked:border-primary-600 peer-focus:ring-2 peer-focus:ring-primary-500 peer-focus:ring-offset-1 w-1/2 text-center -ml-px"
+              >
+                <input 
+                  type="radio" 
+                  id="editValueMode" 
+                  name="editAllocationMode"
+                  value="value"
+                  checked={allocationMode === 'value'}
+                  onChange={() => handleAllocationModeChange('value')}
+                  className="sr-only peer"
+                />
+                <span className="text-sm">Value ($)</span>
+              </label>
+            </div>
+            <p className="mt-2 text-xs text-gray-500">
+              Specify allocation as a percentage or a fixed monetary value. Only one can be active.
+            </p>
+          </fieldset>
+
           {/* Allocation Percentage */}
-          <div>
-            <Input
-              label="Allocation Percentage (%)"
-              id="editAllocationPercentage"
-              name="allocationPercentage"
-              type="number"
-              value={allocationPercentage}
-              onChange={handleInputChange}
-              required
-              placeholder="e.g., 25"
-              min="0"
-              max="100"
-              step="0.01"
-              className="mb-0"
-            />
-            {fieldErrors.allocationPercentage && (
-              <p className="mt-1 text-xs text-red-600">{fieldErrors.allocationPercentage}</p>
-            )}
-          </div>
+          {allocationMode === 'percentage' && (
+            <div>
+              <Input
+                label="Allocation Percentage (%)"
+                id="editAllocationPercentage"
+                name="allocationPercentage"
+                type="number"
+                value={allocationPercentage}
+                onChange={handleInputChange}
+                required={allocationMode === 'percentage'}
+                placeholder="e.g., 25"
+                min="0"
+                max="100"
+                step="0.01"
+                className="mb-0"
+                disabled={allocationMode !== 'percentage'}
+              />
+              {fieldErrors.allocationPercentage && (
+                <p className="mt-1 text-xs text-red-600">{fieldErrors.allocationPercentage}</p>
+              )}
+            </div>
+          )}
+
+          {/* Allocation Value */}
+          {allocationMode === 'value' && (
+            <div>
+              <Input
+                label="Allocation Value ($)"
+                id="editAllocationValue"
+                name="allocationValue"
+                type="number"
+                value={allocationValue}
+                onChange={handleInputChange}
+                required={allocationMode === 'value'}
+                placeholder="e.g., 5000"
+                min="0"
+                step="0.01"
+                className="mb-0"
+                disabled={allocationMode !== 'value'}
+              />
+              {fieldErrors.allocationValue && (
+                <p className="mt-1 text-xs text-red-600">{fieldErrors.allocationValue}</p>
+              )}
+            </div>
+          )}
 
           {/* Manual Expected Return */}
           <div>
@@ -293,6 +403,7 @@ EditAssetModal.propTypes = {
     name: PropTypes.string, // From GET request
     name_or_ticker: PropTypes.string, // Potential property if API changes
     allocation_percentage: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    allocation_value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     manual_expected_return: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.number,
