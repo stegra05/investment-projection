@@ -12,9 +12,14 @@ const usePortfolioListStore = create(set => ({
   fetchPortfolios: async () => {
     set({ isLoading: true, error: null });
     try {
-      const data = await portfolioService.getUserPortfolios();
-      // Ensure that 'data' is an array. If not, default to an empty array.
-      set({ portfolios: Array.isArray(data) ? data : [], isLoading: false });
+      const response = await portfolioService.getUserPortfolios();
+      // The service returns an object like { data: [...], pagination: {...} }
+      // We need to access the 'data' property for the array of portfolios.
+      set({
+        portfolios: Array.isArray(response.data) ? response.data : [],
+        // TODO: Consider storing pagination info as well if needed for UI
+        isLoading: false,
+      });
     } catch (error) {
       const errorMessage =
         error.response?.data?.message || error.message || 'Failed to fetch portfolios';

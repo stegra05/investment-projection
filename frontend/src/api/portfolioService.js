@@ -4,14 +4,65 @@ import { ENDPOINTS } from '../config/api';
 const portfolioService = {
   /**
    * Fetches the list of portfolios for the currently authenticated user.
+   * @param {object} [params] - Optional query parameters.
+   * @param {number} [params.page] - Page number for pagination.
+   * @param {number} [params.per_page] - Number of items per page.
+   * @param {string} [params.sort_by] - Field to sort by.
+   * @param {string} [params.sort_order] - Sort order ('asc' or 'desc').
+   * @param {string} [params.filter_name] - Filter portfolios by name.
    * @returns {Promise<Array<object>>} A promise that resolves to an array of portfolio objects.
    * @throws {Error} Throws an error if the API request fails.
    */
-  getUserPortfolios: async () => {
+  getUserPortfolios: async (params) => {
     try {
-      const response = await instance.get(ENDPOINTS.PORTFOLIO.LIST);
-      // Assuming the API returns the array of portfolios directly in the data property
-      return response.data.data;
+      const config = {};
+      if (params) {
+        const queryParams = { ...params }; // Copy incoming params
+
+        // Handle page parameter
+        if (params.page !== undefined && params.page !== null && String(params.page).trim() !== '') {
+          const pageNum = parseInt(String(params.page), 10);
+          if (!isNaN(pageNum)) {
+            queryParams.page = pageNum;
+          } else {
+            delete queryParams.page; // Or set to undefined to be caught by the cleanup
+          }
+        } else {
+          delete queryParams.page; // Remove if empty, null, or undefined
+        }
+
+        // Handle per_page parameter
+        if (params.per_page !== undefined && params.per_page !== null && String(params.per_page).trim() !== '') {
+          const perPageNum = parseInt(String(params.per_page), 10);
+          if (!isNaN(perPageNum)) {
+            queryParams.per_page = perPageNum;
+          } else {
+            delete queryParams.per_page; // Or set to undefined
+          }
+        } else {
+          delete queryParams.per_page; // Remove if empty, null, or undefined
+        }
+        
+        // Ensure other params (sort_by, sort_order, filter_name) are passed as is if they exist
+        // queryParams already contains them from the initial spread ...params
+
+        // Remove undefined keys so they don't get sent as "undefined" string
+        Object.keys(queryParams).forEach(key => {
+          if (queryParams[key] === undefined || queryParams[key] === null || String(queryParams[key]).trim() === '') {
+            // For sort_by and sort_order, backend has defaults. If filter_name is empty, it should not be sent.
+            // For page/per_page, if they ended up invalid, they should be removed to use backend defaults.
+            delete queryParams[key];
+          }
+        });
+        
+        if (Object.keys(queryParams).length > 0) {
+          config.params = queryParams;
+        }
+      }
+      const response = await instance.get(ENDPOINTS.PORTFOLIO.LIST, config);
+      // Assuming the API returns an object with 'data' (list of portfolios)
+      // and 'pagination' keys, as per backend route.
+      return response.data; // The backend now returns { data: [...], pagination: {...} }
     } catch (error) {
       console.error('Error fetching user portfolios:', error);
       // Re-throw the error or handle it as needed (e.g., return a specific error object)

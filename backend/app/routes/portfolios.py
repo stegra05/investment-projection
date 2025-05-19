@@ -160,17 +160,30 @@ def get_user_portfolios():
     with support for pagination, sorting, and filtering."""
     current_user_id = int(get_jwt_identity())
 
+    # Collect present query parameters
+    request_args = {}
+    if 'page' in request.args:
+        request_args['page'] = request.args.get('page')
+    if 'per_page' in request.args:
+        request_args['per_page'] = request.args.get('per_page')
+    if 'sort_by' in request.args:
+        request_args['sort_by'] = request.args.get('sort_by')
+    if 'sort_order' in request.args:
+        request_args['sort_order'] = request.args.get('sort_order')
+    if 'filter_name' in request.args:
+        request_args['filter_name'] = request.args.get('filter_name')
+        # Handle empty string for filter_name as None if necessary, or let Pydantic handle it
+        if request_args['filter_name'] == '':
+            request_args['filter_name'] = None
+
+
     # Parse and validate query parameters
     try:
-        query_params = PortfolioQueryArgs(
-            page=request.args.get('page'),  # Let Pydantic handle default and type validation
-            per_page=request.args.get('per_page'), # Let Pydantic handle default and type validation
-            sort_by=request.args.get('sort_by'), # Let Pydantic handle default
-            sort_order=request.args.get('sort_order'), # Let Pydantic handle default
-            filter_name=request.args.get('filter_name') # Let Pydantic handle default
-        )
+        query_params = PortfolioQueryArgs(**request_args)
     except ValueError as e: # Handles Pydantic validation errors
-        return jsonify({"errors": str(e)}), 400 # Or use a more structured error response
+        # It's better to return Pydantic's structured errors
+        current_app.logger.warning(f"PortfolioQueryArgs validation failed for user {current_user_id}: {e.errors()}")
+        return jsonify({"errors": e.errors()}), 400
 
     # Base query - Add selectinload for assets
     query = Portfolio.query.options(selectinload(Portfolio.assets)).filter_by(user_id=current_user_id)
