@@ -76,3 +76,36 @@ class EndsOnType(enum.Enum):
     NEVER = 'NEVER'                             # The recurrence continues indefinitely.
     AFTER_OCCURRENCES = 'AFTER_OCCURRENCES'   # The recurrence stops after a specific number of occurrences.
     ON_DATE = 'ON_DATE'                         # The recurrence stops on or after a specific date.
+
+class Currency(enum.Enum):
+    """Specifies the currency for financial values."""
+    USD = 'USD'  # United States Dollar
+    EUR = 'EUR'  # Euro
+    GBP = 'GBP'  # British Pound Sterling
+    JPY = 'JPY'  # Japanese Yen
+    CAD = 'CAD'  # Canadian Dollar
+    AUD = 'AUD'  # Australian Dollar
+    CHF = 'CHF'  # Swiss Franc
+    CNY = 'CNY'  # Chinese Yuan Renminbi
+    INR = 'INR'  # Indian Rupee
+    BRL = 'BRL'  # Brazilian Real
+    ZAR = 'ZAR'  # South African Rand
+    OTHER = 'OTHER' # For other currencies
+
+class ValueType(enum.Enum):
+    """Defines whether a financial value is an absolute amount or a percentage."""
+    FIXED_AMOUNT = 'FIXED_AMOUNT' # The value is a specific monetary amount
+    PERCENTAGE = 'PERCENTAGE'     # The value is a percentage of another value (e.g., portfolio total, asset value)
+
+class RecurrencePattern(enum.Enum): # Assuming this might be for more complex or alternative recurrence logic
+    """Defines patterns for recurring events, potentially more detailed than FrequencyType."""
+    # This might overlap with FrequencyType, consider if it's truly distinct
+    # or if FrequencyType should be expanded/used. For now, adding some common patterns.
+    DAILY = 'DAILY'
+    WEEKLY = 'WEEKLY'
+    BI_WEEKLY = 'BI_WEEKLY' # Every two weeks
+    MONTHLY = 'MONTHLY'
+    QUARTERLY = 'QUARTERLY'
+    SEMI_ANNUALLY = 'SEMI_ANNUALLY' # Every six months
+    ANNUALLY = 'ANNUALLY' # Yearly
+    ONE_TIME = 'ONE_TIME' # Non-recurring

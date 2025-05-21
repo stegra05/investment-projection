@@ -96,4 +96,8 @@ class Portfolio(db.Model):
         if include_details:
              data['assets'] = [asset.to_dict() for asset in self.assets]
              data['planned_changes'] = [change.to_dict() for change in self.planned_changes]
-        return data 
+        return data
+
+    def __repr__(self):
+        """Provide a developer-friendly string representation of the object."""
+        return f'<Portfolio {self.portfolio_id} ({self.name})>' 

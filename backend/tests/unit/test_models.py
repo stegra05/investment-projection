@@ -3,10 +3,11 @@ from app.models.user import User  # Adjust import if necessary
 from app.models.portfolio import Portfolio # Adjust import if necessary
 from sqlalchemy.exc import IntegrityError
 from app.models.asset import Asset
-from app.enums import AssetTypes, Currencies, ChangeTypes, RecurrencePatterns
+from app.enums import AssetType, Currency, ChangeType, RecurrencePattern
 from app.models.planned_future_change import PlannedFutureChange
 from datetime import datetime, date
 from app.models.user_celery_task import UserCeleryTask
+from decimal import Decimal
 
 def test_new_user_creation(session):
     """Test creating a new user."""
@@ -68,20 +69,19 @@ def test_user_representation(session):
     assert repr(user) == '<User repr_user>'
 
 # Example for a related model if User has a relationship, e.g., to Portfolio
-def test_user_portfolio_relationship(session):
+def test_user_portfolio_relationship(session, user_factory, portfolio_factory):
     """Test the relationship between User and Portfolio."""
-    user = User(email='portfolio_user@example.com', username='portfolio_user')
-    user.set_password('password')
+    user = user_factory(email='portfolio_user@example.com', username='portfolio_user', password='password')
+    # user is already committed by the factory, so user.id is available
     
-    portfolio1 = Portfolio(name='My First Portfolio', user=user)
-    portfolio2 = Portfolio(name='My Second Portfolio', user_id=user.id) # Test assignment via user_id too
-
-    session.add_all([user, portfolio1, portfolio2])
-    session.commit()
+    portfolio1 = portfolio_factory(user=user, name='My First Portfolio')
+    portfolio2 = Portfolio(name='My Second Portfolio', user_id=user.id)
+    session.add(portfolio2)
+    session.commit() # Ensure portfolio2 is persisted and relationships updated
 
     retrieved_user = User.query.filter_by(username='portfolio_user').first()
     assert retrieved_user is not None
-    assert len(retrieved_user.portfolios) == 2
+    assert retrieved_user.portfolios.count() == 2
     assert 'My First Portfolio' in [p.name for p in retrieved_user.portfolios]
     assert 'My Second Portfolio' in [p.name for p in retrieved_user.portfolios]
 
@@ -116,7 +116,7 @@ def test_portfolio_representation(session, user_factory):
     portfolio = Portfolio(name='Retirement Fund', user_id=user.id)
     session.add(portfolio)
     session.commit()
-    assert repr(portfolio) == f'<Portfolio {portfolio.id}: Retirement Fund>'
+    assert repr(portfolio) == f'<Portfolio {portfolio.portfolio_id} (Retirement Fund)>'
 
 
 # Tests for Asset Model
@@ -127,23 +127,19 @@ def test_new_asset_creation(session, portfolio_factory): # Assuming a portfolio_
     # session.commit() # portfolio_factory should handle committing
 
     asset = Asset(
-        portfolio_id=portfolio.id,
-        name='Apple Stock',
-        asset_type=AssetTypes.STOCK,
-        currency=Currencies.USD,
-        current_value=1500.00,
-        quantity=10
+        portfolio_id=portfolio.portfolio_id,
+        name_or_ticker='Apple Stock',
+        asset_type=AssetType.STOCK,
+        allocation_value=Decimal('1500.00')
     )
     session.add(asset)
     session.commit()
 
-    retrieved_asset = Asset.query.filter_by(name='Apple Stock').first()
+    retrieved_asset = Asset.query.filter_by(name_or_ticker='Apple Stock').first()
     assert retrieved_asset is not None
-    assert retrieved_asset.portfolio_id == portfolio.id
-    assert retrieved_asset.asset_type == AssetTypes.STOCK
-    assert retrieved_asset.currency == Currencies.USD
-    assert retrieved_asset.current_value == 1500.00
-    assert retrieved_asset.quantity == 10
+    assert retrieved_asset.portfolio_id == portfolio.portfolio_id
+    assert retrieved_asset.asset_type == AssetType.STOCK
+    assert retrieved_asset.allocation_value == Decimal('1500.00')
 
 def test_asset_representation(session, portfolio_factory):
     """Test the __repr__ method of Asset model."""
@@ -151,14 +147,14 @@ def test_asset_representation(session, portfolio_factory):
     # session.add(portfolio)
     # session.commit()
 
-    asset = Asset(portfolio_id=portfolio.id, name='Gold ETF', asset_type=AssetTypes.ETF, currency=Currencies.USD, current_value=200.0)
+    asset = Asset(portfolio_id=portfolio.portfolio_id, name_or_ticker='Gold ETF', asset_type=AssetType.ETF, allocation_value=Decimal('200.0'))
     session.add(asset)
     session.commit()
-    assert repr(asset) == f'<Asset {asset.id}: Gold ETF>'
+    assert repr(asset) == f'<Asset {asset.asset_id}: Gold ETF>'
 
 # Tests for PlannedFutureChange Model
 # PlannedFutureChange import is already at the top
-# Enums ChangeTypes, RecurrencePatterns imported at the top
+# Enums ChangeType, RecurrencePattern imported at the top
 # datetime, date imported at the top
 
 def test_new_planned_future_change_creation(session, portfolio_factory):
@@ -169,23 +165,23 @@ def test_new_planned_future_change_creation(session, portfolio_factory):
     
     change_date_val = date(2024, 12, 25)
     change = PlannedFutureChange(
-        portfolio_id=portfolio.id,
+        portfolio_id=portfolio.portfolio_id,
         description='Christmas bonus investment',
-        change_type=ChangeTypes.ONE_TIME_INVESTMENT,
-        value=500.00,
+        change_type=ChangeType.CONTRIBUTION,
+        amount=Decimal('500.00'), # Changed from value to amount
         change_date=change_date_val, # renamed variable to avoid conflict with 'date' type
-        currency=Currencies.EUR
+        # currency=Currency.EUR # Currency is not part of this model
     )
     session.add(change)
     session.commit()
 
     retrieved_change = PlannedFutureChange.query.filter_by(description='Christmas bonus investment').first()
     assert retrieved_change is not None
-    assert retrieved_change.portfolio_id == portfolio.id
-    assert retrieved_change.change_type == ChangeTypes.ONE_TIME_INVESTMENT
-    assert retrieved_change.value == 500.00
+    assert retrieved_change.portfolio_id == portfolio.portfolio_id
+    assert retrieved_change.change_type == ChangeType.CONTRIBUTION
+    assert retrieved_change.amount == Decimal('500.00') # Changed from value to amount
     assert retrieved_change.change_date == change_date_val
-    assert retrieved_change.currency == Currencies.EUR
+    # assert retrieved_change.currency == Currency.EUR # Currency is not part of this model
 
 def test_planned_future_change_representation(session, portfolio_factory):
     """Test the __repr__ method of PlannedFutureChange model."""
@@ -195,15 +191,15 @@ def test_planned_future_change_representation(session, portfolio_factory):
 
     change_date_val = date(2024,1,1) # renamed variable
     change = PlannedFutureChange(
-        portfolio_id=portfolio.id, 
+        portfolio_id=portfolio.portfolio_id, 
         description='Monthly Savings', 
-        change_type=ChangeTypes.RECURRING_INVESTMENT, 
-        value=100,
+        change_type=ChangeType.CONTRIBUTION,
+        amount=Decimal('100.00'), # Changed from value to amount
         change_date=change_date_val 
     )
     session.add(change)
     session.commit()
-    assert repr(change) == f'<PlannedFutureChange {change.id}: Monthly Savings on {change_date_val}>'
+    assert repr(change) == f'<PlannedFutureChange {change.change_id}: Monthly Savings on {change_date_val}>'
 
 
 # Tests for UserCeleryTask Model
@@ -217,18 +213,18 @@ def test_new_user_celery_task_creation(session, user_factory):
 
     task = UserCeleryTask(
         user_id=user.id,
-        celery_task_id='some-celery-task-id-123',
-        task_name='portfolio_projection',
-        status='PENDING'
+        task_id='some-celery-task-id-123'
+        # task_name='portfolio_projection', # Removed, not in model
+        # status='PENDING' # Removed, not in model
     )
     session.add(task)
     session.commit()
 
-    retrieved_task = UserCeleryTask.query.filter_by(celery_task_id='some-celery-task-id-123').first()
+    retrieved_task = UserCeleryTask.query.filter_by(task_id='some-celery-task-id-123').first()
     assert retrieved_task is not None
     assert retrieved_task.user_id == user.id
-    assert retrieved_task.task_name == 'portfolio_projection'
-    assert retrieved_task.status == 'PENDING'
+    # assert retrieved_task.task_name == 'portfolio_projection'
+    # assert retrieved_task.status == 'PENDING'
     assert retrieved_task.created_at is not None
 
 def test_user_celery_task_representation(session, user_factory):
@@ -237,7 +233,7 @@ def test_user_celery_task_representation(session, user_factory):
     # session.add(user) # user_factory should handle this
     # session.commit() # user_factory should handle this
     
-    task = UserCeleryTask(user_id=user.id, celery_task_id='repr-task-id', task_name='test_task', status='SUCCESS')
+    task = UserCeleryTask(user_id=user.id, task_id='repr-task-id') # Removed task_name and status
     session.add(task)
     session.commit()
-    assert repr(task) == f"<UserCeleryTask {task.id}: test_task (SUCCESS)>"
+    assert repr(task) == f"<UserCeleryTask ID: {task.task_id}, UserID: {user.id}>" # Adjusted repr test for actual model attributes

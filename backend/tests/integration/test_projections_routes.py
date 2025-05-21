@@ -7,7 +7,7 @@ from app.models.user_celery_task import UserCeleryTask # For mocking its creatio
 from app import db 
 from unittest.mock import patch, MagicMock
 from decimal import Decimal
-from app.enums import ChangeTypes, ValueTypes, Currencies # For draft changes
+from app.enums import ChangeType, ValueType, Currency # For draft changes
 
 # Fixtures
 @pytest.fixture
@@ -172,10 +172,10 @@ def test_preview_projection_success(mock_calc_proj, client, portfolio_for_proj, 
         'draft_planned_changes': [
             {
                 'description': 'Draft Q1 Bonus',
-                'change_type': ChangeTypes.ONE_TIME_INVESTMENT.value,
+                'change_type': ChangeType.ONE_TIME_INVESTMENT.value,
                 'value': Decimal('2000.00'),
-                'value_type': ValueTypes.FIXED.value,
-                'currency': Currencies.EUR.value, # Match portfolio currency
+                'value_type': ValueType.FIXED.value,
+                'currency': Currency.EUR.value, # Match portfolio currency
                 'change_date': str(date(2024, 2, 15)),
                 'is_recurring': False
             }
@@ -254,3 +254,92 @@ def test_preview_projection_unauthorized_portfolio(client, portfolio_for_proj, o
     )
     assert response.status_code == 403 # AccessDeniedError
     assert "Forbidden: You do not own this portfolio" in response.get_json()['message']
+
+# === Test POST /portfolios/{portfolio_id}/projections/ ===
+@patch('app.routes.projections.run_portfolio_projection_task.delay')
+def test_create_projection_async_success(mock_delay, auth_client, portfolio_factory, session):
+    user = auth_client.user
+    portfolio = portfolio_factory(user=user)
+    # Ensure portfolio has at least one asset for projection to be meaningful (if service requires it)
+    asset = Asset(portfolio_id=portfolio.portfolio_id, name="ProjAsset", asset_type=AssetType.STOCK, currency=Currency.USD, current_value=10000)
+    session.add(asset)
+    session.commit()
+
+    mock_delay.return_value = MagicMock(id="test-task-id-123") # Mock Celery task object
+
+    projection_params = {
+        "start_date": "2024-01-01",
+        "end_date": "2034-01-01",
+        "initial_portfolio_value": 10000.00 # Can be optional if calculated from assets
+    }
+    response = auth_client.post(f'/portfolios/{portfolio.portfolio_id}/projections/', json=projection_params)
+    assert response.status_code == 202 # Accepted for async processing
+    data = response.get_json()
+    assert data['task_id'] == "test-task-id-123"
+    mock_delay.assert_called_once()
+    # Check call args: (portfolio_id, user_id, start_date, end_date, initial_value, ... other params)
+    # Exact args depend on how run_portfolio_projection_task is defined and called.
+    # Example: mock_delay.assert_called_with(portfolio.portfolio_id, user.id, date(2024,1,1), date(2034,1,1), Decimal('10000.00'))
+
+@patch('app.routes.projections.run_portfolio_projection_task.delay')
+def test_create_projection_async_invalid_params(mock_delay, auth_client, portfolio_factory):
+    user = auth_client.user
+    portfolio = portfolio_factory(user=user)
+    invalid_params = {"start_date": "invalid-date"} # Missing end_date, invalid start_date
+    response = auth_client.post(f'/portfolios/{portfolio.portfolio_id}/projections/', json=invalid_params)
+    assert response.status_code == 400 # Validation error
+    mock_delay.assert_not_called()
+
+@patch('app.routes.projections.run_portfolio_projection_task.delay')
+def test_create_projection_async_unauthorized_portfolio(mock_delay, auth_client, user_factory, portfolio_factory):
+    other_user = user_factory(email='otherproj@example.com', username='otherprojuser')
+    other_portfolio = portfolio_factory(user=other_user)
+    params = {"start_date": "2024-01-01", "end_date": "2025-01-01"}
+    response = auth_client.post(f'/portfolios/{other_portfolio.portfolio_id}/projections/', json=params)
+    assert response.status_code == 403 # verify_portfolio_ownership
+    mock_delay.assert_not_called()
+
+@patch('app.routes.projections.run_portfolio_projection_task.delay')
+def test_create_projection_async_portfolio_not_found(mock_delay, auth_client):
+    params = {"start_date": "2024-01-01", "end_date": "2025-01-01"}
+    response = auth_client.post('/portfolios/999000/projections/', json=params)
+    assert response.status_code == 404 # verify_portfolio_ownership
+    mock_delay.assert_not_called()
+
+
+# === Test POST /portfolios/{portfolio_id}/projections/preview ===
+@patch('app.services.projection_service.calculate_portfolio_projection') # Assuming direct call for preview
+def test_preview_projection_success(mock_calculate_proj, auth_client, portfolio_factory, session):
+    user = auth_client.user
+    portfolio = portfolio_factory(user=user)
+    asset = Asset(portfolio_id=portfolio.portfolio_id, name="PrevAsset", asset_type=AssetType.STOCK, currency=Currency.USD, current_value=5000)
+    session.add(asset)
+    session.commit()
+
+    mock_calculate_proj.return_value = [{"date": "2024-01-01", "projected_value": 5050.00}]
+    preview_params = {"start_date": "2024-01-01", "end_date": "2024-01-31", "initial_portfolio_value": 5000.00}
+    
+    response = auth_client.post(f'/portfolios/{portfolio.portfolio_id}/projections/preview', json=preview_params)
+    assert response.status_code == 200
+    data = response.get_json()
+    assert len(data) == 1
+    assert data[0]['projected_value'] == 5050.00
+    # mock_calculate_proj.assert_called_once_with(portfolio.portfolio_id, date(2024,1,1), date(2024,1,31), Decimal('5000.00'), ANY, ANY) # Check actual args
+
+@patch('app.services.projection_service.calculate_portfolio_projection')
+def test_preview_projection_invalid_pydantic_params(mock_calculate_proj, auth_client, portfolio_factory):
+    user = auth_client.user
+    portfolio = portfolio_factory(user=user)
+    invalid_params = {"start_date": "not-a-date"}
+    response = auth_client.post(f'/portfolios/{portfolio.portfolio_id}/projections/preview', json=invalid_params)
+    assert response.status_code == 400 # Pydantic validation
+    mock_calculate_proj.assert_not_called()
+
+@patch('app.services.projection_service.calculate_portfolio_projection')
+def test_preview_projection_unauthorized_portfolio(mock_calculate_proj, auth_client, user_factory, portfolio_factory):
+    other_user = user_factory(email='otherprev@example.com', username='otherprevuser')
+    other_portfolio = portfolio_factory(user=other_user)
+    params = {"start_date": "2024-01-01", "end_date": "2024-01-31"}
+    response = auth_client.post(f'/portfolios/{other_portfolio.portfolio_id}/projections/preview', json=params)
+    assert response.status_code == 403 # verify_portfolio_ownership
+    mock_calculate_proj.assert_not_called()

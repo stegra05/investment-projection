@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, current_app
+from flask import Flask, jsonify, current_app, request as flask_request
 import json
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -184,13 +184,13 @@ def create_app(config_name='default'):
 
     @app.after_request
     def after_request_logging(response):
-        from flask import g, request
+        from flask import g
         duration_ms = (time.monotonic() - g.start_time) * 1000 if hasattr(g, 'start_time') else -1
-        if not request.path.startswith('/static'):
+        if not flask_request.path.startswith('/static'):
             log_message = (
-                f"Request: {request.remote_addr} '{request.method} {request.path} {request.scheme.upper()}/{request.environ.get('SERVER_PROTOCOL', '').split('/')[1]}' "
+                f"Request: {flask_request.remote_addr} '{flask_request.method} {flask_request.path} {flask_request.scheme.upper()}/{flask_request.environ.get('SERVER_PROTOCOL', '').split('/')[1]}' "
                 f"Status: {response.status_code} Size: {response.content_length} Duration: {duration_ms:.2f}ms "
-                f"Referer: '{request.referrer or '-'}' User-Agent: '{request.user_agent.string or '-'}'"
+                f"Referer: '{flask_request.referrer or '-'}' User-Agent: '{flask_request.user_agent.string or '-'}'"
             )
             if 200 <= response.status_code < 400:
                 app.logger.info(log_message)

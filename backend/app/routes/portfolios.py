@@ -22,7 +22,7 @@ from sqlalchemy.orm import selectinload # Add import for selectinload
 # Import Pydantic Schemas
 from app.schemas.portfolio_schemas import (
     PortfolioSchema, PortfolioCreateSchema, PortfolioUpdateSchema,
-    BulkAllocationUpdateSchema, PortfolioSummarySchema # Import the new summary schema
+    BulkAllocationUpdateSchema, PortfolioSummarySchema, AssetAllocationSchema # Import the new summary schema
 )
 
 # Import custom exceptions
@@ -121,7 +121,7 @@ def verify_portfolio_ownership(f):
 # --- Helper Functions ---
 
 def _validate_bulk_allocation_data(portfolio: Portfolio, 
-                                   allocation_data: list[BulkAllocationUpdateSchema.AllocationItem], 
+                                   allocation_data: list[AssetAllocationSchema], 
                                    app_logger):
     """Validates data for bulk updating asset allocations within a portfolio.
 

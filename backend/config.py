@@ -34,7 +34,7 @@ base_dir = Path(__file__).resolve().parent.parent # Go up one level from config.
 # Load environment variables from a .env file located in the base directory.
 # This allows sensitive configurations (like secret keys, database URLs) to be
 # kept out of version control.
-load_dotenv(base_dir / '.env')
+# load_dotenv(base_dir / '.env')
 
 # --- Logging Configuration Setup ---
 # Define the directory where log files will be stored.

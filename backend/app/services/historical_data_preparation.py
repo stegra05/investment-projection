@@ -9,6 +9,7 @@ consumed by other services, such as performance analytics or projection engines.
 from flask import current_app
 from app import db
 from app.models import Asset, PlannedFutureChange
+from app.enums import ChangeType
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 import json
@@ -103,7 +104,7 @@ def fetch_and_process_reallocations(portfolio_id: int, end_date: date) -> list:
     # Query for reallocation events, ordered by date.
     reallocation_changes_db = db.session.query(PlannedFutureChange).filter(
         PlannedFutureChange.portfolio_id == portfolio_id,
-        PlannedFutureChange.change_type == 'Reallocation', # Enum comparison
+        PlannedFutureChange.change_type == ChangeType.REALLOCATION, # Use Enum member
         PlannedFutureChange.change_date <= end_date
     ).order_by(PlannedFutureChange.change_date).all()
 
@@ -168,7 +169,7 @@ def get_daily_changes(portfolio_id: int, end_date: date) -> dict:
     all_relevant_changes = db.session.query(PlannedFutureChange).filter(
         PlannedFutureChange.portfolio_id == portfolio_id,
         PlannedFutureChange.change_date <= end_date,
-        PlannedFutureChange.change_type.in_(['Contribution', 'Withdrawal']) # Enum list
+        PlannedFutureChange.change_type.in_([ChangeType.CONTRIBUTION, ChangeType.WITHDRAWAL]) # Use Enum members
     ).order_by(PlannedFutureChange.change_date).all()
 
     for change in all_relevant_changes:

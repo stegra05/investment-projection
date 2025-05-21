@@ -39,6 +39,8 @@ from .monthly_calculator import calculate_single_month
 # Import the new projection initializer service
 from .projection_initializer import initialize_projection
 
+logger = logging.getLogger(__name__) # Define logger
+
 # Default annual return assumptions were previously here but are better placed
 # within specific return strategies (e.g., in `return_strategies.py`).
 

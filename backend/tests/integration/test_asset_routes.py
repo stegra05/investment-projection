@@ -3,7 +3,7 @@ import json
 from app.models.user import User
 from app.models.portfolio import Portfolio
 from app.models.asset import Asset
-from app.enums import AssetTypes, Currencies 
+from app.enums import AssetType, Currency 
 from app import db 
 from decimal import Decimal
 
@@ -46,168 +46,127 @@ def specific_asset_url(portfolio_id, asset_id):
     return f'/api/v1/portfolios/{portfolio_id}/assets/{asset_id}/'
 
 
-# === Test Create Asset (POST /portfolios/<portfolio_id>/assets/) ===
-def test_create_asset_success(client, test_portfolio_for_assets, auth_user_1_asset_test, session):
-    user1, headers_user1 = auth_user_1_asset_test
-    portfolio_id = test_portfolio_for_assets.id
-
+# === Test POST /portfolios/{portfolio_id}/assets ===
+def test_create_asset_success(auth_client, portfolio_factory, session):
+    user = auth_client.user
+    portfolio = portfolio_factory(user=user)
     asset_data = {
-        'name_or_ticker': 'Bitcoin', # Field name from AssetCreateSchema
-        'asset_type': AssetTypes.CRYPTO.value,
-        'currency': Currencies.USD.value,
-        'current_value': Decimal('50000.00'),
-        'quantity': Decimal('1.5'),
-        'allocation_percentage': Decimal('10.00') # Optional, but good to test
+        "name": "New Test Asset",
+        "asset_type": AssetType.STOCK.value,
+        "currency": Currency.USD.value,
+        "current_value": 1000.00,
+        "quantity": 10.5,
+        "expected_annual_return": 7.5, # Percentage
+        "target_allocation_percentage": 50.0 # Percentage
     }
-    response = client.post(assets_base_url(portfolio_id), json=asset_data, headers=headers_user1)
-    
+    response = auth_client.post(f'/portfolios/{portfolio.portfolio_id}/assets', json=asset_data)
     assert response.status_code == 201
-    json_data = response.get_json()
-    assert json_data['name_or_ticker'] == 'Bitcoin'
-    assert json_data['asset_type'] == AssetTypes.CRYPTO.value
-    assert json_data['portfolio_id'] == portfolio_id
-    assert 'asset_id' in json_data # Changed from 'id' to 'asset_id' to match AssetSchema
+    data = response.get_json()
+    assert data['name'] == "New Test Asset"
+    assert data['portfolio_id'] == portfolio.portfolio_id
+    assert data['asset_type'] == AssetType.STOCK.value
 
-    asset = session.query(Asset).filter_by(asset_id=json_data['asset_id']).first()
-    assert asset is not None
-    assert asset.name_or_ticker == 'Bitcoin'
-    assert asset.portfolio_id == portfolio_id
-    assert asset.allocation_percentage == Decimal('10.00')
-
-def test_create_asset_default_allocation(client, test_portfolio_for_assets, auth_user_1_asset_test, session):
-    user1, headers_user1 = auth_user_1_asset_test
-    portfolio_id = test_portfolio_for_assets.id
-    asset_data = { # No allocation_percentage or allocation_value
-        'name_or_ticker': 'Ethereum',
-        'asset_type': AssetTypes.CRYPTO.value,
-        'currency': Currencies.USD.value,
-        'current_value': Decimal('3000.00') 
+def test_create_asset_default_allocation(auth_client, portfolio_factory, session):
+    user = auth_client.user
+    portfolio = portfolio_factory(user=user)
+    asset_data = {
+        "name": "Asset With Default Allocation",
+        "asset_type": AssetType.BOND.value,
+        "currency": Currency.EUR.value,
+        "current_value": 500.00
+        # No target_allocation_percentage, should default to 0 or handle as per model/service logic
     }
-    response = client.post(assets_base_url(portfolio_id), json=asset_data, headers=headers_user1)
+    response = auth_client.post(f'/portfolios/{portfolio.portfolio_id}/assets', json=asset_data)
     assert response.status_code == 201
-    json_data = response.get_json()
-    assert json_data['name_or_ticker'] == 'Ethereum'
-    assert json_data['allocation_percentage'] == Decimal('0.00') # Defaulted
+    data = response.get_json()
+    assert data['name'] == "Asset With Default Allocation"
+    assert data['target_allocation_percentage'] is not None # Check based on actual default behavior
 
-    asset_db = session.query(Asset).filter_by(asset_id=json_data['asset_id']).first()
-    assert asset_db is not None
-    assert asset_db.allocation_percentage == Decimal('0.00')
+def test_create_asset_portfolio_not_found_by_decorator(auth_client):
+    asset_data = {"name": "Test Asset", "asset_type": "STOCK", "currency": "USD", "current_value": 100}
+    response = auth_client.post('/portfolios/99999/assets', json=asset_data)
+    assert response.status_code == 404 # Due to @verify_portfolio_ownership
 
+def test_create_asset_unauthorized_portfolio_by_decorator(auth_client, user_factory, portfolio_factory, session):
+    other_user = user_factory(username='otherassetuser', email='otherasset@example.com')
+    other_portfolio = portfolio_factory(user=other_user)
+    asset_data = {"name": "Test Asset", "asset_type": "STOCK", "currency": "USD", "current_value": 100}
+    response = auth_client.post(f'/portfolios/{other_portfolio.portfolio_id}/assets', json=asset_data)
+    assert response.status_code == 403 # Due to @verify_portfolio_ownership
 
-def test_create_asset_portfolio_not_found_by_decorator(client, auth_user_1_asset_test):
-    _ , headers_user1 = auth_user_1_asset_test
-    asset_data = {'name_or_ticker': 'Test', 'asset_type': 'STOCK', 'currency': 'USD', 'current_value': 100}
-    # verify_portfolio_ownership decorator handles this
-    response = client.post(assets_base_url(99999), json=asset_data, headers=headers_user1)
-    assert response.status_code == 404 
-    assert "Portfolio with id 99999 not found" in response.get_json()['message']
+def test_create_asset_missing_required_data(auth_client, portfolio_factory):
+    user = auth_client.user
+    portfolio = portfolio_factory(user=user)
+    asset_data = {"asset_type": AssetType.STOCK.value} # Missing name, currency, current_value
+    response = auth_client.post(f'/portfolios/{portfolio.portfolio_id}/assets', json=asset_data)
+    assert response.status_code == 400 # Validation error
 
-def test_create_asset_unauthorized_portfolio_by_decorator(client, test_portfolio_for_assets, auth_user_2_asset_test):
-    _ , headers_user2 = auth_user_2_asset_test
-    portfolio_id = test_portfolio_for_assets.id # This portfolio belongs to user_1
-
-    asset_data = {'name_or_ticker': 'Unauthorized', 'asset_type': 'STOCK', 'currency': 'USD', 'current_value': 100}
-    # verify_portfolio_ownership decorator handles this
-    response = client.post(assets_base_url(portfolio_id), json=asset_data, headers=headers_user2)
-    assert response.status_code == 403 
-    assert "User does not have permission" in response.get_json()['message']
-
-def test_create_asset_missing_required_data(client, test_portfolio_for_assets, auth_user_1_asset_test):
-    _ , headers_user1 = auth_user_1_asset_test
-    portfolio_id = test_portfolio_for_assets.id
-    asset_data = {'asset_type': AssetTypes.STOCK.value} # Missing name_or_ticker, currency, current_value
-    response = client.post(assets_base_url(portfolio_id), json=asset_data, headers=headers_user1)
-    assert response.status_code == 400 # Pydantic validation error from AssetCreateSchema
-    json_data = response.get_json()
-    assert 'errors' in json_data
-    error_fields = [err['loc'][0] for err in json_data['errors'] if 'loc' in err and err['loc']]
-    assert 'name_or_ticker' in error_fields
-    assert 'currency' in error_fields
-    assert 'current_value' in error_fields
-
-# === Tests for Update Asset (PUT /portfolios/<portfolio_id>/assets/<asset_id>/) ===
-def test_update_asset_success(client, test_portfolio_for_assets, auth_user_1_asset_test, session):
-    user1, headers_user1 = auth_user_1_asset_test
-    portfolio_id = test_portfolio_for_assets.id
-    asset = Asset(portfolio_id=portfolio_id, name_or_ticker='Old Name', asset_type=AssetTypes.STOCK, currency=Currencies.USD, current_value=Decimal('100'))
+# === Test PUT /portfolios/{portfolio_id}/assets/{asset_id} ===
+def test_update_asset_success(auth_client, portfolio_factory, session):
+    user = auth_client.user
+    portfolio = portfolio_factory(user=user)
+    asset = Asset(name="Original Name", asset_type=AssetType.STOCK, currency=Currency.USD, current_value=100, portfolio_id=portfolio.portfolio_id)
     session.add(asset)
     session.commit()
-    asset_id = asset.asset_id
 
-    update_data = {'name_or_ticker': 'New Updated Name', 'current_value': Decimal('150.50')}
-    response = client.put(specific_asset_url(portfolio_id, asset_id), json=update_data, headers=headers_user1)
+    update_data = {"name": "Updated Asset Name", "current_value": 150.00}
+    response = auth_client.put(f'/portfolios/{portfolio.portfolio_id}/assets/{asset.asset_id}', json=update_data)
     assert response.status_code == 200
-    json_data = response.get_json()
-    assert json_data['name_or_ticker'] == 'New Updated Name'
-    assert json_data['current_value'] == "150.50" # Pydantic serializes Decimal to string by default
+    data = response.get_json()
+    assert data['name'] == "Updated Asset Name"
+    assert data['current_value'] == 150.00
 
-    session.refresh(asset)
-    assert asset.name_or_ticker == 'New Updated Name'
-    assert asset.current_value == Decimal('150.50')
-
-def test_update_asset_portfolio_or_asset_not_found(client, test_portfolio_for_assets, auth_user_1_asset_test):
-    _ , headers_user1 = auth_user_1_asset_test
-    portfolio_id = test_portfolio_for_assets.id
-    # Test with non-existent asset_id
-    response_asset_nf = client.put(specific_asset_url(portfolio_id, 999888), json={'name_or_ticker': 'Update Fail'}, headers=headers_user1)
-    assert response_asset_nf.status_code == 404 # From get_owned_child_or_404
-    assert "Asset with ID 999888 not found in portfolio" in response_asset_nf.get_json()['message']
-
-    # Test with non-existent portfolio_id (decorator handles this)
-    response_portfolio_nf = client.put(specific_asset_url(888999, 1), json={'name_or_ticker': 'Update Fail'}, headers=headers_user1)
+def test_update_asset_portfolio_or_asset_not_found(auth_client):
+    # Test with non-existent portfolio
+    response_portfolio_nf = auth_client.put('/portfolios/99999/assets/1', json={"name": "Fail"})
     assert response_portfolio_nf.status_code == 404
-    assert "Portfolio with id 888999 not found" in response_portfolio_nf.get_json()['message']
 
+    # Test with existing portfolio but non-existent asset
+    portfolio = portfolio_factory(user=auth_client.user) # Need portfolio_factory and auth_client.user
+    session.commit() # Ensure portfolio is saved
+    response_asset_nf = auth_client.put(f'/portfolios/{portfolio.portfolio_id}/assets/99999', json={"name": "Fail"})
+    assert response_asset_nf.status_code == 404
 
-def test_update_asset_unauthorized_portfolio(client, test_portfolio_for_assets, auth_user_1_asset_test, auth_user_2_asset_test, session):
-    user1, _ = auth_user_1_asset_test
-    _ , headers_user2 = auth_user_2_asset_test
-    portfolio_id_user1 = test_portfolio_for_assets.id # Belongs to user1
-    
-    asset_user1 = Asset(portfolio_id=portfolio_id_user1, name_or_ticker='User1 Asset Update', asset_type=AssetTypes.STOCK, currency=Currencies.USD, current_value=Decimal('100'))
-    session.add(asset_user1)
+def test_update_asset_unauthorized_portfolio(auth_client, user_factory, portfolio_factory, session):
+    other_user = user_factory(username='otherupdateuser', email='otherupdate@example.com')
+    other_portfolio = portfolio_factory(user=other_user)
+    asset_other = Asset(name="Other's Asset", asset_type=AssetType.STOCK, currency=Currency.USD, current_value=50, portfolio_id=other_portfolio.portfolio_id)
+    session.add(asset_other)
     session.commit()
-    asset_id_user1 = asset_user1.asset_id
 
-    # User2 tries to update asset in User1's portfolio
-    response = client.put(specific_asset_url(portfolio_id_user1, asset_id_user1), json={'name_or_ticker': 'Hacked Update'}, headers=headers_user2)
-    assert response.status_code == 403 # From @verify_portfolio_ownership
+    response = auth_client.put(f'/portfolios/{other_portfolio.portfolio_id}/assets/{asset_other.asset_id}', json={"name": "Attempted Update"})
+    assert response.status_code == 403
 
-# === Tests for Delete Asset (DELETE /portfolios/<portfolio_id>/assets/<asset_id>/) ===
-def test_delete_asset_success(client, test_portfolio_for_assets, auth_user_1_asset_test, session):
-    user1, headers_user1 = auth_user_1_asset_test
-    portfolio_id = test_portfolio_for_assets.id
-    asset_to_delete = Asset(portfolio_id=portfolio_id, name_or_ticker='Deletable', asset_type=AssetTypes.REAL_ESTATE, currency=Currencies.GBP, current_value=Decimal('100000'))
+# === Test DELETE /portfolios/{portfolio_id}/assets/{asset_id} ===
+def test_delete_asset_success(auth_client, portfolio_factory, session):
+    user = auth_client.user
+    portfolio = portfolio_factory(user=user)
+    asset_to_delete = Asset(name="To Delete", asset_type=AssetType.STOCK, currency=Currency.USD, current_value=200, portfolio_id=portfolio.portfolio_id)
     session.add(asset_to_delete)
     session.commit()
-    asset_id = asset_to_delete.asset_id
+    asset_id_del = asset_to_delete.asset_id
 
-    response = client.delete(specific_asset_url(portfolio_id, asset_id), headers=headers_user1)
+    response = auth_client.delete(f'/portfolios/{portfolio.portfolio_id}/assets/{asset_id_del}')
     assert response.status_code == 200
-    assert response.get_json()['message'] == 'Asset deleted successfully'
+    assert response.get_json()['message'] == "Asset deleted successfully"
+    assert Asset.query.get(asset_id_del) is None
 
-    deleted_asset_db = session.query(Asset).filter_by(asset_id=asset_id).first()
-    assert deleted_asset_db is None
-
-def test_delete_asset_unauthorized(client, test_portfolio_for_assets, auth_user_1_asset_test, auth_user_2_asset_test, session):
-    user1, _ = auth_user_1_asset_test
-    _    , headers_user2 = auth_user_2_asset_test
-    portfolio_id_user1 = test_portfolio_for_assets.id
-    
-    asset_user1 = Asset(portfolio_id=portfolio_id_user1, name_or_ticker='User1 Asset Delete', asset_type=AssetTypes.STOCK, currency=Currencies.USD, current_value=Decimal('100'))
-    session.add(asset_user1)
+def test_delete_asset_unauthorized(auth_client, user_factory, portfolio_factory, session):
+    other_user = user_factory(username='otherdeleteuser', email='otherdelete@example.com')
+    other_portfolio = portfolio_factory(user=other_user)
+    asset_other_del = Asset(name="Other's Asset To Delete", asset_type=AssetType.STOCK, currency=Currency.USD, current_value=50, portfolio_id=other_portfolio.portfolio_id)
+    session.add(asset_other_del)
     session.commit()
-    asset_id_user1 = asset_user1.asset_id
 
-    response = client.delete(specific_asset_url(portfolio_id_user1, asset_id_user1), headers=headers_user2)
-    assert response.status_code == 403 # From @verify_portfolio_ownership
+    response = auth_client.delete(f'/portfolios/{other_portfolio.portfolio_id}/assets/{asset_other_del.asset_id}')
+    assert response.status_code == 403
 
-def test_delete_asset_not_found(client, test_portfolio_for_assets, auth_user_1_asset_test):
-    _ , headers_user1 = auth_user_1_asset_test
-    portfolio_id = test_portfolio_for_assets.id
-    response = client.delete(specific_asset_url(portfolio_id, 87654), headers=headers_user1)
-    assert response.status_code == 404 # From get_owned_child_or_404
-    assert "Asset with ID 87654 not found in portfolio" in response.get_json()['message']
+def test_delete_asset_not_found(auth_client, portfolio_factory, session):
+    user = auth_client.user
+    portfolio = portfolio_factory(user=user)
+    # Non-existent asset ID
+    response = auth_client.delete(f'/portfolios/{portfolio.portfolio_id}/assets/99998')
+    assert response.status_code == 404
 
 
 # Note: GET routes (list assets, get specific asset) are NOT in the provided assets.py

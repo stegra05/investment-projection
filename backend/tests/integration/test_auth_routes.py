@@ -71,7 +71,7 @@ def test_login_user_success(client, user_factory):
     user_factory(email=email, username=username, password=password)
 
     response = client.post('/api/v1/auth/login', json={
-        'email': email, # Can login with email
+        'username_or_email': email, # Changed from 'email'
         'password': password
     })
     assert response.status_code == 200
@@ -86,7 +86,7 @@ def test_login_user_success(client, user_factory):
 
     # Test login with username
     response_username_login = client.post('/api/v1/auth/login', json={
-        'username': username, # Login with username
+        'username_or_email': username, # Login with username
         'password': password
     })
     assert response_username_login.status_code == 200
@@ -100,7 +100,7 @@ def test_login_user_incorrect_password(client, user_factory):
     user_factory(email=email, username='wrongpass_login_user', password='correctpassword')
 
     response = client.post('/api/v1/auth/login', json={
-        'email': email,
+        'username_or_email': email, # Changed from 'email'
         'password': 'incorrectpassword'
     })
     assert response.status_code == 401
@@ -110,7 +110,7 @@ def test_login_user_incorrect_password(client, user_factory):
 def test_login_user_not_found(client):
     """Test login for a user that does not exist."""
     response = client.post('/api/v1/auth/login', json={
-        'email': 'nosuchuser_login@example.com',
+        'username_or_email': 'nosuchuser_login@example.com', # Changed from 'email'
         'password': 'password123'
     })
     assert response.status_code == 401 
@@ -124,7 +124,7 @@ def test_refresh_token_success(client, user_factory):
     password = 'password123'
     user_factory(email=email, username='refresher_succ_user', password=password)
 
-    login_response = client.post('/api/v1/auth/login', json={'email': email, 'password': password})
+    login_response = client.post('/api/v1/auth/login', json={'username_or_email': email, 'password': password}) # Changed from 'email'
     assert login_response.status_code == 200
     assert get_cookie_value(login_response, 'refresh_token_cookie') is not None
 
@@ -154,8 +154,7 @@ def test_refresh_token_no_refresh_cookie(client):
     assert refresh_response.status_code == 401 
     json_data = refresh_response.get_json()
     # Message from flask-jwt-extended when refresh token is missing
-    assert "Missing refresh token in cookies" in json_data.get('msg', '') or \
-           "Missing JWT in cookies (Missing 'refresh_token_cookie' cookie)" in json_data.get('msg', '')
+    assert "Missing JWT in headers or cookies (Missing Authorization Header; Missing cookie \"refresh_token_cookie\")" in json_data.get('msg', '')
 
 
 def test_logout_success(client, user_factory):
@@ -164,7 +163,7 @@ def test_logout_success(client, user_factory):
     password = 'password123'
     user_factory(email=email, username='logoutuser_succ_user', password=password)
     
-    login_resp = client.post('/api/v1/auth/login', json={'email': email, 'password': password})
+    login_resp = client.post('/api/v1/auth/login', json={'username_or_email': email, 'password': password}) # Changed from 'email'
     assert login_resp.status_code == 200
     initial_refresh_cookie = get_cookie_value(login_resp, 'refresh_token_cookie')
     assert initial_refresh_cookie is not None

@@ -9,7 +9,7 @@ error responses for all API errors, replacing Flask's default HTML error pages.
 The `register_error_handlers` function is called during application setup
 to attach these handlers to the Flask app instance.
 """
-from flask import jsonify, current_app # Added current_app for direct logger access if app context is available
+from flask import jsonify, current_app, request # Added request
 from werkzeug.exceptions import HTTPException # Base class for Flask's HTTP errors
 import json # For formatting HTTPException responses
 

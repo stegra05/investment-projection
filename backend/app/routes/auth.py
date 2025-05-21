@@ -158,7 +158,7 @@ def login(validated_data: UserLoginSchema):
         BadRequestError: If identifier or password is not provided (though schema should catch this).
         ApplicationException: For invalid credentials (401).
     """
-    identifier = validated_data.identifier # Can be username or email
+    identifier = validated_data.username_or_email # Can be username or email
     password = validated_data.password
 
     # Find the user by either username or email

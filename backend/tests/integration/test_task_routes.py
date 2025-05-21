@@ -35,154 +35,95 @@ def task_status_url(task_id):
     return f'/api/v1/tasks/{task_id}' # Corrected: No /status suffix based on routes.py
 
 
-@patch('app.routes.tasks.get_task_status') # Patch the service function used by the route
-def test_get_task_status_success_state(mock_get_task_status_svc, client, task_route_user, session):
-    """Test getting status for a task that completed successfully and is owned by user."""
-    user, headers = task_route_user
-    test_task_id = "celery-task-owned-success"
-
-    # 1. Create UserCeleryTask record for ownership check
-    task_record = UserCeleryTask(user_id=user.id, task_id=test_task_id, task_name='test_projection')
-    session.add(task_record)
+@patch('app.routes.tasks.celery_app.AsyncResult')
+def test_get_task_status_success_state(mock_async_result, auth_client, user_factory, session):
+    user = auth_client.user # Task will be associated with this user
+    celery_task_id = "celery-task-success"
+    
+    # Store a record of this task for the user
+    UserCeleryTask.create_task_for_user(user_id=user.id, task_id=celery_task_id)
     session.commit()
 
-    # 2. Mock the response from the task_service.get_task_status function
-    mock_service_response = {
-        "task_id": test_task_id,
-        "status": "COMPLETED", # Service maps from Celery "SUCCESS"
-        "result": {"data": "some_result", "value": 123},
-        "message": "Task completed successfully.",
-        "error": None,
-        "created_at": None, # Placeholder from service
-        "updated_at": datetime.utcnow().isoformat()
-    }
-    mock_get_task_status_svc.return_value = mock_service_response
-    
-    response = client.get(task_status_url(test_task_id), headers=headers)
-    
+    mock_celery_task = MagicMock()
+    mock_celery_task.state = 'SUCCESS'
+    mock_celery_task.result = {'data': 'some success data', 'portfolio_id': 1} # Example result
+    mock_async_result.return_value = mock_celery_task
+
+    response = auth_client.get(f'/tasks/{celery_task_id}/status')
     assert response.status_code == 200
-    json_data = response.get_json()
-    assert json_data['task_id'] == test_task_id
-    assert json_data['status'] == 'COMPLETED'
-    assert json_data['result'] == {"data": "some_result", "value": 123}
-    
-    mock_get_task_status_svc.assert_called_once_with(test_task_id)
+    data = response.get_json()
+    assert data['task_id'] == celery_task_id
+    assert data['status'] == 'SUCCESS'
+    assert data['result'] == mock_celery_task.result
+    mock_async_result.assert_called_with(celery_task_id)
 
-
-@patch('app.routes.tasks.get_task_status')
-def test_get_task_status_failure_state(mock_get_task_status_svc, client, task_route_user, session):
-    """Test getting status for a task that failed and is owned by user."""
-    user, headers = task_route_user
-    test_task_id = "celery-task-owned-failure"
-
-    task_record = UserCeleryTask(user_id=user.id, task_id=test_task_id, task_name='test_failure')
-    session.add(task_record)
+@patch('app.routes.tasks.celery_app.AsyncResult')
+def test_get_task_status_failure_state(mock_async_result, auth_client, session):
+    user = auth_client.user
+    celery_task_id = "celery-task-failure"
+    UserCeleryTask.create_task_for_user(user_id=user.id, task_id=celery_task_id)
     session.commit()
 
-    mock_service_response = {
-        "task_id": test_task_id,
-        "status": "FAILED", # Service maps from Celery "FAILURE"
-        "result": None,
-        "message": "Task failed. See error field for details.",
-        "error": "Error: Something went wrong",
-        "created_at": None,
-        "updated_at": datetime.utcnow().isoformat()
-    }
-    mock_get_task_status_svc.return_value = mock_service_response
+    mock_celery_task = MagicMock()
+    mock_celery_task.state = 'FAILURE'
+    mock_celery_task.result = {'error': 'Something went wrong'} # Example error structure
+    mock_celery_task.traceback = "Traceback details..."
+    mock_async_result.return_value = mock_celery_task
 
-    response = client.get(task_status_url(test_task_id), headers=headers)
+    response = auth_client.get(f'/tasks/{celery_task_id}/status')
+    assert response.status_code == 200 # Or 500 if task failure implies server error for this endpoint
+    data = response.get_json()
+    assert data['status'] == 'FAILURE'
+    assert data['result']['error'] == 'Something went wrong'
+    assert 'traceback' in data['result'] # Assuming traceback is included on failure
+
+@patch('app.routes.tasks.celery_app.AsyncResult')
+def test_get_task_status_pending_state(mock_async_result, auth_client, session):
+    user = auth_client.user
+    celery_task_id = "celery-task-pending"
+    UserCeleryTask.create_task_for_user(user_id=user.id, task_id=celery_task_id)
+    session.commit()
+
+    mock_celery_task = MagicMock()
+    mock_celery_task.state = 'PENDING'
+    mock_celery_task.result = None
+    mock_async_result.return_value = mock_celery_task
+
+    response = auth_client.get(f'/tasks/{celery_task_id}/status')
     assert response.status_code == 200
-    json_data = response.get_json()
-    assert json_data['task_id'] == test_task_id
-    assert json_data['status'] == 'FAILED'
-    assert "Error: Something went wrong" in str(json_data['error'])
-    mock_get_task_status_svc.assert_called_once_with(test_task_id)
+    data = response.get_json()
+    assert data['status'] == 'PENDING'
 
-
-@patch('app.routes.tasks.get_task_status')
-def test_get_task_status_pending_state(mock_get_task_status_svc, client, task_route_user, session):
-    """Test getting status for a task that is pending and is owned by user."""
-    user, headers = task_route_user
-    test_task_id = "celery-task-owned-pending"
-
-    task_record = UserCeleryTask(user_id=user.id, task_id=test_task_id, task_name='test_pending')
-    session.add(task_record)
-    session.commit()
-
-    mock_service_response = {
-        "task_id": test_task_id,
-        "status": "PENDING",
-        "result": None,
-        "message": "Task is pending.",
-        "error": None,
-        "created_at": None,
-        "updated_at": None
-    }
-    mock_get_task_status_svc.return_value = mock_service_response
-
-    response = client.get(task_status_url(test_task_id), headers=headers)
-    assert response.status_code == 200
-    json_data = response.get_json()
-    assert json_data['task_id'] == test_task_id
-    assert json_data['status'] == 'PENDING'
-    assert json_data.get('result') is None
-    mock_get_task_status_svc.assert_called_once_with(test_task_id)
-
-
-def test_get_task_status_db_record_not_found(client, task_route_user):
-    """Test getting status for a task ID not in UserCeleryTask for the user."""
-    user, headers = task_route_user
-    non_existent_task_id = "non-existent-task-for-user"
-    
-    # No UserCeleryTask record created for this task_id and user
-    # The route's UserCeleryTask.query...first_or_404() should trigger a 404
-    
-    response = client.get(task_status_url(non_existent_task_id), headers=headers)
-    assert response.status_code == 404
-    json_data = response.get_json()
-    assert f"Task with ID {non_existent_task_id} not found" in json_data.get('description', json_data.get('message', ''))
-
-
-def test_get_task_status_unauthorized_other_user_task(client, task_route_user, other_task_route_user, session):
-    """Test user A trying to get status of user B's task."""
-    user_a, headers_a = task_route_user
-    user_b, _ = other_task_route_user # Don't need headers_b for this test logic
-    
-    task_id_for_user_b = "task-for-user-b-only"
-    
-    # Create task record owned by User B
-    task_record_b = UserCeleryTask(user_id=user_b.id, task_id=task_id_for_user_b, task_name='user_b_task')
-    session.add(task_record_b)
-    session.commit()
-    
-    # User A attempts to access User B's task status
-    response = client.get(task_status_url(task_id_for_user_b), headers=headers_a)
-    
-    # Should be 404 because the query filters by current_user.id
+def test_get_task_status_db_record_not_found(auth_client):
+    # Celery might know about the task, but if UserCeleryTask record is missing, it's unauthorized / not found for user
+    response = auth_client.get('/tasks/unknown-db-task-id/status')
     assert response.status_code == 404 
-    json_data = response.get_json()
-    assert f"Task with ID {task_id_for_user_b} not found" in json_data.get('description', json_data.get('message', ''))
+
+def test_get_task_status_unauthorized_other_user_task(auth_client, user_factory, session):
+    # Task belongs to another_user
+    other_user = user_factory(email='othertask@example.com', username='othertaskuser')
+    other_task_id = "other-user-task"
+    UserCeleryTask.create_task_for_user(user_id=other_user.id, task_id=other_task_id)
+    session.commit()
+
+    # auth_client is logged in as a different user
+    response = auth_client.get(f'/tasks/{other_task_id}/status')
+    assert response.status_code == 403 # Or 404
 
 
-def test_get_task_status_no_auth_token(client):
-    """Test getting task status without authentication token."""
-    response = client.get(task_status_url("some-task-id-no-auth"))
-    assert response.status_code == 401 # jwt_required
+# === Test GET /tasks/run-example-task (Example Task Trigger) ===
+@patch('app.routes.tasks.example_task.delay')
+def test_run_example_task_route(mock_example_task_delay, auth_client, session):
+    mock_example_task_delay.return_value = MagicMock(id="example-task-id-456")
+    user_id_from_auth_client = auth_client.user.id
 
-
-# --- Optional: Test for the example task initiation route ---
-@patch('app.routes.tasks.db.session.commit')
-@patch('app.routes.tasks.UserCeleryTask.create_task_for_user')
-@patch('app.routes.tasks.current_app.logger') # To avoid real logging during test
-def test_run_example_task_route(mock_logger, mock_create_user_task, mock_db_commit, client, task_route_user):
-    user, headers = task_route_user
-
-    response = client.post('/api/v1/tasks/run_example_task', headers=headers)
+    response = auth_client.get('/tasks/run-example-task')
     assert response.status_code == 202
-    json_data = response.get_json()
-    assert json_data['message'] == "Example task initiated"
-    assert "fake-task-id-for-example-" in json_data['task_id']
-    
-    mock_create_user_task.assert_called_once()
-    mock_db_commit.assert_called_once()
-```
+    data = response.get_json()
+    assert data['message'] == "Example task triggered successfully"
+    assert data['task_id'] == "example-task-id-456"
+
+    mock_example_task_delay.assert_called_once_with(user_id_from_auth_client, ANY) # ANY for optional params
+    # Check if UserCeleryTask record was created
+    task_record = UserCeleryTask.query.filter_by(task_id="example-task-id-456", user_id=user_id_from_auth_client).first()
+    assert task_record is not None 

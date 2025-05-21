@@ -10,6 +10,7 @@ import datetime
 from decimal import Decimal, InvalidOperation
 from typing import List, Dict, Tuple, Callable
 import logging # Added logging
+import json # Added json import
 from app.models import PlannedFutureChange # Assuming PlannedFutureChange is used here
 from app.enums import ChangeType # Assuming ChangeType is used here
 

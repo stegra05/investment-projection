@@ -14,6 +14,7 @@ strategy for a given asset type. Default annual returns are sourced from
 from abc import ABC, abstractmethod # For defining abstract strategy classes
 from decimal import Decimal, InvalidOperation # For precise financial calculations
 import logging # For logging warnings and errors
+from typing import List, Dict, Any, Callable, Optional
 
 # Import necessary models and enums from the application package.
 from app.models import Asset

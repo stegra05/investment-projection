@@ -152,4 +152,4 @@ def setup_celery_logging(logger: logging.Logger, **kwargs):
 # It's generally recommended to manage log levels via configuration (code or config files)
 # for consistency across environments, rather than relying solely on command-line flags
 # for production setups.
-current_app.logger.info(f"Celery worker script initialized with Flask config '{config_name}'. `app_celery` is ready.")
+flask_app_instance.logger.info(f"Celery worker script initialized with Flask config '{config_name}'. `app_celery` is ready.")

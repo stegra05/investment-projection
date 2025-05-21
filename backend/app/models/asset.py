@@ -74,6 +74,10 @@ class Asset(db.Model):
     # Relationship
     portfolio = db.relationship('Portfolio', back_populates='assets')
 
+    def __repr__(self):
+        """Provide a developer-friendly string representation of the Asset object."""
+        return f'<Asset {self.asset_id}: {self.name_or_ticker}>'
+
     def to_dict(self):
         """Serialize the Asset object to a dictionary.
 
