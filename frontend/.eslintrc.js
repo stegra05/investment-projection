@@ -1,7 +1,5 @@
 module.exports = {
   extends: [
-    'react-app',
-    'react-app/jest',
     'eslint:recommended',
     'plugin:react/recommended',
     'plugin:jsx-a11y/recommended',
@@ -36,5 +34,10 @@ module.exports = {
     browser: true,
     es2021: true,
     node: true,
+    'vite/client': true,
+  },
+  parserOptions: {
+    sourceType: 'module',
+    ecmaVersion: 'latest',
   },
 }; 
