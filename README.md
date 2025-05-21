@@ -107,6 +107,70 @@ The backend application (Flask and Celery) is configured to output detailed logs
         ```
     *   Review these logs to understand application flow, diagnose errors, and track the execution of background tasks.
 
+### Running Backend Tests
+
+The backend includes a comprehensive suite of unit and integration tests using Pytest.
+
+To run the tests:
+
+1.  Navigate to the `backend` directory:
+    ```bash
+    cd backend
+    ```
+2.  Ensure you have the development and testing dependencies installed (refer to the setup instructions, typically from `requirements.txt`). If you haven't already, activate your virtual environment:
+    ```bash
+    source venv/bin/activate  # Linux/macOS
+    # OR
+    .\venv\Scripts\activate  # Windows
+    ```
+3.  Run Pytest:
+    ```bash
+    pytest
+    ```
+
+**Test Configuration:**
+
+*   Test execution is configured in `pytest.ini` located in the `backend` directory. This file includes settings for markers (like `celery`, `integration`, `unit`) and default options.
+*   The tests utilize an in-memory SQLite database for speed and isolation, as defined in the `TestingConfig` (see `backend/config.py`). Your original development database data is not affected.
+*   Celery background tasks are configured to run eagerly and synchronously during testing (`CELERY_TASK_ALWAYS_EAGER = True` in `TestingConfig`), so no separate Celery worker process is needed to run tests involving Celery tasks.
+
+**Test Coverage:**
+
+To run tests and generate a coverage report (ensure `pytest-cov` is installed, which should be part of `requirements.txt` development dependencies):
+
+```bash
+pytest --cov=app --cov-report=html
+```
+This command will:
+*   Run all tests.
+*   Measure code coverage for the `app` module (located at `backend/app`).
+*   Generate an HTML report in `backend/htmlcov/index.html` which you can open in a browser to explore coverage details.
+
+**Running Specific Tests:**
+
+You can run specific test files, directories, or tests marked with specific markers.
+
+*   **By file:**
+    ```bash
+    pytest tests/unit/test_models.py
+    pytest tests/integration/test_auth_routes.py
+    ```
+*   **By directory:**
+    ```bash
+    pytest tests/unit/
+    pytest tests/integration/
+    pytest tests/celery/
+    ```
+*   **By marker:** (Markers are defined in `pytest.ini`)
+    ```bash
+    pytest -m unit
+    pytest -m integration
+    pytest -m celery 
+    ```
+    (Note: The `celery` marker specifically targets tests for Celery tasks, though most Celery-related integration tests might also fall under the `integration` marker.)
+
+For more Pytest options, refer to the [official Pytest documentation](https://docs.pytest.org/).
+
 ## 6. Initial Task List (High-Level)
 
 *(Based on discussed features and architecture breakdown. Effort is a rough estimate: S=Small, M=Medium, L=Large, XL=Extra Large)*
