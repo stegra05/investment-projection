@@ -1,276 +1,339 @@
-import os
-from dotenv import load_dotenv
-from datetime import timedelta
-import logging
-from logging.handlers import TimedRotatingFileHandler
-import sys
-from pathlib import Path
+"""
+Application Configuration Management.
 
-# Load environment variables from .env file
-base_dir = Path(__file__).resolve().parent
+This module defines configuration classes for different environments (Development,
+Testing, Production) and a base `Config` class from which they inherit.
+Configurations are loaded from environment variables (sourced from a .env file
+using python-dotenv) and provide settings for Flask, SQLAlchemy, Celery, JWT,
+CORS, Talisman (security headers), and logging.
+
+Key features:
+-   Environment-specific configurations.
+-   Loading sensitive data from environment variables.
+-   Centralized logging setup (file and console handlers).
+-   Security configurations for JWT, CORS, and HTTP headers via Talisman.
+-   Celery broker and result backend configuration.
+-   Database URI configuration.
+
+The `config` dictionary at the end maps string names (e.g., 'development')
+to their respective configuration classes, allowing the application factory
+to select the appropriate configuration based on the `FLASK_CONFIG` environment
+variable.
+"""
+import os
+from dotenv import load_dotenv # For loading environment variables from .env files
+from datetime import timedelta # For setting time-based configurations (e.g., JWT expiry)
+import logging # Python's standard logging library
+from logging.handlers import TimedRotatingFileHandler # For rotating log files
+import sys # For directing console logs to stderr/stdout
+from pathlib import Path # For constructing file paths in an OS-agnostic way
+
+# Determine the base directory of the application (backend/config.py -> backend/)
+# This is used for locating the .env file and the logs directory.
+base_dir = Path(__file__).resolve().parent.parent # Go up one level from config.py to app's root (backend/)
+# Load environment variables from a .env file located in the base directory.
+# This allows sensitive configurations (like secret keys, database URLs) to be
+# kept out of version control.
 load_dotenv(base_dir / '.env')
 
-# --- Logging Configuration ---
+# --- Logging Configuration Setup ---
+# Define the directory where log files will be stored.
 LOGS_DIR = base_dir / 'logs'
-LOGS_DIR.mkdir(parents=True, exist_ok=True)
+LOGS_DIR.mkdir(parents=True, exist_ok=True) # Create logs directory if it doesn't exist.
 
-# Define Log Formatters
+# Define log formatters for different levels of detail.
 detailed_formatter = logging.Formatter(
-    '%(asctime)s %(levelname)s [%(name)s:%(module)s:%(funcName)s:%(lineno)d] %(message)s'
+    '%(asctime)s %(levelname)s [%(name)s:%(module)s:%(funcName)s:%(lineno)d] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S' # Added datefmt for consistency
 )
+simple_formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
-simple_formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
+# --- Utility Function for Creating File Handlers ---
+def create_file_handler(filename: str, level: int, formatter: logging.Formatter) -> TimedRotatingFileHandler:
+    """Creates a timed rotating file handler for logging.
 
-# --- Base File Handler Configuration ---
-def create_file_handler(filename, level, formatter):
+    Args:
+        filename: The name of the log file (will be placed in LOGS_DIR).
+        level: The logging level for this handler (e.g., logging.INFO, logging.ERROR).
+        formatter: The logging.Formatter to use for messages in this handler.
+
+    Returns:
+        A configured TimedRotatingFileHandler instance.
+    """
     handler = TimedRotatingFileHandler(
-        str(LOGS_DIR / filename),
-        when='midnight',
-        interval=1,
-        backupCount=7,
-        encoding='utf-8'
+        filename=str(LOGS_DIR / filename), # Construct full path to log file
+        when='midnight',    # Rotate logs at midnight
+        interval=1,         # Rotate daily
+        backupCount=7,      # Keep 7 days of old log files
+        encoding='utf-8'    # Use UTF-8 encoding for log files
     )
     handler.setFormatter(formatter)
     handler.setLevel(level)
     return handler
 
-# --- Console Handler Configuration ---
-console_handler = logging.StreamHandler(sys.stderr)
-console_handler.setFormatter(detailed_formatter) # Or simple_formatter for less verbosity
+# --- Console Handler Configuration (Global Instance) ---
+# This handler directs logs to standard error (stderr).
+# Its level and formatter can be customized per configuration environment (Dev, Prod, etc.).
+console_handler = logging.StreamHandler(sys.stderr) # Log to stderr
+console_handler.setFormatter(detailed_formatter) # Default to detailed, can be changed by specific configs
 
 class Config:
-    """Base configuration class."""
-    # Extend JWT lifetimes to keep active users logged in
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=7)
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
-    # Use a dedicated JWT secret key, falling back to SECRET_KEY if not set
-    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or os.environ.get('SECRET_KEY') or 'jwt-secret-string'
+    """Base configuration class. Defines common settings for all environments.
+    
+    Specific environment configurations (Development, Testing, Production)
+    will inherit from this class and can override these settings.
+    """
+    # --- Security Keys ---
+    # SECRET_KEY: Used by Flask for session management, CSRF protection (if using Flask-WTF), etc.
+    # Should be a long, random string. Loaded from environment variable or defaults to an insecure value.
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'a-very-insecure-default-secret-key-pls-change'
+    # JWT_SECRET_KEY: Dedicated secret key for signing JWTs. It's good practice to use a separate
+    # key for JWTs than the main Flask SECRET_KEY. Falls back to SECRET_KEY or another default.
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or SECRET_KEY or 'a-very-insecure-default-jwt-key-pls-change'
 
-    # --- JWT Cookie Configuration ---
-    # Define where to look for tokens (header for access, cookie for refresh)
+    # --- JWT Configuration (Flask-JWT-Extended) ---
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=7) # Access tokens expire after 7 days (adjust as needed)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30) # Refresh tokens expire after 30 days
+    
+    # Where Flask-JWT-Extended should look for JWTs (e.g., headers, cookies, query string).
+    # Using headers for access tokens and cookies for refresh tokens is a common pattern.
     JWT_TOKEN_LOCATION = ["headers", "cookies"]
-    # Enable CSRF protection for cookie-based tokens (primarily refresh)
-    JWT_COOKIE_CSRF_PROTECT = True
-    # Set cookies to be HttpOnly
-    JWT_COOKIE_HTTPONLY = True
-    # Set cookies to be Secure (only sent over HTTPS) - IMPORTANT FOR PRODUCTION
-    # Set to False ONLY for local HTTP development if necessary
-    JWT_COOKIE_SECURE = os.environ.get('FLASK_ENV') == 'production' # True in production, False otherwise
-    JWT_COOKIE_SAMESITE = 'Lax'
-    # Define the path for the refresh token cookie
-    JWT_REFRESH_COOKIE_PATH = '/api/v1/auth/refresh'
-    # Set path for CSRF cookie (optional, defaults are usually fine)
-    # JWT_ACCESS_CSRF_COOKIE_PATH = '/api/'
-    # JWT_REFRESH_CSRF_COOKIE_PATH = '/api/v1/auth/refresh'
-    # Note: Access tokens are intended to be sent via headers, not cookies here.
+    JWT_COOKIE_CSRF_PROTECT = True  # Enable CSRF protection for refresh tokens sent via cookies.
+    JWT_COOKIE_HTTPONLY = True      # Refresh cookies are HttpOnly (not accessible via client-side JS).
+    # JWT_COOKIE_SECURE: True ensures cookies are only sent over HTTPS. Critical for production.
+    # Dynamically set based on FLASK_ENV; False for non-production to allow HTTP development.
+    JWT_COOKIE_SECURE = os.environ.get('FLASK_ENV') == 'production' 
+    JWT_COOKIE_SAMESITE = 'Lax'     # Mitigates CSRF; 'Lax' is a good default. 'Strict' for more security.
+    # Path for which the refresh token cookie is valid. Should match your refresh token endpoint.
+    JWT_REFRESH_COOKIE_PATH = '/api/v1/auth/refresh' 
+    # Optional: Define paths for CSRF cookies if needed (defaults are usually fine).
+    # JWT_ACCESS_CSRF_COOKIE_PATH = '/api/' # Path for access CSRF cookie (if using CSRF with header tokens)
+    # JWT_REFRESH_CSRF_COOKIE_PATH = '/api/v1/auth/refresh' # Path for refresh CSRF cookie
 
-    # --- CORS Configuration ---
-    # Comma-separated list of allowed origins. Defaults to localhost:3000 for development.
-    CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
-    # --------------------------
-
+    # --- CORS (Cross-Origin Resource Sharing) Configuration (Flask-CORS) ---
+    # A comma-separated string of allowed origins from environment, defaulting to localhost:3000 (common for React dev).
+    CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',')
+    
+    # --- SQLAlchemy (Database) Configuration ---
+    # Database connection URI. Loaded from environment or defaults to a local SQLite database.
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + str(base_dir / 'app.db') # Default to SQLite if not set, use pathlib & str()
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+        'sqlite:///' + str(base_dir / 'app.db') # Default to app.db in the base directory
+    SQLALCHEMY_TRACK_MODIFICATIONS = False # Disable Flask-SQLAlchemy event system if not used, saves resources.
 
-    # --- Celery Configuration ---
+    # --- Celery (Background Task Queue) Configuration ---
+    # URL for the Celery message broker (e.g., Redis, RabbitMQ).
     CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL') or 'redis://localhost:6379/0'
+    # URL for the Celery result backend (where task results are stored).
     CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND') or 'redis://localhost:6379/0'
-    # ----------------------------
 
-    # --- Talisman Security Headers Configuration ---
-    # Define a basic Content Security Policy (CSP)
-    # Adjust this policy based on your specific frontend needs (scripts, styles, images sources)
-    # Example: Allow self, and Google Fonts/APIs
-    # 'default-src': ['\'self\''],
-    # 'script-src': ['\'self\'', '\'unsafe-inline\'', 'https://apis.google.com', 'https://www.google-analytics.com'],
-    # 'style-src': ['\'self\'', '\'unsafe-inline\'', 'https://fonts.googleapis.com'],
-    # 'font-src': ['\'self\'', 'https://fonts.gstatic.com'],
-    # 'img-src': ['\'self\'', 'data:']
-    # Consider using nonces or hashes instead of 'unsafe-inline' for better security
+    # --- Talisman (HTTP Security Headers) Configuration ---
+    # Content Security Policy (CSP): Helps prevent XSS attacks.
+    # This is a basic policy; it should be tailored to the specific needs of the frontend.
+    # Using 'nonce' for script-src allows whitelisting specific inline scripts via a server-generated nonce.
     TALISMAN_CSP = {
-        'default-src': ['\'self\''],
-        'script-src': ['\'self\'', '\'nonce\''], # Allows inline scripts with a nonce
-        'style-src': ['\'self\'', 'https://fonts.googleapis.com', '\'unsafe-inline\''], # Allow Google fonts and inline styles (consider removing unsafe-inline)
-        'font-src': ['\'self\'', 'https://fonts.gstatic.com'], # Allow Google fonts
-        'img-src': ['\'self\'', 'data:'], # Allow images from self and data URIs
-        'object-src': ['\'none\''], # Disallow plugins like Flash
-        'base-uri': ['\'self\''],
-        'frame-ancestors': ['\'none\''] # Disallow embedding in frames (stronger than X-Frame-Options)
+        'default-src': ['\'self\''], # Default source for content: only allow from same origin.
+        'script-src': [
+            '\'self\'', 
+            '\'nonce\'' # Allow inline scripts that have a server-generated nonce.
+            # Add other trusted script sources if needed, e.g., CDNs for analytics.
+        ],
+        'style-src': [
+            '\'self\'', 
+            'https://fonts.googleapis.com', # Allow Google Fonts stylesheets.
+            '\'unsafe-inline\'' # Allow inline styles. For stricter security, remove and use classes/external CSS.
+        ],
+        'font-src': ['\'self\'', 'https://fonts.gstatic.com'], # Allow fonts from self and Google Fonts.
+        'img-src': ['\'self\'', 'data:'], # Allow images from self and data URIs (e.g., embedded images).
+        'object-src': ['\'none\''], # Disallow plugins like Flash, Silverlight.
+        'base-uri': ['\'self\''],   # Restricts URLs that can be used in a document's <base> element.
+        'frame-ancestors': ['\'none\''] # Disallows embedding the site in iframes (clickjacking protection).
     }
-    TALISMAN_FORCE_HTTPS = True # Force HTTPS redirection
-    TALISMAN_HSTS = True # Enable HTTP Strict Transport Security (HSTS)
-    TALISMAN_HSTS_PRELOAD = False # Consider setting to True after verifying HSTS works correctly
-    TALISMAN_HSTS_INCLUDE_SUBDOMAINS = True # Apply HSTS to subdomains
-    TALISMAN_HSTS_MAX_AGE = timedelta(days=365).total_seconds() # HSTS policy duration (1 year)
-    TALISMAN_SESSION_COOKIE_SECURE = True # Ensure session cookies are sent only over HTTPS
-    TALISMAN_SESSION_COOKIE_HTTP_ONLY = True # Prevent client-side script access to session cookies
-    TALISMAN_FRAME_OPTIONS = 'DENY' # Prevent framing (DENY is stronger than SAMEORIGIN)
-    TALISMAN_REFERRER_POLICY = 'strict-origin-when-cross-origin' # Control Referer header information
-    # X-Content-Type-Options: nosniff is enabled by default in Talisman
-    # -----------------------------------------------
+    TALISMAN_FORCE_HTTPS = os.environ.get('FLASK_ENV') == 'production' # Redirect HTTP to HTTPS in production.
+    TALISMAN_HSTS = True  # Enable HTTP Strict Transport Security (HSTS).
+    TALISMAN_HSTS_PRELOAD = False # Set to True after careful testing and submission to HSTS preload lists.
+    TALISMAN_HSTS_INCLUDE_SUBDOMAINS = True # Apply HSTS to all subdomains.
+    TALISMAN_HSTS_MAX_AGE = timedelta(days=365).total_seconds() # HSTS policy duration (e.g., 1 year).
+    TALISMAN_SESSION_COOKIE_SECURE = os.environ.get('FLASK_ENV') == 'production' # Session cookies only over HTTPS in prod.
+    TALISMAN_SESSION_COOKIE_HTTP_ONLY = True # Session cookies not accessible via client-side JS.
+    TALISMAN_FRAME_OPTIONS = 'DENY' # Equivalent to CSP frame-ancestors 'none'; DENY is strongest.
+    TALISMAN_REFERRER_POLICY = 'strict-origin-when-cross-origin' # Controls Referer header behavior.
+    # X-Content-Type-Options: nosniff is enabled by default in Talisman, preventing MIME-type sniffing.
+    
+    # --- Logging Settings (Defaults) ---
+    LOG_LEVEL = logging.INFO # Default overall log level for the application.
+    FLASK_APP_LOG_FILE = 'flask_app.log' # General Flask application logs.
+    CELERY_WORKER_LOG_FILE = 'celery_worker.log' # Logs specific to Celery workers.
+    ERROR_LOG_FILE = 'errors.log' # Consolidated file for ERROR and CRITICAL messages.
+    CONSOLE_LOG_LEVEL = logging.INFO # Default log level for console output.
 
-    # --- Logging Settings ---
-    LOG_LEVEL = logging.INFO # Default log level for the application
-    FLASK_APP_LOG_FILE = 'flask_app.log'
-    CELERY_WORKER_LOG_FILE = 'celery_worker.log'
-    ERROR_LOG_FILE = 'errors.log'
-    CONSOLE_LOG_LEVEL = logging.INFO # Default log level for console output
-
-    # Add other configurations here, e.g., Mail settings, API keys
+    # --- Other Application Configurations (Examples) ---
     # MAIL_SERVER = os.environ.get('MAIL_SERVER')
-    # MAIL_PORT = int(os.environ.get('MAIL_PORT') or 25)
-    # MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') is not None
-    # MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
-    # MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    # ADMINS = ['your-email@example.com']
+    # ... (other mail settings, API keys, etc.)
 
     @staticmethod
     def init_app(app):
-        # --- Setup Logging Handlers ---
-        # Flask App general log
+        """Initializes application-wide logging based on the configuration.
+        
+        This method is called from the application factory (`create_app`) to
+        set up log handlers for the Flask app and other relevant loggers.
+
+        Args:
+            app: The Flask application instance.
+        """
+        # General Flask application log file handler.
         app_file_handler = create_file_handler(
             Config.FLASK_APP_LOG_FILE, 
-            Config.LOG_LEVEL, 
+            app.config.get('LOG_LEVEL', Config.LOG_LEVEL), # Use app's config if overridden
             detailed_formatter
         )
         app.logger.addHandler(app_file_handler)
 
-        # Celery Worker general log (though typically configured in Celery setup)
-        # We define it here for consistency and potential use by other parts of the app
-        # if they need to log to the celery file directly (uncommon).
-        # Actual Celery worker logging is usually set up via Celery signals.
-        celery_file_handler = create_file_handler(
-            Config.CELERY_WORKER_LOG_FILE,
-            Config.LOG_LEVEL,
-            detailed_formatter
-        )
-        # This logger can be used by non-Celery parts if needed: logging.getLogger('celery_general').addHandler(celery_file_handler)
+        # Note: Celery worker logging is primarily configured via Celery signals
+        # in `celery_worker.py` to ensure it uses the Flask app's config.
+        # Defining a handler here could be for non-Celery parts of the app that might
+        # want to log to a file designated for Celery, which is uncommon.
 
-
-        # Consolidated Error log
+        # Consolidated error log file handler (captures ERROR and CRITICAL).
         error_file_handler = create_file_handler(
             Config.ERROR_LOG_FILE,
-            logging.ERROR, # Only logs ERROR and CRITICAL
+            logging.ERROR, # Ensure this handler only processes ERROR and CRITICAL logs.
             detailed_formatter
         )
-        app.logger.addHandler(error_file_handler)
-        logging.getLogger('celery').addHandler(error_file_handler) # Also send Celery errors here
-        logging.getLogger().addHandler(error_file_handler) # Catch errors from any logger
+        app.logger.addHandler(error_file_handler) # Add to Flask app's logger.
+        # Optionally, add to other loggers if you want their errors here too:
+        logging.getLogger('celery').addHandler(error_file_handler) # Capture Celery errors.
+        # logging.getLogger().addHandler(error_file_handler) # Add to root logger to catch all errors (can be noisy).
 
-        # Console Handler for app logger
-        console_handler.setLevel(Config.CONSOLE_LOG_LEVEL)
-        app.logger.addHandler(console_handler)
+        # Configure the global console handler's level based on the app's config.
+        console_handler.setLevel(app.config.get('CONSOLE_LOG_LEVEL', Config.CONSOLE_LOG_LEVEL))
+        app.logger.addHandler(console_handler) # Add configured console handler to Flask app logger.
         
-        app.logger.setLevel(Config.LOG_LEVEL)
-
+        # Set the overall log level for the Flask application logger.
+        # Handlers will further filter based on their individual levels.
+        app.logger.setLevel(app.config.get('LOG_LEVEL', Config.LOG_LEVEL))
+        app.logger.info(f"Application logging initialized for '{app.config.get('ENV', 'unknown')}' environment.")
 
 class DevelopmentConfig(Config):
-    """Development configuration."""
-    DEBUG = True
-    # Prioritize DATABASE_URL (from Docker), then DEV_DATABASE_URL, then hardcoded default
+    """Configuration settings for development environment."""
+    DEBUG = True # Enable Flask's debug mode.
+    # Database URI: Prioritize Docker's DATABASE_URL, then specific DEV_DATABASE_URL, then a local default.
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
                               os.environ.get('DEV_DATABASE_URL') or \
-                              'postgresql:///investment_projection_dev' # Consider changing this default if needed
-    # Allow HTTP during development (Talisman)
-    TALISMAN_FORCE_HTTPS = False
-    TALISMAN_SESSION_COOKIE_SECURE = False
+                              'postgresql://user:password@localhost:5432/investment_projection_dev' # Example PostgreSQL
+    
+    # Relax some security settings for easier local development.
+    TALISMAN_FORCE_HTTPS = False # Allow HTTP for local development.
+    TALISMAN_SESSION_COOKIE_SECURE = False # Allow session cookies over HTTP locally.
+    # Example of modifying CSP for development (e.g., to allow 'unsafe-eval' for some JS libraries' dev modes):
     # TALISMAN_CSP = {
-    #     **Config.TALISMAN_CSP, # Inherit base CSP
-    #     'script-src': Config.TALISMAN_CSP.get('script-src', []) + ['\'unsafe-eval\''],
+    #     **Config.TALISMAN_CSP, # Inherit base CSP rules
+    #     'script-src': Config.TALISMAN_CSP.get('script-src', []) + ['\'unsafe-eval\''], # Add 'unsafe-eval'
     # }
-    LOG_LEVEL = logging.DEBUG
-    CONSOLE_LOG_LEVEL = logging.DEBUG
+    LOG_LEVEL = logging.DEBUG # More verbose logging in development.
+    CONSOLE_LOG_LEVEL = logging.DEBUG # Detailed console output in development.
 
 class TestingConfig(Config):
-    """Testing configuration."""
-    TESTING = True
+    """Configuration settings for testing environment."""
+    TESTING = True # Enable Flask's testing mode.
+    # Use a separate database for testing, often in-memory SQLite for speed.
+    # `cache=shared` is important for some in-memory SQLite use cases with multiple connections.
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
-        'sqlite:///file:testdb?mode=memory&cache=shared' # Use shared in-memory SQLite for tests
-    WTF_CSRF_ENABLED = False # Disable CSRF for tests
-    DEBUG = True # Enable debug for more detailed error messages in tests
-    RATELIMIT_ENABLED = False # Disable rate limiting for tests
+        'sqlite:///file:testdb?mode=memory&cache=shared&uri=true' 
+    WTF_CSRF_ENABLED = False # Disable CSRF protection in forms for simpler testing.
+    DEBUG = True # Often useful to have debug mode on for tests to get more error details.
+    RATELIMIT_ENABLED = False # Disable rate limiting during tests.
     
-    # Flask specific settings for testing
-    SERVER_NAME = 'localhost.test' # Dummy server name for testing
+    # Flask specific settings helpful for testing client interactions.
+    SERVER_NAME = 'localhost.test' # Dummy server name, useful for URL generation in tests.
     APPLICATION_ROOT = '/'
-    PREFERRED_URL_SCHEME = 'http'
+    PREFERRED_URL_SCHEME = 'http' # Assume tests run over HTTP.
 
     # Celery settings for testing:
-    # Execute tasks eagerly (synchronously) for predictable testing
-    CELERY_TASK_ALWAYS_EAGER = True
-    # Ensure results of eager tasks are stored in the backend
-    CELERY_TASK_STORE_EAGER_RESULT = True
+    CELERY_TASK_ALWAYS_EAGER = True  # Execute Celery tasks synchronously in the same process for tests.
+    CELERY_TASK_STORE_EAGER_RESULT = True # Ensure results of eager tasks are available.
 
-    # Disable Talisman HTTPS enforcement for tests
+    # Relax Talisman security for testing environment.
     TALISMAN_FORCE_HTTPS = False
     TALISMAN_SESSION_COOKIE_SECURE = False
-    LOG_LEVEL = logging.DEBUG # Keep logs verbose for testing
-    CONSOLE_LOG_LEVEL = logging.DEBUG # Keep console verbose for testing
+    LOG_LEVEL = logging.DEBUG # Verbose logging for tests.
+    CONSOLE_LOG_LEVEL = logging.DEBUG # Verbose console output for tests.
 
 class ProductionConfig(Config):
-    """Production configuration."""
-    # Production settings might differ, e.g., database URL from production env
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') # No default to SQLite in prod
+    """Configuration settings for production environment.
+    
+    This class emphasizes security and performance. It expects critical
+    configurations (like database URLs, secret keys) to be set via
+    environment variables and includes checks for their presence.
+    """
+    # Database URI must be provided via environment variable in production.
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') 
+    # Celery broker and result backend must be provided via environment variables.
     CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL')
     CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND')
 
-    # Ensure DEBUG is False in production
-    DEBUG = False
-    # Explicitly ensure Talisman security settings are enforced for production
-    TALISMAN_FORCE_HTTPS = True
+    DEBUG = False # Ensure Flask debug mode is OFF in production.
+    
+    # Enforce strict security headers in production.
+    TALISMAN_FORCE_HTTPS = True 
     TALISMAN_SESSION_COOKIE_SECURE = True
-    TALISMAN_HSTS_PRELOAD = True # Enable HSTS preload in production once confirmed
-    LOG_LEVEL = logging.INFO
-    CONSOLE_LOG_LEVEL = logging.WARNING # Reduce console verbosity in production
+    TALISMAN_HSTS_PRELOAD = True # Recommended for production after thorough testing.
+    
+    LOG_LEVEL = logging.INFO # Less verbose logging than debug for production.
+    CONSOLE_LOG_LEVEL = logging.WARNING # Reduce console noise in production, log warnings and above.
 
     def __init__(self):
-        super().__init__()
-        # Check for required environment variables in production
+        """Initializes ProductionConfig and performs critical checks.
+        
+        Logs critical errors if essential production configurations are missing
+        or insecurely set. This helps catch deployment issues early.
+        """
+        super().__init__() # Initialize base Config settings.
+        
+        # --- Critical Configuration Checks for Production ---
         if not self.SQLALCHEMY_DATABASE_URI:
-            logging.critical("PRODUCTION ERROR: DATABASE_URL environment variable is not set.")
-            # Consider raising an exception here or exiting if critical for startup
-            # raise ValueError("PRODUCTION ERROR: DATABASE_URL environment variable is not set.")
-        else:
-            # Example check for PostgreSQL SSL
-            if self.SQLALCHEMY_DATABASE_URI.startswith('postgresql://') and 'sslmode=require' not in self.SQLALCHEMY_DATABASE_URI:
-                logging.warning(
-                    "PRODUCTION WARNING: SQLALCHEMY_DATABASE_URI for PostgreSQL does not explicitly specify 'sslmode=require'. "
-                    "Ensure the connection is secured via other means or update the URL."
-                )
-            # Add checks for other database types like MySQL (e.g., ?ssl_mode=REQUIRED) if needed
+            logging.critical("PRODUCTION FATAL: DATABASE_URL environment variable is not set.")
+            # Consider raising an exception or sys.exit(1) if app cannot run without DB.
+            # Example: raise ValueError("PRODUCTION FATAL: DATABASE_URL is not set.")
+        elif self.SQLALCHEMY_DATABASE_URI.startswith('postgresql://') and 'sslmode=require' not in self.SQLALCHEMY_DATABASE_URI:
+            # Example check for PostgreSQL SSL. Adapt for other databases.
+            logging.warning(
+                "PRODUCTION SECURITY: SQLALCHEMY_DATABASE_URI for PostgreSQL does not explicitly specify 'sslmode=require'. "
+                "Ensure database connections are secure."
+            )
 
         if not self.CELERY_BROKER_URL:
-            logging.critical("PRODUCTION ERROR: CELERY_BROKER_URL environment variable is not set.")
-        elif self.CELERY_BROKER_URL.startswith('redis://'):
+            logging.critical("PRODUCTION FATAL: CELERY_BROKER_URL environment variable is not set.")
+        elif self.CELERY_BROKER_URL.startswith('redis://'): # Check for unencrypted Redis
             logging.warning(
-                "PRODUCTION WARNING: CELERY_BROKER_URL is using 'redis://' (unencrypted). "
-                "Consider using 'rediss://' for a secure connection in production."
+                "PRODUCTION SECURITY: CELERY_BROKER_URL uses 'redis://' (unencrypted). "
+                "Strongly consider 'rediss://' for secure connections in production."
             )
 
         if not self.CELERY_RESULT_BACKEND:
-            logging.critical("PRODUCTION ERROR: CELERY_RESULT_BACKEND environment variable is not set.")
-        elif self.CELERY_RESULT_BACKEND.startswith('redis://'):
+            logging.critical("PRODUCTION FATAL: CELERY_RESULT_BACKEND environment variable is not set.")
+        elif self.CELERY_RESULT_BACKEND.startswith('redis://'): # Check for unencrypted Redis
             logging.warning(
-                "PRODUCTION WARNING: CELERY_RESULT_BACKEND is using 'redis://' (unencrypted). "
-                "Consider using 'rediss://' for a secure connection in production."
+                "PRODUCTION SECURITY: CELERY_RESULT_BACKEND uses 'redis://' (unencrypted). "
+                "Strongly consider 'rediss://' for secure connections in production."
             )
         
-        if not self.SECRET_KEY or self.SECRET_KEY == 'you-will-never-guess':
-            logging.critical("PRODUCTION ERROR: SECRET_KEY is not set or is set to the default insecure value.")
+        # Check for default or missing secret keys.
+        if not self.SECRET_KEY or self.SECRET_KEY == 'a-very-insecure-default-secret-key-pls-change':
+            logging.critical("PRODUCTION SECURITY: SECRET_KEY is not set or is set to the default insecure value.")
         
-        if not self.JWT_SECRET_KEY or self.JWT_SECRET_KEY == 'jwt-secret-string' or self.JWT_SECRET_KEY == self.SECRET_KEY:
+        if (not self.JWT_SECRET_KEY or 
+            self.JWT_SECRET_KEY == 'a-very-insecure-default-jwt-key-pls-change' or 
+            self.JWT_SECRET_KEY == self.SECRET_KEY):
              logging.warning(
-                "PRODUCTION WARNING: JWT_SECRET_KEY is not set, is set to a default insecure value, or is the same as SECRET_KEY. "
-                "It is recommended to use a separate, strong key for JWT tokens."
+                "PRODUCTION SECURITY: JWT_SECRET_KEY is not set, uses a default insecure value, or is the same as SECRET_KEY. "
+                "Using a unique, strong JWT_SECRET_KEY is highly recommended."
             )
 
-
-# Dictionary to map configuration names to classes
+# Dictionary mapping configuration names (e.g., 'development') to their respective classes.
+# This is used by the application factory to load the correct configuration.
 config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
-    'default': DevelopmentConfig # Default to development config
+    'default': DevelopmentConfig # Default configuration if FLASK_CONFIG is not set.
 } 

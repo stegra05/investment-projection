@@ -1,5 +1,13 @@
-from flask import abort
-from sqlalchemy.orm import object_mapper, RelationshipProperty
+"""
+General helper utilities for the Flask application.
+
+This module provides miscellaneous helper functions that can be used across
+various parts of the application, such as utility functions for common
+database queries or data manipulation tasks that don't fit neatly into
+a specific service or route module.
+"""
+from flask import abort # For raising HTTP errors
+from sqlalchemy.orm import object_mapper, RelationshipProperty # For SQLAlchemy introspection
 from typing import Type, TypeVar, Any
 # Assuming db instance is accessible via app package. Adjust if needed.
 from app import db
@@ -10,118 +18,159 @@ from werkzeug.exceptions import HTTPException # Import HTTPException
 # Import custom exceptions
 from app.utils.exceptions import ChildResourceNotFoundError, ApplicationException, DatabaseError, BadRequestError
 
-# Define a generic type variable for SQLAlchemy models
-# Using Type[Any] for simplicity, could refine further if needed.
-ModelType = TypeVar('ModelType', bound=Any)
+# Define a generic type variable for SQLAlchemy models.
+# `TypeVar` is used for generic typing. `bound=Any` means ModelType can be any type,
+# but it's typically used to represent SQLAlchemy model classes.
+ModelType = TypeVar('ModelType', bound=Any) # `Any` is from `typing`
 
 def get_owned_child_or_404(
-    parent_instance: Any,
-    child_relationship_name: str,
-    child_id: int,
-    child_model: Type[ModelType],
-    child_pk_attr: str
-) -> ModelType:
-    """
-    Gets a child entity by ID within a parent's collection or via direct query,
-    aborting with 404 if not found. Assumes parent has the child relationship
-    eagerly loaded or accessible.
+    parent_instance: Any, # The parent SQLAlchemy model instance (e.g., a Portfolio object)
+    child_relationship_name: str, # Name of the attribute on parent that lists children (e.g., "assets")
+    child_id: int, # The primary key value of the child resource to find
+    child_model: Type[ModelType], # The SQLAlchemy model class of the child (e.g., Asset)
+    child_pk_attr: str # The name of the primary key attribute on the child model (e.g., "asset_id")
+) -> ModelType: # Returns an instance of the child model if found
+    """Retrieves a child entity associated with a parent, raising custom errors if not found.
+
+    This function first attempts to find the child entity within the parent's
+    eagerly loaded collection (if available). If not found there, it performs
+    a direct database query, ensuring the child belongs to the given parent.
+
+    This is useful for nested routes (e.g., /portfolios/<pid>/assets/<aid>) to
+    efficiently fetch and validate ownership of a child resource.
 
     Args:
-        parent_instance: The SQLAlchemy model instance of the parent (e.g., Portfolio).
+        parent_instance: The SQLAlchemy model instance of the parent (e.g., a specific Portfolio).
         child_relationship_name: The name of the relationship attribute on the parent
-                                  that holds the child collection (e.g., 'assets').
-        child_id: The ID of the child entity to find.
-        child_model: The SQLAlchemy model class of the child (e.g., Asset).
-        child_pk_attr: The name of the primary key attribute on the child model
-                       (e.g., 'asset_id', 'change_id'). *Must be provided.*
+                                 model that holds the collection of child entities
+                                 (e.g., 'assets' for a Portfolio model).
+        child_id: The primary key value of the child entity being requested.
+        child_model: The SQLAlchemy model class of the child entity (e.g., `Asset`).
+        child_pk_attr: The name of the primary key attribute on the `child_model`
+                       (e.g., 'asset_id' for the Asset model).
 
     Returns:
-        The found child entity instance.
+        The found child entity instance (of type `ModelType`).
 
     Raises:
-        ChildResourceNotFoundError: If the child is not found.
-        ApplicationException: For internal configuration or unexpected errors.
-        AttributeError: If the parent_instance does not have the specified relationship.
-        ValueError: If the relationship configuration is unexpected.
+        ChildResourceNotFoundError (subclass of ApplicationException, typically 404):
+            If the child resource with the given ID is not found or does not belong
+            to the specified parent instance.
+        ApplicationException (500): For internal configuration issues (e.g., incorrect
+                                   relationship name, non-standard model PK/FK setup)
+                                   or unexpected database errors during the fallback query.
+        AttributeError: If `parent_instance` does not have an attribute matching
+                        `child_relationship_name`, or if a child object in the
+                        collection does not have `child_pk_attr`. This usually
+                        indicates a programming error.
+        ValueError: If the SQLAlchemy relationship configuration is unexpected (e.g.,
+                    parent model has a composite primary key not handled by this helper,
+                    or the foreign key relationship on the child cannot be determined).
     """
+    current_app.logger.debug(
+        f"Attempting to get child '{child_model.__name__}' with ID '{child_id}' "
+        f"for parent '{parent_instance.__class__.__name__}' (ID: {getattr(parent_instance, object_mapper(parent_instance).primary_key[0].name, 'N/A')}) "
+        f"via relationship '{child_relationship_name}'."
+    )
     try:
-        # Stage 1: Check eagerly loaded collection first.
-        # This is an optimization. If the parent object (e.g., a Portfolio) was loaded
-        # from the database with its child collection (e.g., its 'assets') already joined
-        # (eagerly loaded), then iterating through this in-memory collection is faster
-        # than issuing a new database query.
-        child_collection = getattr(parent_instance, child_relationship_name)
+        # Stage 1: Check if the child is in an eagerly loaded collection on the parent.
+        # This is an optimization to avoid a database query if the parent was fetched
+        # with its children already loaded (e.g., using `joinedload` or `selectinload`).
+        child_collection = getattr(parent_instance, child_relationship_name, None)
         if child_collection is not None:
-            for child in child_collection:
-                if hasattr(child, child_pk_attr) and getattr(child, child_pk_attr) == child_id:
-                    return child
+            for child_instance in child_collection:
+                # Check if the current child instance in the collection matches the requested child_id.
+                if hasattr(child_instance, child_pk_attr) and getattr(child_instance, child_pk_attr) == child_id:
+                    current_app.logger.debug(f"Child found in eagerly loaded collection: {child_instance}")
+                    return child_instance # Child found in the loaded collection.
 
-        # Stage 2: Fallback to a direct database query.
-        # If the child was not found in an eagerly loaded collection (or the collection
-        # wasn't loaded), this part attempts to fetch the child directly from the database.
-        # This requires ensuring the child belongs to the specified parent.
+        # Stage 2: Fallback to a direct database query if not found in the loaded collection.
+        # This query explicitly filters by both the child's PK and its foreign key to the parent,
+        # ensuring the child belongs to THIS parent.
+        current_app.logger.debug(
+            f"Child not found in eager load for '{child_relationship_name}'. "
+            f"Falling back to direct DB query for {child_model.__name__} ID '{child_id}'."
+        )
 
-        # Inspect the relationship to dynamically find the foreign key on the child model
-        # that links it to the parent model. This makes the helper more generic.
-        mapper = object_mapper(parent_instance)
-        prop = mapper.get_property(child_relationship_name)
-
-        if not isinstance(prop, RelationshipProperty):
-            # The `prop` must be a RelationshipProperty, which describes how two models are related
-            # (e.g., one-to-many, many-to-many). If it's not, the provided
-            # `child_relationship_name` is not a valid SQLAlchemy relationship attribute.
-            raise ValueError(f"'{child_relationship_name}' is not a relationship property on {parent_instance.__class__.__name__}")
-
-        # Determine the parent's primary key name and value to filter the child query.
-        parent_pk_cols = mapper.primary_key
-        if len(parent_pk_cols) != 1:
-            raise ValueError("Parent model must have a single primary key column for this helper.")
-        parent_pk_name = parent_pk_cols[0].name
+        # Dynamically determine parent's primary key name and value for the query.
+        parent_mapper = object_mapper(parent_instance)
+        parent_pk_columns = parent_mapper.primary_key
+        if len(parent_pk_columns) != 1: # This helper assumes single-column PKs for simplicity.
+            raise ValueError(f"Parent model '{parent_instance.__class__.__name__}' must have a single primary key column for this helper.")
+        parent_pk_name = parent_pk_columns[0].name
         parent_pk_value = getattr(parent_instance, parent_pk_name)
 
-        # `prop.remote_side` refers to the columns on the "many" side of a one-to-many relationship
-        # (or the other side in a many-to-many, though this helper is more geared towards one-to-many).
-        # These are typically the foreign key columns on the child model that point back to the parent.
-        # We expect a single foreign key column for a simple parent-child link.
-        child_fk_attrs = prop.remote_side
-        if not child_fk_attrs or len(child_fk_attrs) != 1:
-            raise ValueError(f"Could not determine single foreign key attribute on {child_model.__name__} for relationship '{child_relationship_name}'. Check relationship configuration and foreign_keys/remote_side.")
-        child_fk_attr_name = list(child_fk_attrs)[0].name
+        # Introspect the relationship to find the foreign key attribute on the child model
+        # that references the parent's primary key.
+        relationship_property = parent_mapper.get_property(child_relationship_name)
+        if not isinstance(relationship_property, RelationshipProperty):
+            raise ValueError(
+                f"Attribute '{child_relationship_name}' on '{parent_instance.__class__.__name__}' "
+                "is not a valid SQLAlchemy relationship property."
+            )
 
-        # Construct filter conditions to find the child with the given ID (child_pk_attr)
-        # AND ensure it is linked to the parent (child_fk_attr_name == parent_pk_value).
+        # `remote_side` typically contains the foreign key column(s) on the child table.
+        # Expecting a single FK column for a simple parent-to-child (one-to-many) relationship.
+        child_foreign_key_columns = relationship_property.remote_side
+        if not child_foreign_key_columns or len(child_foreign_key_columns) != 1:
+            raise ValueError(
+                f"Could not determine a single foreign key attribute on '{child_model.__name__}' "
+                f"for relationship '{child_relationship_name}'. Verify relationship configuration "
+                "(e.g., `foreign_keys`, `remote_side` arguments in `relationship()`)."
+            )
+        child_fk_attr_on_child_model = list(child_foreign_key_columns)[0].name
+
+        # Construct filter conditions for the query:
+        # - Child's PK must match `child_id`.
+        # - Child's FK (pointing to parent) must match `parent_pk_value`.
         filter_conditions = {
-            child_fk_attr_name: parent_pk_value,
-            child_pk_attr: child_id
+            child_fk_attr_on_child_model: parent_pk_value, # Ensures child belongs to this parent
+            child_pk_attr: child_id # Matches the specific child ID
         }
+        
+        current_app.logger.debug(f"Executing fallback query on {child_model.__name__} with filters: {filter_conditions}")
+        child_instance_from_db = child_model.query.filter_by(**filter_conditions).first()
 
-        child_fallback = child_model.query.filter_by(**filter_conditions).first()
-
-        if child_fallback is None:
+        if child_instance_from_db is None:
+            # If still not found, raise a specific ChildResourceNotFoundError.
+            current_app.logger.warning(
+                f"Child resource '{child_model.__name__}' ID '{child_id}' not found for "
+                f"parent '{parent_instance.__class__.__name__}' ID '{parent_pk_value}' via fallback query."
+            )
             raise ChildResourceNotFoundError(
                 child_model_name=child_model.__name__,
                 child_id=child_id,
                 parent_model_name=parent_instance.__class__.__name__,
-                parent_id=getattr(parent_instance, parent_pk_name, None)
+                parent_id=parent_pk_value
             )
-
-        return child_fallback
+        
+        current_app.logger.debug(f"Child found via fallback DB query: {child_instance_from_db}")
+        return child_instance_from_db
 
     except AttributeError as e:
-        # Parent might not have the relationship attribute, or child lacks PK attr
-        # Or getattr failed on child in loop
-        current_app.logger.error(f"AttributeError in get_owned_child_or_404: {e}") # Log this
-        # This suggests a potential coding or configuration error.
-        raise ApplicationException(message=f"Internal configuration error accessing relationship or attribute: {e}", status_code=500)
+        # This error typically indicates a programming mistake:
+        # - `parent_instance` might not have an attribute `child_relationship_name`.
+        # - An object in `child_collection` might not have `child_pk_attr`.
+        current_app.logger.error(f"AttributeError in get_owned_child_or_404: {e}. This may indicate a misconfiguration or programming error.", exc_info=True)
+        raise ApplicationException(
+            message=f"Internal configuration error: Problem accessing attribute for relationship or primary key. Details: {e}", 
+            status_code=500
+        )
     except ValueError as e:
-        # Raised if relationship inspection fails - likely a setup/coding error
-        current_app.logger.error(f"ValueError in get_owned_child_or_404: {e}")
-        raise ApplicationException(message=f"Internal configuration error: {e}", status_code=500)
+        # This error indicates issues with the SQLAlchemy model/relationship setup
+        # that this helper function cannot work with (e.g., composite PKs, unresolvable FKs).
+        current_app.logger.error(f"ValueError in get_owned_child_or_404 due to model/relationship configuration: {e}", exc_info=True)
+        raise ApplicationException(
+            message=f"Internal configuration error: Problem with model or relationship setup. Details: {e}", 
+            status_code=500
+        )
     except HTTPException:
-        # Re-raise HTTPExceptions (like those from abort() if any were kept, or Werkzeug's)
+        # Re-raise HTTPExceptions (like 404 from ChildResourceNotFoundError or aborts) directly.
         raise
     except Exception as e:
-        # Catch other potential DB errors during fallback query or other unexpected issues
-        current_app.logger.exception(f"Unexpected error in get_owned_child_or_404 fallback query for child {child_pk_attr}={child_id}")
-        # Raise a more specific DatabaseError or a generic ApplicationException
-        raise DatabaseError(message="An unexpected error occurred while retrieving the requested item.") 
+        # Catch any other unexpected errors, potentially database-related during the fallback query.
+        current_app.logger.exception( # Logs with full stack trace
+            f"Unexpected error in get_owned_child_or_404 for child {child_model.__name__} (PK attr: {child_pk_attr}) ID '{child_id}'. Error: {e}"
+        )
+        # Raise a DatabaseError or a generic ApplicationException for client.
+        raise DatabaseError(message="An unexpected error occurred while trying to retrieve the requested item.")

@@ -1,3 +1,11 @@
+"""
+Blueprint for handling portfolio projection calculations.
+
+This includes routes for initiating long-running projection tasks via Celery
+and for fetching immediate projection previews with draft changes.
+All routes are nested under a specific portfolio and require JWT authentication
+and ownership verification.
+"""
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from pydantic import BaseModel, Field, ValidationError as PydanticValidationError, validator, root_validator # For schema validation
@@ -16,219 +24,228 @@ from app.utils.exceptions import (
     BadRequestError, PortfolioNotFoundError, AccessDeniedError, ApplicationException
 )
 
+# Define the blueprint: 'projections_bp'
+# URL prefix /api/v1/portfolios is applied here, so routes like '/<pid>/projections'
+# become /api/v1/portfolios/<pid>/projections.
 projections_bp = Blueprint('projections_bp', __name__, url_prefix='/api/v1/portfolios')
 
 
 # --- Pydantic Schemas for Projection Requests ---
+
 class ProjectionRequestBase(OrmBaseModel):
-    start_date: datetime.date = Field(..., example="2024-01-01")
-    end_date: datetime.date = Field(..., example="2025-12-31")
-    initial_total_value: Decimal = Field(..., ge=0, example="10000.00")
+    """Base schema for projection requests, defining common fields."""
+    start_date: datetime.date = Field(..., description="Start date for the projection (YYYY-MM-DD).", example="2024-01-01")
+    end_date: datetime.date = Field(..., description="End date for the projection (YYYY-MM-DD).", example="2025-12-31")
+    initial_total_value: Decimal = Field(
+        ..., 
+        ge=0, 
+        description="Initial total value of the portfolio for the projection.",
+        example="10000.00"
+    )
 
     @validator('end_date')
-    def end_date_after_start_date(cls, v, values):
-        if 'start_date' in values and v <= values['start_date']:
-            raise ValueError('End date must be after start date')
-        return v
+    def validate_end_date_after_start_date(cls, end_date_value, values):
+        """Ensures that the end_date is after the start_date."""
+        start_date_value = values.get('start_date')
+        if start_date_value and end_date_value <= start_date_value:
+            raise ValueError('End date must be after start date.')
+        return end_date_value
 
 class ProjectionTaskRequestSchema(ProjectionRequestBase):
-    pass # Inherits all fields and validation
+    """Schema for initiating a background projection task.
+    Currently identical to the base, but can be extended if needed.
+    """
+    pass # Inherits all fields and validation logic from ProjectionRequestBase.
 
 class ProjectionPreviewRequestSchema(ProjectionRequestBase):
-    draft_planned_changes: Optional[List[PlannedChangeCreateSchema]] = Field(default_factory=list)
+    """Schema for requesting an immediate projection preview.
+    Allows for optional 'draft_planned_changes' to be included in the preview.
+    """
+    draft_planned_changes: Optional[List[PlannedChangeCreateSchema]] = Field(
+        default_factory=list, 
+        description="Optional list of draft planned changes to include in the preview calculation."
+    )
 
 # --- Standard Projection Route (Task-based) ---
 @projections_bp.route('/<int:portfolio_id>/projections', methods=['POST'])
-@jwt_required()
-def create_portfolio_projection(portfolio_id):
-    """
-    Initiates a portfolio projection calculation task.
-    Requires start_date, end_date, and initial_total_value in JSON body.
-    Returns a task ID for tracking the calculation progress.
-    --- 
-    parameters:
-      - name: portfolio_id
-        in: path
-        type: integer
-        required: true
-        description: ID of the portfolio to project.
-      - name: body
-        in: body
-        required: true
-        schema:
-          id: ProjectionRequest
-          required:
-            - start_date
-            - end_date
-            - initial_total_value
-          properties:
-            start_date:
-              type: string
-              format: date
-              description: Start date for projection (YYYY-MM-DD).
-            end_date:
-              type: string
-              format: date
-              description: End date for projection (YYYY-MM-DD).
-            initial_total_value:
-              type: string
-              description: Initial total value of the portfolio as a decimal string.
-    responses:
-      202:
-        description: Projection task accepted.
-        schema:
-          type: object
-          properties:
-            message:
-              type: string
-              description: Status message.
-            task_id:
-              type: string
-              description: Unique identifier for tracking the projection task.
-      400:
-        description: Invalid input data (e.g., bad date format, missing fields, invalid value).
-      401:
-        description: Authentication required.
-      403:
-        description: User does not own this portfolio.
-      404:
-        description: Portfolio not found.
-    """
-    current_user_id = get_jwt_identity()
-    data = request.get_json()
+@jwt_required() # User must be authenticated.
+def create_portfolio_projection(portfolio_id: int):
+    """Initiates a background Celery task for portfolio projection.
 
-    if not data:
-        raise BadRequestError("Request body must be JSON")
+    Requires `start_date`, `end_date`, and `initial_total_value` in the JSON body,
+    validated by `ProjectionTaskRequestSchema`.
 
-    # --- Input Validation (using Pydantic for consistency, though manual validation is here) ---
-    # For a more robust validation, use ProjectionTaskRequestSchema directly:
-    # try:
-    #     task_request_data = ProjectionTaskRequestSchema(**data)
-    # except PydanticValidationError as e:
-    #     return jsonify({"message": "Invalid input data", "errors": e.errors()}), 400
-    # start_date = task_request_data.start_date
-    # end_date = task_request_data.end_date
-    # initial_total_value = task_request_data.initial_total_value
+    Args:
+        portfolio_id (int): The ID of the portfolio for which to run the projection.
 
-    # Current manual validation:
-    required_fields = ['start_date', 'end_date', 'initial_total_value']
-    missing_fields = [field for field in required_fields if field not in data]
-    if missing_fields:
-        raise BadRequestError(f"Missing required fields: {', '.join(missing_fields)}")
-
-    try:
-        start_date_str = data['start_date']
-        end_date_str = data['end_date']
-        initial_value_str = data['initial_total_value']
-
-        start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
-        end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date()
-        initial_total_value = Decimal(initial_value_str)
-
-        if start_date >= end_date:
-            raise BadRequestError("End date must be after start date")
-        if initial_total_value < 0:
-            raise BadRequestError("Initial total value cannot be negative")
-
-    except (ValueError, TypeError) as e:
-        raise BadRequestError(f"Invalid date format. Please use YYYY-MM-DD. Error: {e}")
-    except InvalidOperation:
-        raise BadRequestError("Invalid format for initial_total_value. Please provide a valid decimal string.")
-
-    # --- Authorization Check: Ensure user owns the portfolio --- 
-    portfolio = Portfolio.query.filter_by(portfolio_id=portfolio_id, user_id=current_user_id).first()
-    if not portfolio:
-        if Portfolio.query.filter_by(portfolio_id=portfolio_id).first():
-            raise AccessDeniedError("Forbidden: You do not own this portfolio.")
-        else:
-            # return jsonify({"message": "Portfolio not found."}), 404
-            raise PortfolioNotFoundError(f"Portfolio with id {portfolio_id} not found.")
-
-    # Dispatch the Celery task
-    try:
-        # Pass arguments as strings, as the task expects to convert them
-        task = run_projection_task.delay(
-            portfolio_id=portfolio_id,
-            start_date_str=start_date.isoformat(),
-            end_date_str=end_date.isoformat(),
-            initial_total_value_str=str(initial_total_value)
-        )
-        task_id = task.id
-        current_app.logger.info(f"Projection task {task_id} dispatched for portfolio {portfolio_id}.")
-
-        # --- Create UserCeleryTask Record IMMEDIATELY --- 
-        try:
-            UserCeleryTask.create_task_for_user(user_id=current_user_id, task_id=task_id)
-            db.session.commit()
-            current_app.logger.info(f"UserCeleryTask record created for task {task_id}, user {current_user_id}")
-        except Exception as db_error:
-            db.session.rollback()
-            current_app.logger.error(f"Database error creating UserCeleryTask for task {task_id}, user {current_user_id}: {db_error}", exc_info=True)
-            # Even if DB record fails, the task is already dispatched. Return 500, but client might still poll later.
-            raise ApplicationException("Failed to record projection task status. Please try again later.", status_code=500)
-        # --------------------------------------------------
-
-        return jsonify({
-            "message": "Projection task accepted",
-            "task_id": task_id
-        }), 202
+    Returns:
+        JSON response with a message and task_id if successful (202),
+        or an error response (400, 401, 403, 404, 500).
         
-    except Exception as e:
-        current_app.logger.error(f"Failed to dispatch projection task for portfolio {portfolio_id}: {e}", exc_info=True)
-        raise ApplicationException("Failed to initiate projection task. Please try again later.", status_code=500, logging_level="exception")
-
-# --- NEW: Projection Preview Route ---
-@projections_bp.route('/<int:portfolio_id>/projections/preview', methods=['POST'])
-@jwt_required()
-def preview_portfolio_projection(portfolio_id):
+    Raises:
+        BadRequestError: For invalid or missing request data.
+        AccessDeniedError: If the user does not own the portfolio.
+        PortfolioNotFoundError: If the portfolio ID is not found.
+        ApplicationException: For internal server errors during task dispatch or recording.
     """
-    Calculates a portfolio projection preview directly.
-    Accepts start_date, end_date, initial_total_value, and an optional list of draft_planned_changes.
-    Returns the projection result immediately.
-    """
-    current_user_id = get_jwt_identity()
-    data = request.get_json()
-
-    if not data:
-        raise ApplicationException("Request body must be JSON", status_code=415, logging_level="warning")
-
+    current_user_id_str = get_jwt_identity()
+    # It's good practice to ensure current_user_id is int if used for DB queries directly.
+    # Here, it's used for UserCeleryTask.create_task_for_user and auth check.
+    # Assuming get_jwt_identity() returns string ID, convert as needed or ensure consistency.
     try:
-        preview_request_data = ProjectionPreviewRequestSchema(**data)
+        current_user_id = int(current_user_id_str)
+    except (ValueError, TypeError):
+        current_app.logger.error(f"Invalid user ID format in JWT: {current_user_id_str}")
+        raise ApplicationException("Invalid user identity.", status_code=401)
+
+    json_data = request.get_json()
+    if not json_data:
+        raise BadRequestError("Request body must be JSON.")
+
+    # Validate request data using Pydantic schema
+    try:
+        task_request = ProjectionTaskRequestSchema(**json_data)
     except PydanticValidationError as e:
-        raise BadRequestError("Invalid input data", payload={"errors": e.errors()})
-    except Exception as e: # Catch any other unexpected parsing errors
-        current_app.logger.error(f"Error parsing preview request: {e}")
-        raise BadRequestError("Error processing request data.")
+        current_app.logger.warning(f"Projection request validation failed for PortfolioID {portfolio_id}: {e.errors()}")
+        raise BadRequestError("Invalid input data.", payload={"errors": e.errors()})
 
-    # --- Authorization Check: Ensure user owns the portfolio ---
-    # (Reusing logic from above, could be refactored into a decorator/helper if used more)
-    portfolio = Portfolio.query.filter_by(portfolio_id=portfolio_id, user_id=current_user_id).first()
-    if not portfolio:
+    # Authorization Check: Ensure the current user owns the portfolio.
+    # This check is crucial for data security.
+    portfolio_owner_check = Portfolio.query.filter_by(portfolio_id=portfolio_id, user_id=current_user_id).first()
+    if not portfolio_owner_check:
+        # Distinguish between portfolio not existing and not owned for accurate error reporting/logging.
         if Portfolio.query.filter_by(portfolio_id=portfolio_id).first():
-            raise AccessDeniedError("Forbidden: You do not own this portfolio.")
+            current_app.logger.warning(
+                f"Access Denied: UserID '{current_user_id}' attempted to run projection for PortfolioID '{portfolio_id}' "
+                "which they do not own."
+            )
+            raise AccessDeniedError("You do not have permission to access this portfolio.")
         else:
-            raise PortfolioNotFoundError(f"Portfolio with id {portfolio_id} not found.")
+            raise PortfolioNotFoundError(f"Portfolio with ID {portfolio_id} not found.")
 
+    # Dispatch the Celery task for background processing.
     try:
-        # Call the projection engine with the validated and parsed data
-        projection_results = calculate_projection(
+        # Pass validated and correctly typed data to the Celery task.
+        # Dates are converted to ISO format strings, Decimal to string for JSON compatibility if task expects strings.
+        celery_task_instance = run_projection_task.delay(
             portfolio_id=portfolio_id,
-            start_date=preview_request_data.start_date,
-            end_date=preview_request_data.end_date,
-            initial_total_value=preview_request_data.initial_total_value,
-            draft_changes_input=preview_request_data.draft_planned_changes # Pass the list of Pydantic schema objects
+            start_date_str=task_request.start_date.isoformat(),
+            end_date_str=task_request.end_date.isoformat(),
+            initial_total_value_str=str(task_request.initial_total_value)
+        )
+        celery_task_id = celery_task_instance.id
+        current_app.logger.info(f"Projection Celery task '{celery_task_id}' dispatched for PortfolioID '{portfolio_id}'.")
+
+        # Record the link between the user and the Celery task in the database.
+        # This allows users to later query the status of their tasks.
+        try:
+            UserCeleryTask.create_task_for_user(user_id=current_user_id, task_id=celery_task_id)
+            db.session.commit()
+            current_app.logger.info(f"UserCeleryTask record created for TaskID '{celery_task_id}', UserID '{current_user_id}'.")
+        except Exception as db_exc:
+            db.session.rollback()
+            current_app.logger.error(
+                f"Database error creating UserCeleryTask for TaskID '{celery_task_id}', UserID '{current_user_id}': {db_exc}", 
+                exc_info=True
+            )
+            # The Celery task is already dispatched. This failure means the user might not be able to track it via API.
+            # Return a 500 error, as the system is in an inconsistent state regarding task tracking.
+            raise ApplicationException(
+                "Failed to record projection task status. The task may be processing, but you might not be able to track it.", 
+                status_code=500
+            )
+        
+        return jsonify({
+            "message": "Projection task accepted and is being processed.",
+            "task_id": celery_task_id
+        }), 202 # HTTP 202 Accepted: request accepted for processing.
+        
+    except Exception as e:
+        current_app.logger.error(f"Failed to dispatch Celery projection task for PortfolioID '{portfolio_id}': {e}", exc_info=True)
+        # This is a general catch-all if Celery dispatch itself fails (e.g., broker unavailable).
+        raise ApplicationException("Failed to initiate the projection task due to a server error. Please try again later.", status_code=500)
+
+# --- Projection Preview Route ---
+@projections_bp.route('/<int:portfolio_id>/projections/preview', methods=['POST'])
+@jwt_required() # User must be authenticated.
+def preview_portfolio_projection(portfolio_id: int):
+    """Calculates and returns a portfolio projection preview immediately.
+
+    Accepts `start_date`, `end_date`, `initial_total_value`, and an optional
+    list of `draft_planned_changes` in the JSON body, validated by
+    `ProjectionPreviewRequestSchema`.
+
+    Args:
+        portfolio_id (int): The ID of the portfolio for the preview.
+
+    Returns:
+        JSON response with the projection result (list of date-value pairs) if successful (200),
+        or an error response (400, 401, 403, 404, 500).
+        
+    Raises:
+        BadRequestError: For invalid or missing request data.
+        AccessDeniedError: If the user does not own the portfolio.
+        PortfolioNotFoundError: If the portfolio ID is not found.
+        ApplicationException: For internal server errors during calculation.
+    """
+    current_user_id_str = get_jwt_identity()
+    try:
+        current_user_id = int(current_user_id_str)
+    except (ValueError, TypeError):
+        current_app.logger.error(f"Invalid user ID format in JWT for preview: {current_user_id_str}")
+        raise ApplicationException("Invalid user identity.", status_code=401)
+
+    json_data = request.get_json()
+    if not json_data:
+        # Use ApplicationException for non-payload related errors like wrong content type.
+        raise ApplicationException("Request body must be JSON.", status_code=415, logging_level="warning")
+
+    # Validate request data using Pydantic schema.
+    try:
+        preview_request = ProjectionPreviewRequestSchema(**json_data)
+    except PydanticValidationError as e:
+        current_app.logger.warning(f"Projection preview request validation failed for PortfolioID {portfolio_id}: {e.errors()}")
+        raise BadRequestError("Invalid input data for projection preview.", payload={"errors": e.errors()})
+    except Exception as e: # Catch any other unexpected parsing errors
+        current_app.logger.error(f"Unexpected error parsing projection preview request for PortfolioID {portfolio_id}: {e}", exc_info=True)
+        raise BadRequestError("Error processing request data. Ensure format is correct.")
+
+    # Authorization Check: Ensure the current user owns the portfolio.
+    portfolio_owner_check = Portfolio.query.filter_by(portfolio_id=portfolio_id, user_id=current_user_id).first()
+    if not portfolio_owner_check:
+        if Portfolio.query.filter_by(portfolio_id=portfolio_id).first():
+            current_app.logger.warning(
+                f"Access Denied: UserID '{current_user_id}' attempted projection preview for PortfolioID '{portfolio_id}' "
+                "which they do not own."
+            )
+            raise AccessDeniedError("You do not have permission to access this portfolio.")
+        else:
+            raise PortfolioNotFoundError(f"Portfolio with ID {portfolio_id} not found.")
+    
+    current_app.logger.info(f"Calculating projection preview for PortfolioID '{portfolio_id}' (UserID '{current_user_id}').")
+    try:
+        # Call the projection engine directly with the validated and parsed data.
+        # `draft_planned_changes` are passed as Pydantic model instances.
+        projection_points = calculate_projection(
+            portfolio_id=portfolio_id, # Or pass portfolio_owner_check if it contains all needed data (e.g. assets)
+            start_date=preview_request.start_date,
+            end_date=preview_request.end_date,
+            initial_total_value=preview_request.initial_total_value,
+            draft_changes_input=preview_request.draft_planned_changes 
         )
         
-        formatted_results = [
-            {"date": date.isoformat(), "value": str(value)}
-            for date, value in projection_results
+        # Format results for JSON response (dates to ISO strings, Decimals to strings).
+        formatted_projection_points = [
+            {"date": date_point.isoformat(), "value": str(value_point)}
+            for date_point, value_point in projection_points
         ]
-        return jsonify(formatted_results), 200
+        current_app.logger.info(f"Projection preview calculated successfully for PortfolioID '{portfolio_id}'.")
+        return jsonify(formatted_projection_points), 200
 
-    except ValueError as e:
-        # Catch ValueErrors from projection_engine (e.g., portfolio not found if somehow missed above, or other data issues)
-        current_app.logger.warning(f"ValueError during projection calculation for preview: {e}")
-        raise BadRequestError(str(e))
+    except ValueError as ve: # Catch specific ValueErrors from the projection engine.
+        current_app.logger.warning(f"ValueError during projection preview calculation for PortfolioID '{portfolio_id}': {ve}", exc_info=True)
+        raise BadRequestError(f"Error in projection parameters or data: {str(ve)}")
     except Exception as e:
-        current_app.logger.exception(f"Unexpected error during projection preview for portfolio {portfolio_id}")
-        raise ApplicationException("An unexpected error occurred during projection calculation.", status_code=500, logging_level="exception") 
+        current_app.logger.exception(f"Unexpected error during projection preview for PortfolioID '{portfolio_id}'.")
+        # General error for unexpected issues in the calculation.
+        raise ApplicationException("An unexpected error occurred during the projection preview calculation.", status_code=500)

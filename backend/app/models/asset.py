@@ -1,9 +1,27 @@
+"""Defines the Asset SQLAlchemy model."""
+
 from app import db
 from sqlalchemy.sql import func
 from app.enums import AssetType
 from sqlalchemy.orm import validates
 
 class Asset(db.Model):
+    """Represents an asset within a user's portfolio.
+
+    Attributes:
+        asset_id: The unique identifier for the asset.
+        portfolio_id: The ID of the portfolio this asset belongs to.
+        asset_type: The type of the asset (e.g., STOCK, BOND, REAL_ESTATE).
+        name_or_ticker: The name or ticker symbol of the asset (e.g., 'AAPL', 'Vanguard S&P 500 ETF').
+        allocation_percentage: The percentage of the portfolio allocated to this asset.
+                                 Used if the user wants to define allocation by percentage.
+        allocation_value: The monetary value allocated to this asset.
+                          Used if the user wants to define allocation by a fixed value.
+        manual_expected_return: The user-defined expected return for this asset (e.g., 7.50 for 7.5%).
+                                This overrides any automatically fetched expected return.
+        created_at: The timestamp when the asset was created.
+        portfolio: The relationship to the Portfolio model.
+    """
     __tablename__ = 'assets'
 
     asset_id = db.Column(db.Integer, primary_key=True)
@@ -13,7 +31,7 @@ class Asset(db.Model):
     # Add constraint later if needed: CheckConstraint('(allocation_percentage IS NULL AND allocation_value IS NOT NULL) OR (allocation_percentage IS NOT NULL AND allocation_value IS NULL)', name='check_allocation_exclusive')
     allocation_percentage = db.Column(db.Numeric(5, 2), nullable=True)
     allocation_value = db.Column(db.Numeric(15, 2), nullable=True)
-    manual_expected_return = db.Column(db.Numeric(5, 2), nullable=True) # e.g., 7.50 for 7.5%
+    manual_expected_return = db.Column(db.Numeric(5, 2), nullable=True) # e.g., 7.50 for 7.5%, this overrides any fetched values
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
     # --- Validation ---
@@ -23,9 +41,11 @@ class Asset(db.Model):
 
         Ensures that if allocation_percentage is set, allocation_value is
         cleared to maintain exclusivity between the two allocation methods.
-        Allows setting the value to None.
+        Allows setting the value to None. If a value is provided, it also
+        clears any existing allocation_value.
         """
         if value is not None:
+            # If allocation_percentage is being set, ensure allocation_value is None.
             if self.allocation_value is not None:
                  self.allocation_value = None # Clear the other value
             # Optional: Add range validation if not handled elsewhere (e.g., Pydantic/DB constraint)
@@ -39,9 +59,11 @@ class Asset(db.Model):
 
         Ensures that if allocation_value is set, allocation_percentage is
         cleared to maintain exclusivity between the two allocation methods.
-        Allows setting the value to None.
+        Allows setting the value to None. If a value is provided, it also
+        clears any existing allocation_percentage.
         """
         if value is not None:
+            # If allocation_value is being set, ensure allocation_percentage is None.
             if self.allocation_percentage is not None:
                 self.allocation_percentage = None # Clear the other value
             # Optional: Add non-negative validation if not handled elsewhere
@@ -53,7 +75,14 @@ class Asset(db.Model):
     portfolio = db.relationship('Portfolio', back_populates='assets')
 
     def to_dict(self):
-        """Serialize the Asset object to a dictionary."""
+        """Serialize the Asset object to a dictionary.
+
+        This method is useful for converting the asset's data into a
+        JSON-serializable format, often for API responses.
+
+        Returns:
+            A dictionary representation of the Asset.
+        """
         return {
             'asset_id': self.asset_id,
             'portfolio_id': self.portfolio_id,
