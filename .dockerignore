@@ -1,0 +1,36 @@
+.env
+.env.*
+!/.env.example
+
+# Docker specific
+docker-compose.yml
+Dockerfile
+
+# Python specific
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE / OS specific
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Other
+dump.rdb 
