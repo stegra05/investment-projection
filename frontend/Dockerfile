@@ -19,4 +19,5 @@ COPY . .
 EXPOSE 3000
 
 # Define the command to run your app
-CMD ["npm", "start"] 
+# Vite dev server needs to bind to 0.0.0.0 to work in Docker
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"] 

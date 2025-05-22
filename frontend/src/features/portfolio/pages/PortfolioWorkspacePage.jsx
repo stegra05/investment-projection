@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Allotment } from 'allotment';
 import { usePortfolio } from '../state/PortfolioContext';
-import NavigationPanel from '../panels/NavigationPanel';
-import MainContentPanel from '../panels/MainContentPanel';
-import ProjectionPanel from '../panels/ProjectionPanel';
+import NavigationPanel from '../panels/NavigationPanel.jsx';
+import MainContentPanel from '../panels/MainContentPanel.jsx';
+import ProjectionPanel from '../panels/ProjectionPanel.jsx';
 import {
   BREADCRUMB_DASHBOARD,
   BREADCRUMB_PORTFOLIO_PREFIX,
@@ -142,4 +142,4 @@ function PortfolioWorkspacePage() {
   );
 }
 
-export default PortfolioWorkspacePage;
+export default PortfolioWorkspacePage; 

@@ -5,20 +5,30 @@ import svgr from 'vite-plugin-svgr';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      jsxRuntime: 'automatic',
+      include: '**/*.{js,jsx,ts,tsx}',
+    }),
     svgr({
-      // svgr options: https://react-svgr.com/docs/options/
       svgrOptions: {
-        // ...
+        // svgr options
       },
-      // esbuild options, to transform jsx to js
-      esbuildOptions: {
-        // ...
-      },
-      // A minimatch pattern, or array of patterns, which specifies the files in the public directory to be compiled by svgr
-      include: "**/*.svg?react",
-      // A minimatch pattern, or array of patterns, which specifies the files in the public directory to be excluded by svgr
-      exclude: "",
     }),
   ],
+  server: {
+    port: 3000,
+    host: true, // Allow external connections (needed for Docker)
+    watch: {
+      usePolling: true, // Enable polling for file watching in Docker
+    },
+    proxy: {
+      // Proxy API requests to the backend server
+      // Example:
+      // '/api': {
+      //   target: 'http://localhost:5000', // Your backend server URL
+      //   changeOrigin: true,
+      //   secure: false,
+      // },
+    },
+  },
 });

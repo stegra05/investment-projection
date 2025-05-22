@@ -2,11 +2,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import useAuthStore from './store/authStore';
-import LoginPage from './features/auth/pages/LoginPage';
-import RegisterPage from './features/auth/pages/RegisterPage';
-import DashboardPage from './features/dashboard/pages/DashboardPage';
-import PortfolioWorkspacePage from './features/portfolio/pages/PortfolioWorkspacePage';
-import { PortfolioProvider } from './features/portfolio/state/PortfolioContext';
+import LoginPage from './features/auth/pages/LoginPage.jsx';
+import RegisterPage from './features/auth/pages/RegisterPage.jsx';
+import DashboardPage from './features/dashboard/pages/DashboardPage.jsx';
+import PortfolioWorkspacePage from './features/portfolio/pages/PortfolioWorkspacePage.jsx';
+import { PortfolioProvider } from './features/portfolio/state/PortfolioContext.jsx';
 
 const Layout = ({ children }) => <div className="min-h-screen bg-gray-50">{children}</div>;
 
@@ -58,4 +58,4 @@ function App() {
   );
 }
 
-export default App;
+export default App; 

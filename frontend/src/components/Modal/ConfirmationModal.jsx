@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import Button from '../Button/Button';
+import Button from '../Button/Button.jsx';
 import styles from './Modal.module.css'; // Import the CSS module
-import Spinner from '../Spinner/Spinner'; // Import Spinner
+import Spinner from '../Spinner/Spinner.jsx'; // Import Spinner
 
 function ConfirmationModal({
   isOpen,

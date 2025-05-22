@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import Input from '../../../components/Input/Input'; // Assuming path is correct
-import Button from '../../../components/Button/Button'; // Assuming path is correct
-import Spinner from '../../../components/Spinner/Spinner'; // Import Spinner
-import AlertMessage from '../../../components/AlertMessage/AlertMessage'; // Import AlertMessage
-import styles from '../../../components/Modal/Modal.module.css'; // Import common modal styles
+import Input from '../../../components/Input/Input.jsx'; 
+import Button from '../../../components/Button/Button.jsx'; 
+import Spinner from '../../../components/Spinner/Spinner.jsx'; 
+import AlertMessage from '../../../components/AlertMessage/AlertMessage.jsx';
+import styles from '../../../components/Modal/Modal.module.css'; 
 
 function CreatePortfolioModal({
   isOpen = false,

@@ -1,10 +1,10 @@
 import React from 'react';
-import Input from '../../../components/Input/Input';
-import Button from '../../../components/Button/Button';
-import Spinner from '../../../components/Spinner/Spinner';
-import AlertMessage from '../../../components/AlertMessage/AlertMessage';
+import Input from '../../../components/Input/Input.jsx';
+import Button from '../../../components/Button/Button.jsx';
+import Spinner from '../../../components/Spinner/Spinner.jsx';
+import AlertMessage from '../../../components/AlertMessage/AlertMessage.jsx';
 import useAppSettingsForm from '../hooks/useAppSettingsForm';
-import useTheme from '../../../hooks/useTheme'; // Import useTheme hook
+import useTheme from '../../../hooks/useTheme';  
 import {
   HEADING_APPLICATION_SETTINGS,
   LABEL_DEFAULT_INFLATION_RATE,

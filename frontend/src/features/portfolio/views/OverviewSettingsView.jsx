@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom'; // Assuming portfolioId comes from route params
-import Spinner from '../../../components/Spinner/Spinner'; // Assuming Spinner component exists
-import AlertMessage from '../../../components/AlertMessage/AlertMessage'; // Assuming AlertMessage component exists
-import Button from '../../../components/Button/Button'; // Corrected path
-import SkeletonLoader from '../../../components/SkeletonLoader/SkeletonLoader'; // Import SkeletonLoader
-import { usePortfolio } from '../state/PortfolioContext'; // Import usePortfolio
-import useTheme from '../../../hooks/useTheme'; // Import the useTheme hook
+import { useParams } from 'react-router-dom'; 
+import Spinner from '../../../components/Spinner/Spinner.jsx'; 
+import AlertMessage from '../../../components/AlertMessage/AlertMessage.jsx';
+import Button from '../../../components/Button/Button.jsx';
+import SkeletonLoader from '../../../components/SkeletonLoader/SkeletonLoader.jsx'; 
+import { usePortfolio } from '../state/PortfolioContext';
+import useTheme from '../../../hooks/useTheme'; 
 
 import {
   HEADING_PORTFOLIO_OVERVIEW,
@@ -17,19 +17,16 @@ import {
   LABEL_OVERALL_RISK_PROFILE,
   LABEL_CREATED_ON,
   LABEL_LAST_UPDATED,
-  // Aria Labels for Edit Buttons
   ARIA_LABEL_EDIT_PORTFOLIO_NAME,
   ARIA_LABEL_EDIT_PORTFOLIO_DESCRIPTION,
-} from '../../../constants/textConstants'; // Assuming these constants exist or will be added
+} from '../../../constants/textConstants'; 
+ 
 
-// Placeholder for an edit icon if available, otherwise use text
-// import { FaPencilAlt } from 'react-icons/fa'; 
-
-// Import the new hook and component
+ 
 import usePortfolioEditForm from '../hooks/usePortfolioEditForm';
-import EditPortfolioDetailModal from '../components/EditPortfolioDetailModal';
-import ApplicationSettingsSection from '../components/ApplicationSettingsSection'; // Import new component
-import DataManagementSection from '../components/DataManagementSection'; // Import new component
+import EditPortfolioDetailModal from '../components/EditPortfolioDetailModal.jsx';
+import ApplicationSettingsSection from '../components/ApplicationSettingsSection.jsx';  
+import DataManagementSection from '../components/DataManagementSection.jsx';  
 
 const OverviewSettingsView = () => {
   const { portfolioId: routePortfolioId } = useParams(); // Renamed to avoid conflict with context's portfolioId if any

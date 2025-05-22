@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { usePortfolio } from '../state/PortfolioContext';
-import EditAssetModal from '../components/EditAssetModal'; // Import the modal
-import ConfirmationModal from '../../../components/Modal/ConfirmationModal'; // Import the confirmation modal
-import AddAssetForm from '../components/AddAssetForm'; // Import the new form component
-import AssetList from '../components/AssetList'; // Import the new list component
+import EditAssetModal from '../components/EditAssetModal.jsx';  
+import ConfirmationModal from '../../../components/Modal/ConfirmationModal.jsx';  
+import AddAssetForm from '../components/AddAssetForm.jsx';  
+import AssetList from '../components/AssetList.jsx';  
 import { ASSET_TYPE_OPTIONS } from '../../../constants/portfolioConstants';
 import {
   CONFIRM_DELETE_ASSET_TITLE,
@@ -11,9 +11,9 @@ import {
   CONFIRM_DELETE_ASSET_MESSAGE,
   HEADING_EXISTING_ASSETS,
 } from '../../../constants/textConstants';
-import useNotification from '../../../hooks/useNotification'; // Import the hook
-import Spinner from '../../../components/Spinner/Spinner'; // Import Spinner
-import { useAssetCRUD } from '../hooks/useAssetCRUD'; // Import the new hook
+import useNotification from '../../../hooks/useNotification';  
+import Spinner from '../../../components/Spinner/Spinner.jsx';  
+import { useAssetCRUD } from '../hooks/useAssetCRUD';  
 
 function AssetsView() {
   const { portfolio, refreshPortfolio, portfolioId } = usePortfolio();

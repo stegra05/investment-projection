@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import NotificationContainer from '../Notification/NotificationContainer';
+import NotificationContainer from '../Notification/NotificationContainer.jsx';
 
 const Layout = ({ children }) => (
   <div className="min-h-screen bg-gray-50 text-gray-900">

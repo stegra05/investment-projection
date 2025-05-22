@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { usePortfolio } from '../state/PortfolioContext'; // Corrected path
-import TimelineView from '../components/TimelineView'; // Import TimelineView
-import AddEditChangePanel from '../components/AddEditChangePanel'; // Import the new panel
-import ChangeFilters from '../components/ChangeFilters';
-import ChangeDetailsList from '../components/ChangeDetailsList';
+import { usePortfolio } from '../state/PortfolioContext'; 
+import TimelineView from '../components/TimelineView.jsx';
+import AddEditChangePanel from '../components/AddEditChangePanel.jsx';
+import ChangeFilters from '../components/ChangeFilters.jsx';
+import ChangeDetailsList from '../components/ChangeDetailsList.jsx';
 import useFilteredChanges from '../hooks/useFilteredChanges';
-import useNotification from '../../../hooks/useNotification'; // Import the hook
-import { usePlannedChangeCRUD } from '../hooks/usePlannedChangeCRUD'; // Import the new CRUD hook
-import Spinner from '../../../components/Spinner/Spinner'; // Import Spinner
-import Button from '../../../components/Button/Button'; // Import Button component
+import useNotification from '../../../hooks/useNotification';
+import { usePlannedChangeCRUD } from '../hooks/usePlannedChangeCRUD';
+import Spinner from '../../../components/Spinner/Spinner.jsx'; 
+import Button from '../../../components/Button/Button.jsx'; 
 
 const ChangesView = () => {
   const {

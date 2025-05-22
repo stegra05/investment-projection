@@ -88,17 +88,17 @@ services:
       dockerfile: Dockerfile
     container_name: investment_projection_frontend
     ports:
-      - "${REACT_PORT_ON_HOST:-3000}:3000" # Expose React port to host (use port from .env or default 3000)
+      - "${REACT_PORT_ON_HOST:-3000}:3000" # Expose Vite dev server port to host
     volumes:
       - ./frontend:/usr/src/app # Mount local frontend code for hot-reloading
       # Use an anonymous volume for node_modules to prevent local overriding container install
       - /usr/src/app/node_modules
     environment:
-      # Helps with hot-reloading file watching inside Docker
-      CHOKIDAR_USEPOLLING: "true"
-      # Pass the API base URL to the React app
-      REACT_APP_API_BASE_URL: ${REACT_APP_API_BASE_URL:-http://localhost:5000/api/v1}
-    # Required for Create React App interactive terminal
+      # Vite specific environment variables
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:5000/api/v1}
+      # Enable hot-reloading in Docker
+      WATCHPACK_POLLING: "true"
+    # Required for Vite dev server interactive terminal
     stdin_open: true
     tty: true
     depends_on:

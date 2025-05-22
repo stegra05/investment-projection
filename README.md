@@ -191,7 +191,69 @@ For more Pytest options, refer to the [official Pytest documentation](https://do
 | T12| Basic Testing Setup (Jest/Pytest)    | Should     | M           | T1           |
 
 
-## 7. Contributing
+## 7. Development Guidelines
+
+### File Naming Conventions
+
+To maintain consistency and ensure proper build processes, follow these file naming conventions:
+
+**Frontend Files:**
+- **React Components**: Use `.jsx` extension for all files containing JSX syntax
+  - Example: `Button.jsx`, `PortfolioView.jsx`, `LoginForm.jsx`
+- **JavaScript Utilities**: Use `.js` extension for files without JSX (hooks, services, configurations)
+  - Example: `useTheme.js`, `portfolioService.js`, `api.js`
+- **TypeScript**: Use `.tsx` for TypeScript files with JSX, `.ts` for TypeScript files without JSX
+
+**Backend Files:**
+- **Python Files**: Use `.py` extension for all Python files
+- **Configuration Files**: Use appropriate extensions (`.json`, `.yaml`, `.env`)
+
+### Code Organization
+
+**Frontend Structure:**
+```
+src/
+├── components/           # Reusable UI components (.jsx)
+├── features/            # Feature-specific components and logic
+│   └── auth/
+│       ├── components/  # Feature-specific components (.jsx)
+│       ├── hooks/       # Feature-specific hooks (.js)
+│       └── pages/       # Feature pages (.jsx)
+├── hooks/               # Global custom hooks (.js)
+├── api/                 # API service functions (.js)
+├── store/               # Global state management (.js)
+├── constants/           # Application constants (.js)
+└── utils/               # Utility functions (.js)
+```
+
+**Backend Structure:**
+```
+app/
+├── models/              # SQLAlchemy models (.py)
+├── routes/              # Flask route blueprints (.py)
+├── services/            # Business logic layer (.py)
+├── schemas/             # Pydantic schemas (.py)
+└── utils/               # Utility functions (.py)
+```
+
+### Import Statement Standards
+
+- Always use explicit file extensions in imports for component files
+- Use relative imports for local files, absolute imports for shared utilities
+- Group imports: React first, external libraries, then internal imports
+
+```javascript
+// Good examples:
+import React, { useState } from 'react';
+import Button from '../../../components/Button/Button.jsx';
+import { usePortfolio } from '../state/PortfolioContext';
+import portfolioService from '../../../api/portfolioService.js';
+
+// Avoid:
+import Button from '../../../components/Button/Button'; // Missing extension
+```
+
+## 8. Contributing
 
 This is currently a personal project.
 

@@ -1,13 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-// Adjust import paths based on actual file location (frontend/src/features/dashboard/pages)
 import usePortfolioListStore from '../../../store/portfolioListStore';
 import useAuthStore from '../../../store/authStore';
-// Assuming a Button component exists relative to frontend/src
-import Button from '../../../components/Button/Button';
-// Assuming a Spinner component exists relative to frontend/src
-import CreatePortfolioModal from '../components/CreatePortfolioModal';
-import portfolioService from '../../../api/portfolioService'; // <-- Import portfolio service
+import Button from '../../../components/Button/Button.jsx';
+import CreatePortfolioModal from '../components/CreatePortfolioModal.jsx';
+import portfolioService from '../../../api/portfolioService';
 
 function DashboardPage() {
   const {
@@ -118,4 +115,4 @@ function DashboardPage() {
   );
 }
 
-export default DashboardPage;
+export default DashboardPage; 

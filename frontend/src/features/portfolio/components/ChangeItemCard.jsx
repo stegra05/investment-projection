@@ -6,7 +6,7 @@ import {
   FaCalendarAlt,
   FaMoneyBillWave,
 } from 'react-icons/fa';
-import { getChangeTypeIcon } from '../utils/iconUtils.js';
+import { getChangeTypeIcon } from '../utils/iconUtils.jsx';
 
 const ChangeItemCard = ({ change, onEdit, onDelete, onSelectChange, isSelected, portfolioCurrency, assetIdToNameMap }) => {
   if (!change) return null;

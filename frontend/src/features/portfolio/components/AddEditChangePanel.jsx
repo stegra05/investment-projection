@@ -3,15 +3,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes } from 'react-icons/fa';
 import { usePortfolio } from '../state/PortfolioContext';
 import PropTypes from 'prop-types';
-import RecurrenceSettingsForm from './RecurrenceSettingsForm';
-import TargetAllocationInput from './TargetAllocationInput';
+import RecurrenceSettingsForm from './RecurrenceSettingsForm.jsx';
+import TargetAllocationInput from './TargetAllocationInput.jsx';
 import { usePlannedChangeForm } from '../hooks/usePlannedChangeForm';
-import Spinner from '../../../components/Spinner/Spinner';
-import AlertMessage from '../../../components/AlertMessage/AlertMessage';
+import Spinner from '../../../components/Spinner/Spinner.jsx';
+import AlertMessage from '../../../components/AlertMessage/AlertMessage.jsx';
 import { useChangePanelActions } from '../hooks/useChangePanelActions';
-import Button from '../../../components/Button/Button';
-import Input from '../../../components/Input/Input';
-import Select from '../../../components/Select/Select';
+import Button from '../../../components/Button/Button.jsx';
+import Input from '../../../components/Input/Input.jsx';
+import Select from '../../../components/Select/Select.jsx';
 
 const CHANGE_TYPE_OPTIONS_FOR_SELECT = [
   { value: 'Contribution', label: 'Contribution' },
