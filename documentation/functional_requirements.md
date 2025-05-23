@@ -24,7 +24,7 @@ Requirements are contextualized within the adopted **hybrid multi-panel and guid
 * **M-4: Portfolio Management (CRUD):** Users must be able to create, view, edit, and delete portfolios.
     * ***Frontend Location:*** **Create initiated from 'Dashboard'. View/Switch handled via 'Navigation Panel'. Edit/Delete actions available via Navigation Panel or within an 'Overview/Settings View' in the Main Content Panel.**
 * **M-5: Future Change Planning:** Users must be able to define and schedule future single changes (contributions, withdrawals, reallocations).
-    * ***Frontend Location:*** **Implemented within a 'Planned Changes View' of the Main Content Panel.** *(See also SH-UX2 for recurring)*
+    * ***Frontend Location:*** **Implemented within a 'Changes View' of the Main Content Panel.** *(See also SH-UX2 for recurring)*
 * **M-6: Projection Visualization (Basic):** The system must calculate and display a visual graph of the projected portfolio value (deterministic model).
     * ***Frontend Location:*** **Inputs and visualization implemented within the dedicated 'Projection Panel' of the Portfolio Workspace.** *(See also SH-MC1, SH-MC3, SH-INF2 for enhancements. Consider a Guided Workflow for complex setup - see SH-GW1 below)*
 * **M-7: User Registration & Login:** Users must be able to create an account and log in securely.
@@ -67,9 +67,9 @@ Requirements are contextualized within the adopted **hybrid multi-panel and guid
 * **SH-UX1 (Projection Feedback):** Display informative status during projections (e.g., "Calculating...", "Fetching data..."). Uses clear microcopy and subtle animation.
     * *(Projection Panel)*
 * **SH-UX2 (Recurring Changes):** Define recurring future changes.
-    * *(Planned Changes View)*
+    * *(Changes View)*
 * **SH-UX3 (Contextual Info):** Display relevant contextual info in change form (e.g., current balance if relevant). Uses clear microcopy/tooltips.
-    * *(Planned Changes View)*
+    * *(Changes View)*
 * **SH-GW1 (Guided Projection Workflow):** The system SHOULD use a guided workflow (e.g., modal steps, dedicated workflow panel state) for configuring complex projections like Monte Carlo, breaking down parameter inputs logically. Workflow uses clear, guiding language and smooth animations. *(Reflects accepted idea #3)*
     * ***Frontend Location:*** **Triggered from the 'Projection Panel'.**
 * **SH-AN1 (Risk Profile):** Display portfolio risk metrics including risk score, volatility, and confidence intervals.

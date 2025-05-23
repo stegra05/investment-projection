@@ -28,10 +28,10 @@ This document summarizes the revised key User Interface (UI) and User Experience
 * **Portfolio Workspace Panels (Example Configuration):**
     * **Navigation Panel:** List of user portfolios. Clear visual indication of the selected portfolio. Uses professional, clear typography.
     * **Main Content/Editor Panel:** This is the primary interactive area. Content views within should maintain consistency:
-        * An **Assets View:** Clean table or card list for assets. Input fields styled for clarity. Allocation guidance (%) clearly visible. Error messages are specific and placed near the source.
-        * A **Planned Changes View:** List or timeline view of changes. Forms for adding/editing changes are clear and potentially part of a guided workflow for complex recurring changes (SH-UX2). Uses helpful microcopy (SH-UX3).
-        * An **Overview/Settings View:** Displays portfolio metadata. Clear headings and potentially input fields for editable items (like name, description, inflation rate - SH-INF1).
-    * **Projection Panel:** Contains clear input fields for parameters. The Recharts chart uses the chosen color palette effectively (e.g., vibrant accent for key lines/areas, neutral tones otherwise). Status feedback (SH-UX1) is clear and uses subtle animation.
+        * An **Assets View:** Clean table or card list for assets (corresponding to `AssetsView.jsx`). Input fields styled for clarity. Allocation guidance (%) clearly visible. Error messages are specific and placed near the source.
+        * A **Changes View:** List or timeline view of changes (corresponding to `ChangesView.jsx`). Forms for adding/editing changes are clear and potentially part of a guided workflow for complex recurring changes (SH-UX2). Uses helpful microcopy (SH-UX3).
+        * An **Overview/Settings View:** Displays portfolio metadata (corresponding to `OverviewSettingsView.jsx`). Clear headings and potentially input fields for editable items (like name, description, inflation rate - SH-INF1).
+    * **Projection Panel:** Contains clear input fields for parameters. The Recharts chart uses the chosen color palette effectively (e.g., vibrant accent for key lines/areas, neutral tones otherwise). Status feedback (SH-UX1) is clear and uses subtle animation. (Corresponds to `ProjectionPanel.jsx`).
 
 ## 4. Core User Workflows & Guided Workflows
 
