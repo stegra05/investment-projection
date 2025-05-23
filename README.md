@@ -1,105 +1,205 @@
-# Investment Planning Projection Website
+# Investment Projection Web Application
 
 ## 1. Description
 
-A web application designed for intermediate to advanced users to build investment portfolios, plan future contributions/changes, and visualize long-term wealth projections based on user-defined assumptions. This project focuses on providing flexible planning capabilities.
+A web application designed for personal finance planners and finance students to build investment portfolios, plan future contributions/changes (including recurring ones), and visualize long-term (3-40 year) wealth projections based on user-defined assumptions. This project focuses on providing flexible planning capabilities with a Data-Focused Flat 2.0 aesthetic.
 
-## 2. Features (Core - Initial Version)
+## 2. Features
 
-* Create, Edit, Delete investment portfolios.
-* Select core assets (Stocks, Bonds) and specify allocation/weight.
-* Manually input expected returns for assets/portfolio components.
-* Plan future portfolio changes (contributions, withdrawals, reallocations) over time.
-* Visualize projected portfolio value growth via a graph.
-* Secure user registration and login to save portfolio data.
-* Simple, clean, and efficient user interface.
+The application implements the following core features:
 
-## 3. Technology Stack Summary
+*   **Portfolio Management (CRUD):** Create, view, edit, and delete investment portfolios.
+*   **Asset Selection & Allocation:** Select core assets (e.g., Stocks, Bonds) and specify their allocation amount or weight within the portfolio. The UI provides guidance on total allocation and remaining percentages.
+*   **Manual Expected Returns:** Input expected rates of return for individual assets or portfolio components.
+*   **Future Change Planning:** Define and schedule future single and recurring portfolio changes (e.g., contributions, withdrawals, reallocations).
+*   **Projection Visualization:** Calculate and display a visual graph of the projected portfolio value based on a deterministic model.
+*   **User Authentication:** Secure user registration and login to save and manage portfolio data.
+*   **Task Management:** Utilizes a background task queue (Celery) for handling potentially long-running operations like complex projections, with UI feedback on task status.
+*   **User Interface:** A simple, clean, and efficient user interface following Flat 2.0 design principles, with clear error messaging (e.g., for asset allocation).
+*   **(Should-have additions based on project context):**
+    *   Define recurring future changes (e.g., monthly contributions). (SH-UX2)
+    *   Asynchronous task processing for operations like projections. (SH-TK1)
+    *   Display task status and progress in the UI. (SH-TK2)
 
-* **Frontend:** React
-* **Backend:** Flask (Python)
-* **Database:** PostgreSQL
-* **Database Interaction:** SQLAlchemy (with Flask-SQLAlchemy/Flask-Migrate)
-* **Task Queue:** Celery (with Redis as broker/backend)
-* **Version Control:** Git / GitHub
-* **Task Tracking:** Trello
-* **Environment:** Python `venv`
-* **Testing (Planned):** Jest (React), Pytest (Flask)
+## 3. Technology Stack
 
-## 4. Setup (Local Development)
+*   **Frontend:**
+    *   **Framework/Library:** React
+    *   **Build Tool/Dev Server:** Vite
+    *   **Routing:** React Router
+    *   **Styling:** Tailwind CSS
+    *   **State Management:** Zustand (global), React Context/Hooks (local)
+    *   **Data Fetching:** Axios
+    *   **Charting:** Recharts
+    *   **Animation (Considered):** Framer Motion
+    *   **Code Quality:** ESLint, Prettier
+    *   **Testing (Planned):** Jest/React Testing Library
+*   **Backend:**
+    *   **Framework:** Flask (Python)
+    *   **Database:** PostgreSQL
+    *   **ORM:** SQLAlchemy (with Flask-SQLAlchemy, Flask-Migrate)
+    *   **Task Queue:** Celery
+    *   **Message Broker/Result Backend:** Redis
+    *   **API Interaction:** Pydantic (for data validation/serialization)
+    *   **Authentication:** Flask-JWT-Extended
+    *   **Security:** Flask-CORS, Flask-Limiter, Flask-Talisman
+    *   **Testing:** Pytest
+*   **DevOps & General:**
+    *   **Containerization:** Docker, Docker Compose
+    *   **Version Control:** Git / GitHub
+    *   **Task Tracking:** Trello (conceptual)
+    *   **Environment Management (local, non-Docker):** Python `venv` / Node.js `npm`
 
-1.  **Prerequisites:** Ensure Git, Python 3.x, Node.js (npm/yarn), PostgreSQL, and Redis are installed.
-2.  **Clone Repository:** `git clone https://github.com/stegra05/investment-projection`
-3.  **Navigate to Project:** `cd investment-projection`
-4.  **Backend Setup:**
-    * `cd backend` (adjust directory name if needed)
-    * `python -m venv venv`
-    * `source venv/bin/activate` (Linux/macOS) or `.\venv\Scripts\activate` (Windows)
-    * `pip install -r requirements.txt`
-    * Configure Database Connection (e.g., set `DATABASE_URL` environment variable for your local PostgreSQL instance).
-    * Ensure PostgreSQL server is running and database/user exist.
-    * Apply Database Migrations (e.g., `flask db upgrade`).
-5.  **Frontend Setup:**
-    * `cd ../frontend` (adjust directory name if needed)
-    * `npm install` (or `yarn install`)
+## 4. Setup (Local Development with Docker)
 
-## 5. Usage (Local Development)
+This project is designed to be run using Docker and Docker Compose for a consistent development environment.
 
-1.  Ensure your local PostgreSQL server is running.
-2.  Ensure your local Redis server is running (e.g., `redis-server &`).
-3.  **Option A: Manual Startup (Individual Components)**
-    *   **Run Backend Flask Application:**
-        *   In a terminal, navigate to the `backend` directory.
-        *   Activate the virtual environment: `source .venv/bin/activate` (Linux/macOS) or `.\venv\Scripts\activate` (Windows).
-        *   Set required environment variables (e.g., `FLASK_APP=run.py`, `FLASK_ENV=development`, `DATABASE_URL`). Refer to `.env.example` or your local `.env` file for necessary variables.
-        *   Run the Flask app: `flask run`. This will typically serve on `http://127.0.0.1:5000`.
-    *   **Run Celery Worker:**
-        *   **In a separate terminal window:**
-        *   Navigate to the `backend` directory.
-        *   Activate the virtual environment.
-        *   Set the `FLASK_CONFIG` environment variable if you use different configurations (e.g., `export FLASK_CONFIG=development`). The `celery_worker.py` script will use this or default to 'default'.
-        *   Run the Celery worker: `celery -A celery_worker.app_celery worker -l INFO`.
-    *   **Run Frontend:**
-        *   Navigate to the `frontend` directory.
-        *   `npm start` (or `yarn start`).
-4.  **Option B: Automated Startup Script (macOS)**
-    *   A helper script `start_dev_env.sh` is provided at the root of the project to automate starting the Flask backend, Celery worker, and React frontend in separate Terminal windows on macOS.
-    *   **First-time setup:** Make the script executable:
+1.  **Prerequisites:**
+    *   Git
+    *   Docker Engine
+    *   Docker Compose
+    *   Python 3.x (for any local pre-commit hooks or scripts, if not using Docker for everything)
+    *   Node.js (npm/yarn) (for any local pre-commit hooks or scripts, if not using Docker for everything)
+
+2.  **Clone Repository:**
+    ```bash
+    git clone https://github.com/stegra05/investment-projection
+    ```
+
+3.  **Navigate to Project Root:**
+    ```bash
+    cd investment-projection
+    ```
+
+4.  **Environment Configuration:**
+    *   **Root `.env` File:** Copy the `.env.example` file in the project root to `.env`.
         ```bash
-        chmod +x start_dev_env.sh
+        cp .env.example .env
         ```
-    *   **Run the script:**
+        Review and update the variables in this `.env` file. These are used by `docker-compose.yml` to configure services (database credentials, ports, etc.).
+    *   **Backend `.env` File:** Copy the `backend/.env.example` file to `backend/.env`.
         ```bash
-        ./start_dev_env.sh
+        cp backend/.env.example backend/.env
         ```
-    *   **Stopping the Automated Environment:**
-        *   A corresponding `stop_dev_env.sh` script is provided to stop all services initiated by `start_dev_env.sh`.
-        *   **First-time setup (if not already done):** Make the script executable:
-            ```bash
-            chmod +x stop_dev_env.sh
-            ```
-        *   **Run the stop script:**
-            ```bash
-            ./stop_dev_env.sh
-            ```
-        *   This script will attempt to terminate the Flask backend, Celery worker, and the React frontend development server processes. You can verify their termination by checking if the services are unresponsive or by using process monitoring tools (e.g., `ps aux | grep flask`). The terminal windows opened by the start script will remain open but the processes within them should have exited.
-    *   **Important Notes for `start_dev_env.sh`:**
-        *   On macOS, you might need to grant Terminal permission to control other apps (System Settings -> Privacy & Security -> Automation) the first time you run it.
-        *   This script is currently tailored for macOS using `osascript`. For Linux/Windows, you'll need to adapt the commands for opening new terminals or use Option A.
-5.  Access application via browser at `http://localhost:3000` (or the port specified by React).
+        Review and update the variables in `backend/.env`. These are specific to the Flask application (secret keys, API settings, etc.). **Important:** The `DATABASE_URL` in `backend/.env` should match the database service configured in `docker-compose.yml` and the root `.env` file (e.g., `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${DB_PORT_INTERNAL}/${POSTGRES_DB}`).
+
+5.  **Start Core Services (Database & Redis):**
+    It's often useful to start the database and Redis first and ensure they are running correctly.
+    ```bash
+    docker-compose up -d db redis
+    ```
+    Wait for them to initialize. You can check their status with `docker-compose ps`.
+
+6.  **Backend Setup (Docker):**
+    *   The Docker image for the backend will be built automatically by Docker Compose. It handles Python environment setup and `pip install -r requirements.txt`.
+    *   **Apply Database Migrations:** Once the `db` service is healthy, run database migrations *inside* the backend container.
+        ```bash
+        docker-compose exec backend flask db upgrade
+        ```
+        If this is the first time, you might need to initialize the migrations:
+        ```bash
+        # Only if migrations haven't been initialized in the project yet:
+        # docker-compose exec backend flask db init 
+        # docker-compose exec backend flask db migrate -m "Initial migration." 
+        # docker-compose exec backend flask db upgrade
+        ```
+    *   The backend service can then be started (if not already running as a dependency):
+        ```bash
+        docker-compose up -d --build backend 
+        # Use --build to ensure the image is up-to-date with any code changes.
+        # Remove -d to see logs in the current terminal.
+        ```
+
+7.  **Frontend Setup (Docker):**
+    *   The Docker image for the frontend will be built by Docker Compose. It handles Node.js setup and `npm install`.
+    *   The frontend service can be started:
+        ```bash
+        docker-compose up -d --build frontend
+        # Use --build to ensure the image is up-to-date.
+        # Remove -d to see logs.
+        ```
+
+## 5. Usage (Local Development with Docker)
+
+The primary way to run the application for local development is using Docker Compose.
+
+1.  **Ensure Environment Variables are Set:**
+    *   Verify that you have copied `.env.example` to `.env` in the project root and `backend/.env.example` to `backend/.env`.
+    *   Ensure the variables in these files are correctly configured, especially `DATABASE_URL` in `backend/.env` to point to the Dockerized database service (e.g., `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${DB_PORT_INTERNAL}/${POSTGRES_DB}`).
+
+2.  **Start All Services with Docker Compose:**
+    *   Navigate to the project root directory (where `docker-compose.yml` is located).
+    *   To build (or rebuild) images and start all services (backend, frontend, celery worker, database, redis) in detached mode:
+        ```bash
+        docker-compose up -d --build
+        ```
+    *   To start services and see aggregated logs in your terminal (useful for debugging):
+        ```bash
+        docker-compose up --build
+        ```
+    *   If you need to start specific services, you can list them:
+        ```bash
+        docker-compose up -d --build db redis backend celeryworker frontend
+        ```
+
+3.  **Accessing the Application:**
+    *   **Frontend:** Once the services are running, the frontend should be accessible at `http://localhost:3000` (or the `REACT_PORT_ON_HOST` defined in your root `.env` file).
+    *   **Backend API:** The backend API will be available at `http://localhost:5000` (or the `FLASK_PORT_ON_HOST` defined in your root `.env` file). The frontend is configured to proxy requests to this address.
+
+4.  **Stopping Services:**
+    *   To stop all running services:
+        ```bash
+        docker-compose down
+        ```
+    *   To stop and remove volumes (e.g., to clear database data):
+        ```bash
+        docker-compose down -v
+        ```
+
+**Note on Local Non-Docker Setup:**
+While Docker is the recommended approach, minimal setup for running outside Docker would involve:
+*   Manually setting up and running PostgreSQL and Redis.
+*   Setting up Python virtual environment for backend, installing `requirements.txt`.
+*   Setting up Node.js environment for frontend, running `npm install`.
+*   Managing environment variables manually for each service.
+This method is not actively documented or supported as the primary development path.
 
 ### Accessing Logs
 
-The backend application (Flask and Celery) is configured to output detailed logs to files, which is essential for development and debugging.
+There are two primary ways to access logs when running the application with Docker Compose:
 
-*   **Log File Locations:** All log files are stored in the `backend/logs/` directory.
-    *   `flask_app.log`: Contains logs from the Flask web application, including request handling, API calls, and general application events.
-    *   `celery_worker.log`: Contains logs specific to Celery task processing, including task execution, errors within tasks, and worker status.
-    *   `errors.log`: A consolidated log file that captures all messages logged at `ERROR` or `CRITICAL` levels from both the Flask app and Celery workers. This is useful for quickly identifying critical issues.
-*   **Log Format:** Logs include a timestamp, log level, logger name (indicating the source module/component), module, function name, line number, and the log message.
-*   **Log Rotation:** Log files are automatically rotated daily, and a history of the last 7 days is kept to prevent files from growing excessively large.
-*   **Usage for Debugging:**
-    *   To monitor logs in real-time, you can "tail" the log files in your terminal. For example:
+1.  **Via `docker-compose logs`:**
+    This command fetches and displays the logs from the standard output/error streams of your containers. It's useful for a combined view or for services that primarily log to console.
+    *   To view logs for all services and follow new output:
+        ```bash
+        docker-compose logs -f
+        ```
+    *   To view and follow logs for specific services:
+        ```bash
+        docker-compose logs -f backend
+        docker-compose logs -f celeryworker
+        docker-compose logs -f frontend
+        docker-compose logs -f db
+        docker-compose logs -f redis
+        ```
+
+2.  **Via Log Files (Backend Service):**
+    The backend application (Flask and Celery worker) is configured to output detailed logs to files within the `backend` service container. These files are stored in the `/usr/src/app/logs` directory inside the container, which is mapped to `backend/logs` on your host machine due to the volume mount in `docker-compose.yml`.
+
+    *   **Log File Locations (accessible at `backend/logs/` on host):**
+        *   `flask_app.log`: Contains logs from the Flask web application, including request handling, API calls, and general application events. (Configured in `backend/config.py`)
+        *   `celery_worker.log`: Contains logs specific to Celery task processing, including task execution, errors within tasks, and worker status. (Celery logging is also configured to use handlers defined in `backend/config.py`)
+        *   `errors.log`: A consolidated log file that captures all messages logged at `ERROR` or `CRITICAL` levels from both the Flask app and Celery workers.
+    *   **Log Format:** Logs include a timestamp, log level, logger name (indicating the source module/component), module, function name, line number, and the log message.
+    *   **Log Rotation:** Log files are automatically rotated daily (at midnight), and a history of the last 7 days is kept to prevent files from growing excessively large. This is configured in `backend/config.py`.
+    *   **Usage for Debugging (Tailing Logs within Container):**
+        To monitor these log files in real-time directly from the container:
+        ```bash
+        docker-compose exec backend tail -f /usr/src/app/logs/flask_app.log
+        docker-compose exec backend tail -f /usr/src/app/logs/celery_worker.log
+        docker-compose exec backend tail -f /usr/src/app/logs/errors.log
+        ```
+        Alternatively, since these logs are volume-mounted to `backend/logs/` on your host:
         ```bash
         tail -f backend/logs/flask_app.log
         tail -f backend/logs/celery_worker.log
@@ -109,86 +209,81 @@ The backend application (Flask and Celery) is configured to output detailed logs
 
 ### Running Backend Tests
 
-The backend includes a comprehensive suite of unit and integration tests using Pytest.
+The backend includes a comprehensive suite of unit and integration tests using Pytest. Tests are run inside the Docker container to ensure an environment consistent with deployment.
 
-To run the tests:
+**To run all backend tests:**
 
-1.  Navigate to the `backend` directory:
-    ```bash
-    cd backend
-    ```
-2.  Ensure you have the development and testing dependencies installed (refer to the setup instructions, typically from `requirements.txt`). If you haven't already, activate your virtual environment:
-    ```bash
-    source venv/bin/activate  # Linux/macOS
-    # OR
-    .\venv\Scripts\activate  # Windows
-    ```
-3.  Run Pytest:
-    ```bash
-    pytest
-    ```
+Execute the following command in your project root directory:
+```bash
+docker-compose exec backend pytest
+```
 
 **Test Configuration:**
 
-*   Test execution is configured in `pytest.ini` located in the `backend` directory. This file includes settings for markers (like `celery`, `integration`, `unit`) and default options.
-*   The tests utilize an in-memory SQLite database for speed and isolation, as defined in the `TestingConfig` (see `backend/config.py`). Your original development database data is not affected.
-*   Celery background tasks are configured to run eagerly and synchronously during testing (`CELERY_TASK_ALWAYS_EAGER = True` in `TestingConfig`), so no separate Celery worker process is needed to run tests involving Celery tasks.
+*   **Pytest Configuration:** Test execution is configured in `backend/pytest.ini`. This file specifies test paths (`tests`), Python file patterns (`test_*.py`), and custom markers (e.g., `celery`).
+*   **Test Environment:** Tests utilize the `TestingConfig` (defined in `backend/config.py`). This configuration ensures:
+    *   An **in-memory SQLite database** is used for testing, providing speed and isolation from your development database.
+    *   **Celery tasks run eagerly and synchronously** (`CELERY_TASK_ALWAYS_EAGER = True`), meaning background tasks are executed immediately in the same process, simplifying testing without needing a separate Celery worker.
+    *   CSRF protection is typically disabled, and rate limiting might also be disabled for ease of testing.
+    *   Debug mode is often enabled for more detailed error output.
 
 **Test Coverage:**
 
-To run tests and generate a coverage report (ensure `pytest-cov` is installed, which should be part of `requirements.txt` development dependencies):
+To run tests and generate a code coverage report:
 
-```bash
-pytest --cov=app --cov-report=html
-```
-This command will:
-*   Run all tests.
-*   Measure code coverage for the `app` module (located at `backend/app`).
-*   Generate an HTML report in `backend/htmlcov/index.html` which you can open in a browser to explore coverage details.
+1.  Ensure `pytest-cov` is listed in `backend/requirements.txt` (it should be).
+2.  Run the following command:
+    ```bash
+    docker-compose exec backend pytest --cov=app --cov-report=html
+    ```
+    This command will:
+    *   Run all tests.
+    *   Measure code coverage for the `app` module (located at `backend/app`).
+    *   Generate an HTML report in `backend/htmlcov/`. You can open `backend/htmlcov/index.html` in your browser to explore coverage details. This directory is accessible on your host machine due to the volume mount.
 
 **Running Specific Tests:**
 
-You can run specific test files, directories, or tests marked with specific markers.
+You can run specific test files, directories, or tests marked with specific markers by appending standard Pytest arguments to the `docker-compose exec backend pytest` command.
 
 *   **By file:**
     ```bash
-    pytest tests/unit/test_models.py
-    pytest tests/integration/test_auth_routes.py
+    docker-compose exec backend pytest tests/unit/test_models.py
+    docker-compose exec backend pytest tests/integration/test_auth_routes.py
     ```
 *   **By directory:**
     ```bash
-    pytest tests/unit/
-    pytest tests/integration/
-    pytest tests/celery/
+    docker-compose exec backend pytest tests/unit/
+    docker-compose exec backend pytest tests/integration/
+    docker-compose exec backend pytest tests/celery/
     ```
-*   **By marker:** (Markers are defined in `pytest.ini`)
+*   **By marker** (markers are defined in `backend/pytest.ini`, e.g., `celery`):
     ```bash
-    pytest -m unit
-    pytest -m integration
-    pytest -m celery 
+    docker-compose exec backend pytest -m celery
+    # docker-compose exec backend pytest -m unit (if you add 'unit' marker in pytest.ini)
+    # docker-compose exec backend pytest -m integration (if you add 'integration' marker in pytest.ini)
     ```
-    (Note: The `celery` marker specifically targets tests for Celery tasks, though most Celery-related integration tests might also fall under the `integration` marker.)
+    (Note: The `celery` marker specifically targets tests for Celery tasks. Other markers like `unit` and `integration` can be added to `pytest.ini` and used to group tests.)
 
-For more Pytest options, refer to the [official Pytest documentation](https://docs.pytest.org/).
+For more Pytest options and advanced usage, refer to the [official Pytest documentation](https://docs.pytest.org/).
 
-## 6. Initial Task List (High-Level)
+## 6. Initial Task List (High-Level - *Status as of last major review*)
 
-*(Based on discussed features and architecture breakdown. Effort is a rough estimate: S=Small, M=Medium, L=Large, XL=Extra Large)*
+*(This section provides a snapshot. For up-to-date task status, refer to the project's Trello board or equivalent task management tool.)*
 
-| ID | Task Description                       | Priority   | Est. Effort | Dependencies |
-|----|----------------------------------------|------------|-------------|--------------|
-| T1 | Project Setup & Boilerplate          | Must       | M           | -            |
-| T2 | Basic Flask Backend Setup (API structure) | Must       | M           | T1           |
-| T3 | PostgreSQL DB Setup & Migrations     | Must       | M           | T1, T2       |
-| T4 | User Auth Backend (Flask/SQLAlchemy)   | Must       | L           | T3           |
-| T5 | Core Portfolio Models & API (Flask/SQLAlchemy) | Must | L           | T3           |
-| T6 | Backend Projection Engine (Core Logic) | Must       | XL          | T5           |
-| T7 | Basic React Frontend Setup           | Must       | M           | T1           |
-| T8 | Frontend Auth Pages & Logic          | Must       | L           | T4, T7       |
-| T9 | Frontend Portfolio Input/Mgmt UI     | Must       | L           | T5, T7       |
-| T10| Frontend Projection Viz Display      | Must       | L           | T6, T7       |
-| T11| Integrate FE/BE API Calls          | Must       | L           | T8, T9, T10  |
-| T12| Basic Testing Setup (Jest/Pytest)    | Should     | M           | T1           |
+| ID  | Task Description                               | Priority | Est. Effort | Status        | Dependencies |
+|-----|------------------------------------------------|----------|-------------|---------------|--------------|
+| T1  | Project Setup & Boilerplate                    | Must     | M           | Completed     | -            |
+| T2  | Basic Flask Backend Setup (API structure)      | Must     | M           | Completed     | T1           |
+| T3  | PostgreSQL DB Setup & Migrations               | Must     | M           | Completed     | T1, T2       |
+| T4  | User Auth Backend (Flask/SQLAlchemy)           | Must     | L           | Completed     | T3           |
+| T5  | Core Portfolio Models & API (Flask/SQLAlchemy) | Must     | L           | Completed     | T3           |
+| T6  | Backend Projection Engine (Core Logic)         | Must     | XL          | In Progress   | T5           |
+| T7  | Basic React Frontend Setup (Vite)              | Must     | M           | Completed     | T1           |
+| T8  | Frontend Auth Pages & Logic                    | Must     | L           | Completed     | T4, T7       |
+| T9  | Frontend Portfolio Input/Mgmt UI               | Must     | L           | In Progress   | T5, T7       |
+| T10 | Frontend Projection Viz Display                | Must     | L           | In Progress   | T6, T7       |
+| T11 | Integrate FE/BE API Calls                      | Must     | L           | In Progress   | T8, T9, T10  |
+| T12 | Basic Testing Setup (Jest/Pytest)              | Should   | M           | Completed     | T1           |
 
 
 ## 7. Development Guidelines
@@ -197,64 +292,92 @@ For more Pytest options, refer to the [official Pytest documentation](https://do
 
 To maintain consistency and ensure proper build processes, follow these file naming conventions:
 
-**Frontend Files:**
-- **React Components**: Use `.jsx` extension for all files containing JSX syntax
-  - Example: `Button.jsx`, `PortfolioView.jsx`, `LoginForm.jsx`
-- **JavaScript Utilities**: Use `.js` extension for files without JSX (hooks, services, configurations)
-  - Example: `useTheme.js`, `portfolioService.js`, `api.js`
-- **TypeScript**: Use `.tsx` for TypeScript files with JSX, `.ts` for TypeScript files without JSX
+**Frontend Files (JavaScript - React):**
+-   **React Components**: Use `.jsx` extension for all files containing JSX syntax.
+    -   Example: `Button.jsx`, `PortfolioView.jsx`, `LoginForm.jsx`
+-   **JavaScript Utilities/Modules**: Use `.js` extension for files without JSX (e.g., custom hooks, services, configurations, utility functions).
+    -   Example: `useTheme.js`, `portfolioService.js`, `api.js`, `validation.js`
+-   *(Note: TypeScript is not currently used in this project. If introduced, files would be `.ts` or `.tsx`.)*
 
-**Backend Files:**
-- **Python Files**: Use `.py` extension for all Python files
-- **Configuration Files**: Use appropriate extensions (`.json`, `.yaml`, `.env`)
+**Backend Files (Python - Flask):**
+-   **Python Files**: Use `.py` extension for all Python source code files.
+-   **Configuration Files**: Use appropriate extensions based on the format (e.g., `.env` for environment variables, `pytest.ini` for Pytest config).
 
 ### Code Organization
 
-**Frontend Structure:**
+The project follows a modular structure for both frontend and backend to promote separation of concerns and maintainability.
+
+**Frontend Structure (`frontend/src/`):**
 ```
 src/
-├── components/           # Reusable UI components (.jsx)
-├── features/            # Feature-specific components and logic
-│   └── auth/
-│       ├── components/  # Feature-specific components (.jsx)
-│       ├── hooks/       # Feature-specific hooks (.js)
-│       └── pages/       # Feature pages (.jsx)
-├── hooks/               # Global custom hooks (.js)
-├── api/                 # API service functions (.js)
-├── store/               # Global state management (.js)
-├── constants/           # Application constants (.js)
-└── utils/               # Utility functions (.js)
+├── api/                 # API service functions for backend communication (.js)
+├── assets/              # Static assets (images, icons - if not in public/)
+├── components/          # Global, reusable UI components (.jsx)
+├── config/              # Frontend configuration (e.g., API base URLs) (.js)
+├── constants/           # Application-wide constants (e.g., action types, text) (.js)
+├── features/            # Feature-specific modules, each potentially containing its own components, hooks, pages, utils
+│   ├── auth/            # Example: Authentication feature
+│   │   ├── components/  # Auth-specific React components (.jsx)
+│   │   ├── pages/       # Auth-related pages (e.g., LoginPage.jsx, RegistrationPage.jsx)
+│   │   └── utils/       # Auth-specific utilities (e.g., validation.js)
+│   └── portfolio/       # Example: Portfolio feature
+│       ├── components/
+│       ├── hooks/
+│       ├── layouts/
+│       ├── pages/
+│       ├── utils/
+│       └── views/
+├── hooks/               # Global custom React hooks (.js)
+├── layouts/             # Layout components (e.g., MainLayout.jsx) - if global ones exist
+├── pages/               # Top-level page components (if not organized by feature)
+├── store/               # Global state management stores (e.g., Zustand stores) (.js)
+├── styles/              # Global styles, Tailwind base/plugins, main CSS file (index.css)
+├── utils/               # Global utility functions (.js)
+└── App.jsx              # Main application component
+└── index.jsx            # Entry point for the React application
 ```
+*(This structure is a general guide; refer to the `frontend/src` directory for the exact organization.)*
 
-**Backend Structure:**
+**Backend Structure (`backend/app/`):**
 ```
 app/
-├── models/              # SQLAlchemy models (.py)
-├── routes/              # Flask route blueprints (.py)
-├── services/            # Business logic layer (.py)
-├── schemas/             # Pydantic schemas (.py)
-└── utils/               # Utility functions (.py)
+├── models/              # SQLAlchemy ORM models (.py)
+├── routes/              # API route blueprints/controllers (.py)
+├── services/            # Business logic layer, interacting with models and other services (.py)
+├── schemas/             # Pydantic schemas for request/response validation and serialization (.py)
+├── utils/               # Utility functions and decorators (.py)
+├── config/              # Configuration loading (though main config is in backend/config.py)
+├── enums.py             # Enumerations used across the backend
+├── error_handlers.py    # Global error handlers
+└── __init__.py          # Application factory (create_app)
 ```
+*(This structure is a general guide; refer to the `backend/app` directory for the exact organization.)*
 
-### Import Statement Standards
+### Import Statement Standards (Frontend - JavaScript/React)
 
-- Always use explicit file extensions in imports for component files
-- Use relative imports for local files, absolute imports for shared utilities
-- Group imports: React first, external libraries, then internal imports
-
-```javascript
-// Good examples:
-import React, { useState } from 'react';
-import Button from '../../../components/Button/Button.jsx';
-import { usePortfolio } from '../state/PortfolioContext';
-import portfolioService from '../../../api/portfolioService.js';
-
-// Avoid:
-import Button from '../../../components/Button/Button'; // Missing extension
-```
+-   **Clarity with Extensions:** While Vite (the frontend build tool) can resolve imports without extensions for `.js` and `.jsx` files, it is preferred to **use explicit file extensions** (e.g., `import MyComponent from './MyComponent.jsx';`) for custom module imports. This improves clarity and reduces ambiguity, especially when dealing with files that might have the same base name but different types (e.g., `utils.js` vs. `utils.css`).
+-   **Grouping and Ordering:** Group imports for better readability:
+    1.  React and core React libraries (e.g., `react`, `react-router-dom`).
+    2.  External/third-party libraries (e.g., `axios`, `recharts`, `zustand`).
+    3.  Internal absolute imports (e.g., from aliases if configured, or full paths from `src/`).
+    4.  Internal relative imports (e.g., `../components/`, `./utils.js`).
+-   **Example:**
+    ```javascript
+    import React, { useState, useEffect } from 'react'; // React imports
+    import { Link, useNavigate } from 'react-router-dom';
+    
+    import axios from 'axios'; // External libraries
+    import { useStore } from 'zustand';
+    
+    import MainLayout from 'src/layouts/MainLayout.jsx'; // Internal absolute/aliased
+    import { apiService } from 'src/api/apiService.js';
+    
+    import MyButton from '../components/common/MyButton.jsx'; // Internal relative
+    import { someUtilFunction } from './utils.js';
+    ```
 
 ## 8. Contributing
 
-This is currently a personal project.
+This is currently a personal project. If you are interested in contributing, please reach out to the project owner.
 
 ---
