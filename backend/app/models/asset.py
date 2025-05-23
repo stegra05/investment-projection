@@ -37,12 +37,12 @@ class Asset(db.Model):
     # --- Validation ---
     @validates('allocation_percentage')
     def validate_allocation_percentage(self, key, value):
-        """Validate allocation percentage.
+        """SQLAlchemy validation for `allocation_percentage`.
 
-        Ensures that if allocation_percentage is set, allocation_value is
-        cleared to maintain exclusivity between the two allocation methods.
-        Allows setting the value to None. If a value is provided, it also
-        clears any existing allocation_value.
+        Ensures that if `allocation_percentage` is set (not None), any existing
+        `allocation_value` is cleared. This enforces that an asset uses either
+        percentage-based or value-based allocation, but not both.
+        Allows `allocation_percentage` to be set to None.
         """
         if value is not None:
             # If allocation_percentage is being set, ensure allocation_value is None.
@@ -55,12 +55,12 @@ class Asset(db.Model):
 
     @validates('allocation_value')
     def validate_allocation_value(self, key, value):
-        """Validate allocation value.
+        """SQLAlchemy validation for `allocation_value`.
 
-        Ensures that if allocation_value is set, allocation_percentage is
-        cleared to maintain exclusivity between the two allocation methods.
-        Allows setting the value to None. If a value is provided, it also
-        clears any existing allocation_percentage.
+        Ensures that if `allocation_value` is set (not None), any existing
+        `allocation_percentage` is cleared. This enforces that an asset uses either
+        value-based or percentage-based allocation, but not both.
+        Allows `allocation_value` to be set to None.
         """
         if value is not None:
             # If allocation_value is being set, ensure allocation_percentage is None.
@@ -82,7 +82,9 @@ class Asset(db.Model):
         """Serialize the Asset object to a dictionary.
 
         This method is useful for converting the asset's data into a
-        JSON-serializable format, often for API responses.
+        JSON-serializable format, often for API responses. The `asset_type`
+        enum is converted to its string value. Numeric fields are converted
+        to strings to preserve precision.
 
         Returns:
             A dictionary representation of the Asset.
@@ -90,7 +92,7 @@ class Asset(db.Model):
         return {
             'asset_id': self.asset_id,
             'portfolio_id': self.portfolio_id,
-            'asset_type': self.asset_type.value if self.asset_type else None,
+            'asset_type': self.asset_type.value if self.asset_type else None, # Serialize enum to its string value
             'name_or_ticker': self.name_or_ticker,
             'allocation_percentage': str(self.allocation_percentage) if self.allocation_percentage is not None else None,
             'allocation_value': str(self.allocation_value) if self.allocation_value is not None else None,

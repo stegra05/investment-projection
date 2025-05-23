@@ -82,7 +82,8 @@ def verify_portfolio_ownership(f):
                 f"Method: {request.method}, Path: {request.path}. This might indicate a configuration issue."
             )
             # Return 401 as per standard for missing/invalid JWT.
-            abort(401, description="Authentication required; user identity not found.")
+            # Replace abort with ApplicationException for consistency with custom error handling.
+            raise ApplicationException(message="Authentication required; user identity not found.", status_code=401, logging_level="error")
         
         try:
             current_user_id = int(user_id_str)
@@ -261,7 +262,13 @@ def get_user_portfolios():
             f"Invalid query parameters for UserID '{current_user_id}': {e.errors()}. Request args: {request.args}"
         )
         # Return Pydantic's structured error messages.
-        return jsonify({"message": "Invalid query parameters.", "errors": e.errors()}), 400
+        # This is a direct jsonify response that could potentially be standardized if
+        # a specific PydanticValidationError custom exception was caught by handle_api_errors.
+        # For now, this is acceptable as Pydantic's e.errors() is already structured.
+        # However, to fully align with raising exceptions, one might create a
+        # PydanticValidationErr(messages=e.errors()) and let handle_api_errors format it.
+        # Current approach: Keep as is, but note for future refactoring if stricter standardization is needed.
+        raise BadRequestError(message="Invalid query parameters.", details=e.errors())
 
     # Construct the base query, filtering by the current user.
     # Eagerly load 'assets' for PortfolioSummarySchema's total_value calculation.

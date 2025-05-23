@@ -124,6 +124,20 @@ def handle_api_errors(schema=None):
                 )
                 # Abort with 400, indicating bad request data.
                 abort(400, description=f"Invalid data format or value provided: {str(e)}")
+            # Catch ApplicationException and its subclasses to use their specific details.
+            except ApplicationException as e:
+                db.session.rollback()
+                # Use the logging level defined in the exception, or default to WARNING.
+                log_level = getattr(e, 'logging_level', 'warning').lower()
+                log_func = getattr(current_app.logger, log_level, current_app.logger.warning)
+                log_func(
+                    f"ApplicationException caught for {request.method} {request.path}: {e.message}. Status: {e.status_code}. "
+                    f"Details: {getattr(e, 'details', 'N/A')}. Source IP: {request.remote_addr}."
+                )
+                response_data = {"message": e.message}
+                if hasattr(e, 'details') and e.details: # Add details to response if present
+                    response_data["details"] = e.details
+                return jsonify(response_data), e.status_code
             except Exception as e: # Catch any other unhandled exceptions from the route handler.
                 db.session.rollback() # Rollback DB session.
                 # Log the full exception details for server-side debugging.

@@ -35,6 +35,8 @@ def _apply_monthly_growth(
             - total_value_pre_cashflow (Decimal): Total portfolio value after growth,
                                                   before cash flows.
     """
+    logger.debug(f"Applying monthly growth. Current asset values: {json.dumps({k: str(v) for k, v in current_asset_values.items()}) if current_asset_values else 'None'}. "
+                 f"Monthly asset returns: {json.dumps({k: str(v) for k, v in monthly_asset_returns.items()}) if monthly_asset_returns else 'None'}")
     value_i_pre_cashflow = {} # Stores individual asset values after growth
     total_value_pre_cashflow = Decimal('0.0') # Accumulates total portfolio value after growth
 
@@ -103,6 +105,7 @@ def _calculate_net_monthly_change(
     Returns:
         Decimal: The net sum of cash inflows (positive) and outflows (negative) for the month.
     """
+    logger.debug(f"Calculating net monthly change. Monthly changes: {monthly_changes}")
     net_change_month = Decimal('0.0') # Initialize net cash flow for the month
 
     for change in monthly_changes:
@@ -153,20 +156,30 @@ def _distribute_cash_flow(
             - value_i_final (Dict[int, Decimal]): Asset values after distributing cash flow.
             - current_total_value_month (Decimal): Final total portfolio value for the month.
     """
+    logger.debug(f"Distributing cash flow for {current_date.strftime('%Y-%m')}. "
+                 f"Value pre-cashflow: {json.dumps({k: str(v) for k, v in value_i_pre_cashflow.items()}) if value_i_pre_cashflow else 'None'}, "
+                 f"Total pre-cashflow: {total_value_pre_cashflow:.2f}, Net change: {net_change_month:.2f}")
     value_i_final = {} # Stores final asset values after cash flow distribution
     current_total_value_month = total_value_pre_cashflow # Initialize with pre-cashflow total
 
+    # Distribute net cash flow based on whether the portfolio has a positive value.
     if total_value_pre_cashflow > Decimal('0.0'):
-        # If portfolio has positive value, distribute cash flow proportionally.
+        # Scenario 1: Portfolio has positive value.
+        # Distribute the net monthly cash flow (positive or negative) proportionally
+        # across assets based on their value relative to the total pre-cashflow value.
         for asset_id, pre_cashflow_val in value_i_pre_cashflow.items():
             try:
                 # Calculate this asset's share of the cash flow.
+                # If total_value_pre_cashflow is zero (e.g., all assets were zero),
+                # this proportion calculation would be division by zero, but the
+                # `if total_value_pre_cashflow > Decimal('0.0')` guard prevents this.
                 proportion = pre_cashflow_val / total_value_pre_cashflow
                 cash_flow_for_asset_i = net_change_month * proportion
                 final_value_for_asset_i = pre_cashflow_val + cash_flow_for_asset_i
                 value_i_final[asset_id] = final_value_for_asset_i
             except InvalidOperation as e:
-                # This might happen if total_value_pre_cashflow became zero unexpectedly.
+                # This might happen if total_value_pre_cashflow became zero unexpectedly
+                # or if pre_cashflow_val is problematic.
                 logger.error(
                     f"Invalid operation during cash flow distribution for AssetID '{asset_id}' "
                     f"at {current_date.strftime('%Y-%m')}. Pre-cashflow value: {pre_cashflow_val}, "
@@ -175,35 +188,42 @@ def _distribute_cash_flow(
                 )
                 value_i_final[asset_id] = pre_cashflow_val # Fallback to pre-cashflow value
 
-        # Recalculate total from individual final asset values for precision.
+        # Recalculate total from individual final asset values for precision,
+        # as summing Decimal proportions can sometimes lead to tiny discrepancies.
         current_total_value_month = sum(value_i_final.values())
     else:
-        # Handle scenarios where portfolio value before cash flow is zero or negative.
+        # Scenario 2: Portfolio value before cash flow is zero or negative.
+        # In this case, proportional distribution based on asset values is not meaningful.
         # The net cash flow is applied directly to the total portfolio value.
         current_total_value_month = total_value_pre_cashflow + net_change_month
-        value_i_final = value_i_pre_cashflow.copy() # Initialize with (likely zero) pre-cashflow values
+        value_i_final = value_i_pre_cashflow.copy() # Asset values are typically zero or unchanged.
         
-        # If there's a positive net cash inflow and assets exist (even if at zero value),
-        # a strategy is needed to allocate this inflow.
-        # Current simple strategy: if starting from zero and adding cash, and assets are defined,
-        # allocate the entire net positive cash flow to the "first" asset.
-        # This might need refinement based on business rules (e.g., target allocations).
+        # Special handling for positive net cash inflow when starting from zero/negative value:
+        # If there's a positive net cash inflow (e.g., a contribution) and assets are defined
+        # (even if they all have zero value), a strategy is needed to allocate this inflow.
+        # The current simple strategy is to allocate the entire net positive cash flow
+        # to the "first" asset found in the `value_i_final` dictionary.
+        # This is a placeholder strategy and might need refinement based on more complex
+        # business rules, such as pre-defined target allocations for new cash.
         if net_change_month > Decimal('0.0') and len(value_i_final) > 0:
-            first_asset_id = next(iter(value_i_final)) # Get the ID of the first asset
+            # Attempt to allocate the positive inflow to the first available asset.
+            first_asset_id = next(iter(value_i_final)) # Get the ID of an arbitrary asset
             value_i_final[first_asset_id] = value_i_final.get(first_asset_id, Decimal('0.0')) + net_change_month
-            # Recalculate total as asset values have changed.
+            # Recalculate the total portfolio value as individual asset values have now changed.
             current_total_value_month = sum(value_i_final.values())
             logger.info(
                 f"Portfolio value at {current_date.strftime('%Y-%m')} was {total_value_pre_cashflow:.2f}. "
-                f"Positive net change {net_change_month:.2f} allocated (e.g. to first asset). "
+                f"Positive net change {net_change_month:.2f} was allocated (e.g., to asset ID '{first_asset_id}'). "
                 f"New total: {current_total_value_month:.2f}"
             )
         elif net_change_month != Decimal('0.0'):
-             # If cash flow is non-zero but not positive into existing assets (e.g. withdrawal from zero),
-             # log that the change primarily affected the total.
+             # If cash flow is non-zero but not a positive inflow into existing assets
+             # (e.g., a withdrawal from an already zero or negative portfolio),
+             # log that the change primarily affected the total value.
              logger.warning(
                 f"Portfolio value before cash flow at {current_date.strftime('%Y-%m')} was {total_value_pre_cashflow:.2f}. "
-                f"Net change {net_change_month:.2f} applied. Final total: {current_total_value_month:.2f}"
+                f"Net change {net_change_month:.2f} applied. Final total: {current_total_value_month:.2f}. "
+                "Asset values remain unchanged as there was no positive value base for distribution."
              )
     
     logger.debug(f"Distributed cash flow for {current_date.strftime('%Y-%m')}. Final total value: {current_total_value_month:.2f}")

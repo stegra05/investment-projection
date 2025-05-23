@@ -64,7 +64,7 @@ def _fetch_portfolio_and_assets(portfolio_id: int) -> Tuple[Portfolio, List[Asse
     Raises:
         ValueError: If no portfolio is found for the given `portfolio_id`.
     """
-    logger.debug(f"Fetching portfolio and assets for PortfolioID '{portfolio_id}'.")
+    logger.debug(f"Attempting to fetch portfolio and assets for PortfolioID '{portfolio_id}'.")
     # Query for the portfolio, using joinedload to eager-load related assets and planned_changes.
     # This can be more efficient than lazy loading if these relations are consistently accessed.
     portfolio = Portfolio.query.options(
@@ -76,7 +76,7 @@ def _fetch_portfolio_and_assets(portfolio_id: int) -> Tuple[Portfolio, List[Asse
         logger.error(f"Portfolio with ID '{portfolio_id}' not found.")
         raise ValueError(f"Portfolio with id {portfolio_id} not found.")
 
-    logger.debug(f"Successfully fetched Portfolio '{portfolio.name}' with {len(portfolio.assets)} assets "
+    logger.debug(f"Successfully fetched Portfolio '{portfolio.name}' (ID: {portfolio_id}) with {len(portfolio.assets)} assets "
                  f"and {len(portfolio.planned_changes)} planned changes.")
     return portfolio, portfolio.assets # Return the portfolio and its already loaded assets list
 
@@ -121,7 +121,8 @@ def calculate_projection(
     Raises:
         ValueError: If the portfolio with `portfolio_id` is not found.
     """
-    logger.info(f"Starting projection calculation for PortfolioID '{portfolio_id}' from {start_date} to {end_date}.")
+    logger.info(f"Starting projection calculation for PortfolioID '{portfolio_id}' from {start_date} to {end_date}. "
+                f"Initial Total Value: {initial_total_value}, Draft Changes Provided: {draft_changes_input is not None}.")
     
     # --- 1. Fetch Portfolio & Assets --- 
     # This retrieves the portfolio and its associated assets.
@@ -163,7 +164,8 @@ def calculate_projection(
     # This uses the `projection_initializer` service.
     current_asset_values, monthly_asset_returns, current_total_value = \
         initialize_projection(assets, initial_total_value)
-    logger.info(f"Projection initialized. Start Date: {start_date}, Initial Total Value: {current_total_value:.2f}")
+    logger.info(f"Projection initialized. Start Date: {start_date}, Initial Total Value: {current_total_value:.2f}. "
+                f"Initial Asset Values: {current_asset_values}, Monthly Asset Returns: {monthly_asset_returns}")
 
     # `projection_results` will store (date, total_value) tuples for each month-end.
     # Start with the initial state.
@@ -181,7 +183,8 @@ def calculate_projection(
         # It's either the natural month-end or the projection `end_date` if it's earlier.
         month_end_date = current_date + relativedelta(months=1) - relativedelta(days=1)
         actual_month_end_for_reporting = min(month_end_date, end_date)
-        logger.debug(f"Processing month starting {current_date.strftime('%Y-%m-%d')}, reporting at {actual_month_end_for_reporting.strftime('%Y-%m-%d')}")
+        logger.debug(f"Processing month starting {current_date.strftime('%Y-%m-%d')}, reporting at {actual_month_end_for_reporting.strftime('%Y-%m-%d')}. "
+                     f"Current Asset Values: {current_asset_values}, Monthly Asset Returns: {monthly_asset_returns}")
 
         # --- Generate Occurrences of Planned Changes for the Current Month ---
         # This is done "on-the-fly" for each month to handle complex recurrence rules correctly.

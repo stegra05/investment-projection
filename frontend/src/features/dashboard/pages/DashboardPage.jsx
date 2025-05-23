@@ -24,6 +24,13 @@ import Spinner from '../../../components/Spinner/Spinner.jsx'; // Spinner compon
  *
  * @returns {JSX.Element} The rendered dashboard page UI.
  */
+
+/**
+ * DashboardPage component.
+ * Serves as the main dashboard for authenticated users, displaying a list of their
+ * investment portfolios and providing functionality to create new portfolios and log out.
+ * @returns {JSX.Element} The rendered dashboard page.
+ */
 function DashboardPage() {
   // Destructure state and actions from the portfolio list store.
   const {
@@ -31,25 +38,36 @@ function DashboardPage() {
     isLoading: isLoadingList, // Boolean indicating if the portfolio list is being fetched.
     error: listError,       // Error object/message if fetching the list failed.
     fetchPortfolios,     // Action to fetch/refresh the portfolio list.
-  } = usePortfolioListStore();
+  } = usePortfolioListStore(state => ({ // Explicitly select needed state/actions
+    portfolios: state.portfolios,
+    isLoading: state.isLoading,
+    error: state.error,
+    fetchPortfolios: state.fetchPortfolios,
+  }));
 
   // Access the logout action from the authentication store.
   const logout = useAuthStore(state => state.logout);
 
-  // Local state for managing the "Create Portfolio" modal.
-  const [isModalOpen, setIsModalOpen] = useState(false); // Controls modal visibility.
-  // Local state for loading status during the portfolio creation API call.
-  const [isCreating, setIsCreating] = useState(false);
-  // Local state for storing any error that occurs during portfolio creation.
-  const [createError, setCreateError] = useState(null);
+  // --- Local State Management ---
+  // State for controlling the visibility of the "Create Portfolio" modal.
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  // State to track loading status during the portfolio creation API call (within the modal).
+  const [isCreatingPortfolio, setIsCreatingPortfolio] = useState(false);
+  // State to store any error message that occurs specifically during portfolio creation.
+  const [portfolioCreationError, setPortfolioCreationError] = useState(null);
 
-  // `useEffect` to fetch portfolios when the component mounts or `fetchPortfolios` function identity changes.
+  // Effect hook to fetch the list of portfolios when the component mounts.
+  // It also re-runs if the `fetchPortfolios` function reference changes (though typically stable).
   useEffect(() => {
-    fetchPortfolios(); // Initial fetch of portfolios.
-  }, [fetchPortfolios]); // Dependency array.
+    fetchPortfolios(); // Trigger the fetch operation from the Zustand store.
+  }, [fetchPortfolios]); // Dependency array ensures this runs once on mount, and if fetchPortfolios changes.
 
   /**
-   * Handles the logout action. Calls the logout function from the auth store.
+   * Handles the user's logout action.
+   * It calls the `logout` function from the `useAuthStore`.
+   * Post-logout redirection is expected to be handled by a global mechanism
+   * (e.g., a route guard or a listener in the auth store) that reacts to
+   * changes in the authentication state.
    * Navigation to login page is typically handled by `ProtectedRoute` upon auth state change.
    */
   const handleLogout = () => {
@@ -58,26 +76,32 @@ function DashboardPage() {
   };
 
   /**
-   * Handles the creation of a new portfolio.
-   * This function is passed as the `onSubmit` prop to the `CreatePortfolioModal`.
-   * It sets loading states, calls the portfolio creation API service,
-   * closes the modal on success, refreshes the portfolio list, and handles errors.
-   * @param {object} portfolioData - Data for the new portfolio, typically `{ name, description }`.
+   * Handles the submission of the create portfolio form.
+   * This function is passed to the `CreatePortfolioModal` component.
+   * It calls the portfolio service to create a new portfolio, handles loading
+   * and error states for the creation process, and refreshes the portfolio
+   * list upon successful creation.
+   * @async
+   * @param {object} portfolioData - The data for the new portfolio, typically containing `{ name, description }`.
    */
   const handleCreatePortfolio = async portfolioData => {
-    setIsCreating(true); // Indicate start of creation process.
-    setCreateError(null); // Clear any previous creation errors.
+    setIsCreatingPortfolio(true); // Set loading state for creation.
+    setPortfolioCreationError(null); // Clear any previous errors related to creation.
     try {
-      await portfolioService.createPortfolio(portfolioData); // API call.
-      setIsModalOpen(false); // Close the modal on successful creation.
-      await fetchPortfolios(); // Refresh the portfolio list to include the new one.
+      // Attempt to create the portfolio via the API service.
+      await portfolioService.createPortfolio(portfolioData);
+      setIsModalOpen(false); // Close the modal on success.
+      // Refresh the list of portfolios to display the newly created one.
+      await fetchPortfolios();
     } catch (err) {
-      console.error('Failed to create portfolio:', err); // Log the full error for debugging.
-      // Extract a user-friendly error message from the error object.
+      // Log the error for debugging purposes.
+      console.error('Failed to create portfolio:', err);
+      // Extract a user-friendly error message from the API response or the error object.
       const message = err.response?.data?.message || err.message || 'An unexpected error occurred while creating the portfolio.';
-      setCreateError(message); // Set the error message to be displayed in the modal.
+      setPortfolioCreationError(message); // Store the error message to be displayed in the modal.
     } finally {
-      setIsCreating(false); // Indicate end of creation process, regardless of outcome.
+      // Reset the loading state regardless of success or failure.
+      setIsCreatingPortfolio(false);
     }
   };
 
@@ -157,8 +181,8 @@ function DashboardPage() {
         isOpen={isModalOpen} // Controls modal visibility.
         onClose={() => setIsModalOpen(false)} // Handler to close the modal.
         onSubmit={handleCreatePortfolio} // Handler for form submission within the modal.
-        isLoading={isCreating} // Loading state for the creation process.
-        error={createError} // Error message to display within the modal if creation fails.
+        isLoading={isCreatingPortfolio} // Pass loading state for the creation process to the modal.
+        error={portfolioCreationError} // Pass error message to display within the modal if creation fails.
       />
     </div>
   );

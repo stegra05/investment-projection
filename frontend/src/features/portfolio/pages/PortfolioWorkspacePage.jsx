@@ -34,28 +34,39 @@ const defaultSizes = [1, 2, 1];
  *
  * @returns {JSX.Element} The rendered portfolio workspace UI.
  */
+
+/**
+ * PortfolioWorkspacePage component.
+ * This page serves as the main workspace for a single investment portfolio.
+ * It uses a three-pane resizable layout to display navigation, main content (like assets or planned changes),
+ * and financial projections. Portfolio data is sourced via `usePortfolio` context.
+ * Layout preferences and active view are persisted to localStorage.
+ * @returns {JSX.Element} The rendered portfolio workspace.
+ */
 function PortfolioWorkspacePage() {
   // Get `portfolioId` from the current route URL (e.g., /portfolio/123).
-  const { portfolioId } = useParams();
-  // Access portfolio data and loading state from the PortfolioContext.
-  // `rawPortfolioData` is the detailed portfolio object; `portfolioLoading` indicates if it's being fetched.
+  const { portfolioId } = useParams(); 
+  // Access portfolio data and its loading status from the PortfolioContext.
+  // `rawPortfolioData` holds the detailed portfolio object (or null if not loaded/found).
+  // `isPortfolioLoading` indicates if the core portfolio data is currently being fetched.
   const { 
     portfolio: rawPortfolioData, 
-    loading: portfolioLoading, 
+    isLoading: isPortfolioLoading, // Renamed for clarity from context's `loading`
   } = usePortfolio();
 
-  // Local state for managing the relative sizes of the Allotment panes.
-  // Initialized with default sizes, then potentially overridden by localStorage.
-  const [sizes, setSizes] = useState(defaultSizes);
-  // Local state for the active view displayed in the MainContentPanel (e.g., 'assets', 'plannedChanges').
-  // Initialized from localStorage or defaults to 'assets'.
+  // --- Local State Management ---
+  // State for managing the relative sizes of the Allotment panes.
+  // Initialized with default sizes, then potentially overridden by values from localStorage.
+  const [paneSizes, setPaneSizes] = useState(defaultSizes);
+  // State for the active view key (e.g., 'assets', 'plannedChanges') displayed in the MainContentPanel.
+  // Initialized from localStorage to remember the user's last active view, or defaults to 'assets'.
   const [activeMainView, setActiveMainView] = useState(() => {
     return localStorage.getItem(STORAGE_KEY_ACTIVE_VIEW) || 'assets';
   });
-  // Ref for the Allotment component instance to allow programmatic control (e.g., reset).
+  // Ref for the Allotment component instance, allowing programmatic control (e.g., resetting pane sizes).
   const allotmentRef = useRef(null);
 
-  // `useEffect` to load saved layout sizes from localStorage on component mount.
+  // Effect hook to load saved layout (pane) sizes from localStorage when the component mounts.
   useEffect(() => {
     const savedSizes = localStorage.getItem(STORAGE_KEY_LAYOUT);
     if (savedSizes) {
@@ -64,12 +75,13 @@ function PortfolioWorkspacePage() {
         // Validate the saved sizes before applying them.
         if (
           Array.isArray(parsedSizes) &&
-          parsedSizes.length === 3 && // Expects three panes.
-          parsedSizes.every(n => typeof n === 'number') // All elements must be numbers.
+          parsedSizes.length === 3 && // Validate: must be an array of 3 numbers.
+          parsedSizes.every(n => typeof n === 'number')
         ) {
-          setSizes(parsedSizes);
+          setPaneSizes(parsedSizes); // Apply saved sizes if valid.
         } else {
-          // If invalid, log a warning and remove the faulty item from localStorage.
+          // If data in localStorage is invalid (e.g., wrong format, wrong length),
+          // log a warning and remove the corrupted item to prevent future errors.
           console.warn('Invalid layout sizes found in localStorage, using defaults.');
           localStorage.removeItem(STORAGE_KEY_LAYOUT);
         }
@@ -88,10 +100,11 @@ function PortfolioWorkspacePage() {
    */
   const handleDragEnd = newSizes => {
     localStorage.setItem(STORAGE_KEY_LAYOUT, JSON.stringify(newSizes));
-    setSizes(newSizes);
+    setPaneSizes(newSizes); // Update state with the new sizes after drag.
   };
 
-  // `useEffect` to save the active main view to localStorage whenever it changes.
+  // Effect hook to save the `activeMainView` to localStorage whenever it changes.
+  // This ensures the user's selected view persists across sessions for this workspace.
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_ACTIVE_VIEW, activeMainView);
   }, [activeMainView]); // Dependency: runs when `activeMainView` changes.
@@ -109,12 +122,12 @@ function PortfolioWorkspacePage() {
 
       // Handler to reset layout to default sizes.
       const handleDoubleClick = () => {
-        allotmentRef.current?.reset(); // Programmatically reset Allotment to its initial/default sizes.
-        setSizes(defaultSizes); // Update local state to reflect default sizes.
-        localStorage.setItem(STORAGE_KEY_LAYOUT, JSON.stringify(defaultSizes)); // Save defaults to localStorage.
+        allotmentRef.current?.reset(); // Use Allotment's API to reset to initial/default sizes.
+        setPaneSizes(defaultSizes); // Update local state to reflect these default sizes.
+        localStorage.setItem(STORAGE_KEY_LAYOUT, JSON.stringify(defaultSizes)); // Persist the reset state.
       };
 
-      // Add double-click event listeners to each sash.
+      // Add double-click event listeners to each sash for layout reset.
       sashes.forEach(sash => {
         sash.removeEventListener('dblclick', handleDoubleClick); // Remove any existing listener first.
         sash.addEventListener('dblclick', handleDoubleClick);
@@ -131,19 +144,26 @@ function PortfolioWorkspacePage() {
     return () => clearTimeout(timer); // Cleanup timeout on unmount/re-run.
   }, []); // Empty dependency array: runs once on mount, cleans up on unmount.
 
-  // Conditional rendering for when portfolio data is unavailable (and not loading).
-  // This might occur if an error happened during fetch or if the portfolio ID is invalid.
-  if (!rawPortfolioData && !portfolioLoading) {
+  // --- Conditional Rendering for Loading/Error States ---
+
+  // Display message if portfolio data is unavailable and not currently loading.
+  // This can happen if fetching failed or if `portfolioId` is invalid.
+  // `usePortfolio` context handles the actual error state internally.
+  if (!rawPortfolioData && !isPortfolioLoading) {
     return <div className="p-4 text-center text-red-600">{INFO_PORTFOLIO_DATA_UNAVAILABLE}</div>;
   }
 
-  // Conditional rendering for the initial loading state when no data is yet available.
-  if (portfolioLoading && !rawPortfolioData) {
-    // TODO: Replace with a more sophisticated full-page skeleton loader or spinner.
+  // Display a loading indicator if portfolio data is being fetched and not yet available.
+  // This typically covers the initial load of the page.
+  if (isPortfolioLoading && !rawPortfolioData) {
+    // TODO: Consider replacing with a more sophisticated full-page skeleton loader or spinner component
+    // for better user experience during initial data fetch.
     return <div className="p-4 text-center text-gray-600">{INFO_LOADING_PORTFOLIO_DATA}</div>;
   }
   
-  // Main workspace UI rendering.
+  // --- Main Workspace UI Rendering ---
+  // This section renders if portfolio data is available or if it's loading but some (potentially stale)
+  // data is already present (e.g., during a refresh).
   return (
     // Full-screen flex container with padding and background color.
     <div className="flex flex-col h-screen p-4 bg-gray-100">
@@ -169,26 +189,30 @@ function PortfolioWorkspacePage() {
       </nav>
 
       {/* Resizable Panes Area: takes remaining vertical space and prevents overflow. */}
-      <div className="flex-grow min-h-0">
-        {/* Allotment component for managing the three-pane layout. */}
-        <Allotment ref={allotmentRef} defaultSizes={sizes} onDragEnd={handleDragEnd}>
-          {/* Navigation Panel (Left) */}
+      <div className="flex-grow min-h-0"> {/* This div ensures Allotment takes up remaining space and handles overflow. */}
+        {/* Allotment component for managing the three-pane resizable layout. */}
+        <Allotment ref={allotmentRef} defaultSizes={paneSizes} onDragEnd={handleDragEnd}>
+          {/* Navigation Panel (Left Pane) */}
           <Allotment.Pane minSize={200} maxSize={600}>
             <div className="h-full bg-white rounded shadow p-4 overflow-auto">
+              {/* NavigationPanel displays portfolio-specific navigation links (e.g., to Assets, Planned Changes). */}
               <NavigationPanel />
             </div>
           </Allotment.Pane>
-          {/* Main Content Panel (Center) */}
+          {/* Main Content Panel (Center Pane) */}
           <Allotment.Pane minSize={300}>
             <div className="h-full bg-white rounded shadow p-4 overflow-auto">
+              {/* MainContentPanel displays the content corresponding to the `activeMainView`. */}
               <MainContentPanel 
-                activeView={activeMainView} // Current active view (e.g., 'assets').
-                setActiveView={setActiveMainView} // Callback to change the active view.
-                portfolioLoaded={!!rawPortfolioData} // Pass loading status for conditional rendering inside panel.
+                activeView={activeMainView} // Currently selected view (e.g., 'assets', 'plannedChanges').
+                setActiveView={setActiveMainView} // Function to update the active view.
+                // `portfolioLoaded` indicates if the main portfolio data is available,
+                // allowing child components to render appropriately.
+                portfolioLoaded={!!rawPortfolioData} 
               />
             </div>
           </Allotment.Pane>
-          {/* Projection Panel (Right) */}
+          {/* Projection Panel (Right Pane) */}
           <Allotment.Pane minSize={250} maxSize={800}>
             <div className="h-full bg-white rounded shadow p-4 overflow-auto">
               <ProjectionPanel />
