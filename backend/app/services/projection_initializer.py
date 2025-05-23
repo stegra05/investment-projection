@@ -52,12 +52,14 @@ def _initialize_asset_values(
                                                 if fixed values dictate a different sum or if
                                                 allocations don't sum to 100% of the override.
     """
-    logger.debug(f"Initializing asset values. Override total: {initial_total_value_override}")
+    logger.debug(f"Initializing asset values. Number of assets: {len(assets)}. Override total: {initial_total_value_override}")
     current_asset_values: Dict[int, Decimal] = {} # Stores asset_id -> initialized_value
     calculated_total_from_fixed_values = Decimal('0.0') # Sum of values from assets with fixed allocation_value
     assets_with_percentage_only: List[Asset] = [] # Stores assets to process in the second pass
 
     # First pass: Process assets with fixed `allocation_value`.
+    # These values are taken directly and contribute to `calculated_total_from_fixed_values`.
+    # Assets with `allocation_percentage` are collected for a second pass.
     for asset in assets:
         if asset.allocation_value is not None: # Asset has a fixed monetary value defined
             try:
@@ -84,39 +86,54 @@ def _initialize_asset_values(
     logger.debug(f"Pass 1 (fixed values): Sum = {calculated_total_from_fixed_values}. Assets with % only: {len(assets_with_percentage_only)}")
 
     # Determine the definitive total value to use for calculating percentage-based allocations.
-    # Priority: Override > Sum of fixed values. If neither, effectively zero.
+    # The order of priority is:
+    # 1. `initial_total_value_override` (if provided by the user/caller).
+    # 2. `calculated_total_from_fixed_values` (sum of assets with fixed values, if no override).
+    # If neither is available or applicable (e.g., override is None and no fixed-value assets),
+    # then `definitive_total_for_percentages` will be effectively zero.
     definitive_total_for_percentages = initial_total_value_override 
-    if definitive_total_for_percentages is None: # No override provided
+    if definitive_total_for_percentages is None: # No override provided by the caller
+        # Use the sum of fixed-value assets as the basis for percentage calculations.
         definitive_total_for_percentages = calculated_total_from_fixed_values
-        logger.debug(f"Using sum of fixed values ({calculated_total_from_fixed_values}) as definitive total for percentages.")
-    else: # Override was provided
-        logger.debug(f"Using override total ({initial_total_value_override}) as definitive total for percentages.")
+        logger.debug(f"No total value override provided. Using sum of fixed values ({calculated_total_from_fixed_values}) as definitive total for percentage allocations.")
+    else: # An override total value was provided
+        logger.debug(f"Using provided override total ({initial_total_value_override}) as definitive total for percentage allocations.")
     
-    # Second pass: Apply percentage allocations for relevant assets.
+    # Second pass: Apply percentage allocations for assets in `assets_with_percentage_only`.
+    # This is only meaningful if `definitive_total_for_percentages` is positive.
     if definitive_total_for_percentages > Decimal('0.0'):
-        logger.debug(f"Pass 2 (percentage values): Using definitive total {definitive_total_for_percentages}.")
+        logger.debug(f"Pass 2 (percentage-based values): Calculating based on definitive total {definitive_total_for_percentages}.")
         for asset in assets_with_percentage_only:
-            # This check is somewhat redundant as the list is populated with such assets, but safe.
+            # Asset is guaranteed to have allocation_percentage from the first pass logic.
+            # This check `asset.allocation_percentage is not None` is technically redundant here
+            # because `assets_with_percentage_only` only contains such assets, but kept for safety/clarity.
             if asset.allocation_percentage is not None: 
                 try:
-                    # Calculate value based on percentage of the definitive total.
-                    # asset.allocation_percentage is stored as, e.g., 50 for 50%.
-                    percentage_value = (Decimal(asset.allocation_percentage) / Decimal('100')) * definitive_total_for_percentages
+                    # Calculate the asset's value based on its percentage of the `definitive_total_for_percentages`.
+                    # Note: `asset.allocation_percentage` is stored as a whole number (e.g., 50 for 50%).
+                    percentage_decimal = Decimal(asset.allocation_percentage) / Decimal('100')
+                    percentage_value = percentage_decimal * definitive_total_for_percentages
                     current_asset_values[asset.asset_id] = percentage_value
                 except InvalidOperation:
                     logger.error(
-                        f"Invalid allocation_percentage '{asset.allocation_percentage}' for AssetID '{asset.asset_id}'. "
+                        f"Invalid allocation_percentage '{asset.allocation_percentage}' for AssetID '{asset.asset_id}' during percentage calculation. "
                         "Setting its initial value (from percentage) to 0."
                     )
-                    current_asset_values[asset.asset_id] = Decimal('0.0') # Fallback for this asset
+                    # Fallback for this specific asset if its percentage value is invalid.
+                    current_asset_values[asset.asset_id] = Decimal('0.0') 
     elif len(assets_with_percentage_only) > 0:
-        # Log a warning if percentage allocations cannot be calculated due to zero/negative total.
+        # If there are percentage-based assets but the total value for calculation is zero or negative,
+        # their values cannot be determined and will remain at their initialized value of 0.
         logger.warning(
-            "Cannot calculate percentage-based allocations because the definitive total portfolio value "
-            f"is zero or negative ({definitive_total_for_percentages}). Percentage-based assets will remain at 0 value."
+            f"Cannot calculate percentage-based allocations for {len(assets_with_percentage_only)} asset(s) "
+            f"because the definitive total portfolio value is zero or negative ({definitive_total_for_percentages}). "
+            "These assets will remain at 0 value."
         )
 
-    # Final sum of all initialized asset values.
+    # Calculate the final sum of all initialized asset values (both fixed and percentage-based).
+    # This sum represents the portfolio's total value based purely on its asset definitions.
+    # It might differ from `initial_total_value_override` if, for example, fixed value assets
+    # sum up to a different total, or if percentage allocations don't sum to 100% of the override.
     final_calculated_total = sum(current_asset_values.values())
     logger.debug(f"Asset values initialized. Final calculated total from assets: {final_calculated_total:.2f}")
     return current_asset_values, final_calculated_total
@@ -136,7 +153,7 @@ def _calculate_all_monthly_asset_returns(assets: List[Asset]) -> Dict[int, Decim
         Dict[int, Decimal]: A dictionary mapping asset_id to its calculated
                             Decimal monthly return rate (e.g., 0.005 for 0.5% monthly).
     """
-    logger.debug("Calculating monthly returns for all assets.")
+    logger.debug(f"Calculating monthly returns for all assets. Number of assets: {len(assets)}.")
     monthly_asset_returns: Dict[int, Decimal] = {}
     for asset in assets:
         try:
@@ -199,7 +216,8 @@ def initialize_projection(
             - projection_start_total_value (Decimal): The definitive total value to begin
                                                       the projection with.
     """
-    logger.info("Initializing projection state.")
+    logger.info(f"Initializing projection state. Number of assets: {len(assets)}. "
+                f"Initial total value override: {initial_total_value_override}")
     
     # 1. Initialize individual asset values based on their fixed/percentage allocations
     #    and the optional total value override.
@@ -212,32 +230,40 @@ def initialize_projection(
     monthly_asset_returns = _calculate_all_monthly_asset_returns(assets)
 
     # 3. Determine the definitive starting total value for the projection.
+    # This value will be used as the baseline for the first month of the projection.
     projection_start_total_value: Decimal
     if initial_total_value_override is not None:
-        # If an override is provided, it takes precedence as the projection's starting total.
+        # If an `initial_total_value_override` is provided by the user/caller,
+        # this value takes precedence and becomes the projection's starting total value.
         projection_start_total_value = initial_total_value_override
         
-        # Log a warning if the sum of individually calculated asset values
-        # significantly differs from the provided override total. This might indicate
-        # inconsistencies in how the portfolio is defined (e.g., allocations don't sum to 100%
-        # of the override, or fixed values conflict with the override).
-        # Using a small relative tolerance (e.g., 1%) or an absolute tolerance for small values.
-        # max(Decimal('1.0'), ...) handles cases where override might be very small or zero to avoid large tolerance.
-        discrepancy_tolerance = Decimal('0.01') * max(Decimal('1.0'), initial_total_value_override)
+        # Sanity check: Log a warning if the sum of asset values calculated based on
+        # their individual allocations (`final_calculated_total_from_assets`)
+        # significantly differs from the `initial_total_value_override`.
+        # This discrepancy might indicate:
+        #   - Fixed-value assets sum to a total different from the override.
+        #   - Percentage-based allocations (calculated using the override as base)
+        #     do not sum up to 100% of that override if other fixed values also exist.
+        #   - Or, a mix of these factors.
+        # The projection will still proceed using the `initial_total_value_override`.
+        # A small tolerance is used for comparison to avoid warnings for minor floating-point differences.
+        # `max(Decimal('1.0'), ...)` ensures a reasonable tolerance even if the override is very small or zero.
+        discrepancy_tolerance = Decimal('0.01') * max(Decimal('1.0'), initial_total_value_override) # 1% tolerance
         if abs(final_calculated_total_from_assets - initial_total_value_override) > discrepancy_tolerance:
             logger.warning(
                 f"The sum of initialized asset values ({final_calculated_total_from_assets:.2f}) differs significantly "
                 f"from the provided initial_total_value_override ({initial_total_value_override:.2f}). "
-                f"The override value will be used as the projection's starting total value. "
-                "Individual asset values might not sum perfectly to this override if fixed allocations exist."
+                f"The override value ({initial_total_value_override:.2f}) will be used as the projection's starting total. "
+                "This may occur if fixed asset values conflict with the override, or if percentage allocations "
+                "do not sum to 100% of the override when combined with fixed values."
             )
     else:
-        # If no override is provided, the sum of the initialized asset values becomes
-        # the projection's starting total value.
+        # If no `initial_total_value_override` is provided, the projection's starting total value
+        # is simply the sum of all initialized asset values (`final_calculated_total_from_assets`).
         projection_start_total_value = final_calculated_total_from_assets
     
     logger.info(
-        f"Projection initialized. Starting Total Value: {projection_start_total_value:.2f}. "
+        f"Projection initialized. Definitive Starting Total Value: {projection_start_total_value:.2f}. "
         f"Number of assets: {len(assets)}."
     )
     return current_asset_values, monthly_asset_returns, projection_start_total_value 

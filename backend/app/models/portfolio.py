@@ -42,16 +42,17 @@ class Portfolio(db.Model):
 
     @property
     def total_value(self) -> Decimal:
-        """Calculate the total current value of the portfolio.
+        """Calculates the total current value of the portfolio by summing fixed values.
 
-        This is based on the sum of 'allocation_value' of all assets
-        currently in the portfolio. If an asset has 'allocation_percentage'
-        instead of 'allocation_value', it's not directly included in this sum
-        as its actual value would depend on the (yet to be defined) total value
-        it's a percentage of.
+        This property sums the `allocation_value` (fixed monetary value) of all
+        assets directly associated with this portfolio. Assets defined with
+        `allocation_percentage` are NOT included in this sum, as their actual
+        value is relative to a total portfolio value that must be defined or
+        calculated elsewhere (e.g., during projection initialization).
 
-        Logs an error if an asset's allocation_value is invalid and cannot be
-        added to the total, but continues summing other assets.
+        If an asset's `allocation_value` is invalid (e.g., not a valid number),
+        an error is logged, and that asset's value is skipped in the sum.
+        The calculation proceeds with the remaining valid asset values.
 
         Returns:
             Decimal: The total value of assets with fixed allocation_value.
@@ -79,8 +80,9 @@ class Portfolio(db.Model):
 
         Args:
             include_details (bool): If True, includes lists of serialized assets
-                                  and planned changes associated with the portfolio.
-                                  Defaults to False.
+                                  and planned changes. Assets are serialized using
+                                  `Asset.to_dict()` and planned changes using
+                                  `PlannedFutureChange.to_dict()`. Defaults to False.
 
         Returns:
             dict: A dictionary representation of the portfolio.

@@ -185,6 +185,8 @@ def _create_one_time_change_from_rule(
     Returns:
         A new PlannedFutureChange object representing a single occurrence.
     """
+    logger.debug(f"Creating one-time change from rule ID '{original_change_rule.change_id}' for date {occurrence_date}. "
+                 f"Original rule details: Type={original_change_rule.change_type}, Amount={original_change_rule.amount}")
     new_description = original_change_rule.description if original_change_rule.description else ""
     if description_suffix and new_description: # Add space if both exist
         new_description += description_suffix
@@ -246,6 +248,9 @@ def get_occurrences_for_month(
         occurrence within the target month. Returns an empty list if no occurrences
         are found, or if inputs are invalid.
     """
+    logger.debug(f"Getting occurrences for rule ID '{change_rule.change_id}' in {target_year}-{target_month}. "
+                 f"Rule details: Type={change_rule.change_type}, Amount={change_rule.amount}, Freq={change_rule.frequency}, "
+                 f"Start={change_rule.change_date}, EndsOn={change_rule.ends_on_type}, EndsOcc={change_rule.ends_on_occurrences}, EndsDate={change_rule.ends_on_date}")
     occurrences_in_target_month: List[PlannedFutureChange] = []
     
     # Ensure the rule's own start date is a date object for comparisons.
@@ -338,6 +343,7 @@ def get_occurrences_for_month(
 
     # --- Generate Occurrences using rrule ---
     try:
+        logger.debug(f"Constructed rrule_params for rule ID '{change_rule.change_id}': {rrule_params}")
         rule_obj = rrule.rrule(**rrule_params) # Instantiate the rrule object
         
         # Use rrule.between() to find occurrences strictly within the target month's window.

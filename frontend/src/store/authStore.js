@@ -20,25 +20,37 @@ import authService from '../api/authService'; // API service for authentication 
 const getInitialState = () => {
   const token = localStorage.getItem('accessToken');
   const userString = localStorage.getItem('user');
-  let user = null;
 
-  if (token && userString) { // Both token and user string must exist.
+  if (token && userString) {
     try {
-      user = JSON.parse(userString); // Attempt to parse user data.
-      // TODO: Implement token validation/decoding here (e.g., check expiry using a library like jwt-decode).
+      const user = JSON.parse(userString);
+      // TODO: Implement token validation/decoding here
       // For now, the presence of a token and user data implies an authenticated initial state.
       return { user, isAuthenticated: true };
     } catch (error) {
-      // If parsing user data fails (e.g., corrupted JSON).
       console.error('Failed to parse user data from localStorage during initial state retrieval:', error);
-      // Clear potentially corrupted authentication items from localStorage.
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('user');
-      return { user: null, isAuthenticated: false }; // Return unauthenticated state.
+      // Fall through to clearing localStorage and returning unauthenticated state if parsing fails.
     }
   }
-  // If token or userString is missing, return unauthenticated state.
+
+  // Clear items if they were invalid (e.g., parsing failed) or not all present.
+  // This ensures a clean slate if the conditions for a valid initial authenticated state aren't fully met.
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('user');
   return { user: null, isAuthenticated: false };
+};
+
+// Helper function to clear auth state from localStorage and reset relevant parts of the store.
+// This promotes consistency in how authentication state is cleared.
+const clearAuthState = (set, errorMessage = null) => {
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('user');
+  set({
+    user: null,
+    isAuthenticated: false,
+    isLoading: false, // Ensure loading is reset
+    error: errorMessage, // Set error message if provided
+  });
 };
 
 /**
@@ -86,48 +98,27 @@ const useAuthStore = create(set => ({
       // Update store state with user info and authenticated status.
       set({ user: data.user, isAuthenticated: true, isLoading: false, error: null });
     } catch (error) {
-      // On login failure (API error or thrown error from above).
-      localStorage.removeItem('accessToken'); // Clear any potentially stored token.
-      localStorage.removeItem('user');      // Clear any potentially stored user data.
-      // Update store state with error message and unauthenticated status.
-      set({
-        error: error.message || 'Login failed due to an unexpected error.',
-        isLoading: false,
-        user: null,
-        isAuthenticated: false,
-      });
+      // On login failure, clear auth state and set appropriate error message.
+      clearAuthState(set, error.message || 'Login failed due to an unexpected error.');
     }
   },
 
   /**
    * Asynchronously logs out the current user.
    * Attempts to call a backend logout endpoint via `authService.logout()`.
-   * Regardless of backend call success, it clears local authentication state (localStorage and store).
+   * Regardless of backend call success, it clears local authentication state using `clearAuthState`.
    */
   logout: async () => {
     set(state => ({ ...state, isLoading: true, error: null })); // Indicate loading, clear previous errors.
     try {
       await authService.logout(); // Attempt to call the backend logout endpoint.
-      // If backend logout is successful (or if it doesn't throw an error that's caught):
-      localStorage.removeItem('accessToken'); // Clear token from localStorage.
-      localStorage.removeItem('user');      // Clear user data from localStorage.
-      // Reset store state to unauthenticated.
-      set({ user: null, isAuthenticated: false, error: null, isLoading: false });
+      // On successful backend logout or if it doesn't throw an error, clear local auth state.
+      clearAuthState(set); 
     } catch (error) {
-      // If backend logout fails (e.g., network error, server error).
+      // If backend logout fails, log the error but still clear local auth state.
+      // The user's intent was to log out, so the client session should end.
       console.error('Backend logout request failed:', error);
-      // IMPORTANT: Still clear local storage and set user as unauthenticated on the client-side
-      // as a fallback, because the user's intent was to log out. This ensures the client session ends.
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('user');
-      set({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        // Optionally, set an error message to inform the user about the backend issue,
-        // while still confirming they are logged out locally.
-        error: error.response?.data?.msg || error.message || 'Logout failed on server. You have been logged out locally.',
-      });
+      clearAuthState(set, error.response?.data?.msg || error.message || 'Logout failed on server. You have been logged out locally.');
     }
   },
 

@@ -69,7 +69,10 @@ class PlannedFutureChange(db.Model):
         """Serialize the PlannedFutureChange object to a dictionary.
 
         This method is useful for converting the planned change's data into a
-        JSON-serializable format, often for API responses.
+        JSON-serializable format, often for API responses. Enum fields (like
+        `change_type`, `frequency`, etc.) are converted to their string values.
+        Numeric fields are converted to strings to preserve precision. Date
+        fields are converted to ISO 8601 format.
 
         Returns:
             A dictionary representation of the PlannedFutureChange.
@@ -77,23 +80,23 @@ class PlannedFutureChange(db.Model):
         return {
             'change_id': self.change_id,
             'portfolio_id': self.portfolio_id,
-            'change_type': self.change_type.value if self.change_type else None,
+            'change_type': self.change_type.value if self.change_type else None, # Serialize enum to its string value
             'change_date': self.change_date.isoformat() if self.change_date else None,
-            'amount': str(self.amount) if self.amount is not None else None,
+            'amount': str(self.amount) if self.amount is not None else None, # Serialize Decimal as string
             'target_allocation_json': self.target_allocation_json,
             'description': self.description,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'is_recurring': self.is_recurring,
-            'frequency': self.frequency.value if self.frequency else None,
+            'frequency': self.frequency.value if self.frequency else None, # Enum to string
             'interval': self.interval,
-            'days_of_week': self.days_of_week,
+            'days_of_week': self.days_of_week, # Assumed to be JSON-serializable (list)
             'day_of_month': self.day_of_month,
-            'month_ordinal': self.month_ordinal.value if self.month_ordinal else None,
-            'month_ordinal_day': self.month_ordinal_day.value if self.month_ordinal_day else None,
+            'month_ordinal': self.month_ordinal.value if self.month_ordinal else None, # Enum to string
+            'month_ordinal_day': self.month_ordinal_day.value if self.month_ordinal_day else None, # Enum to string
             'month_of_year': self.month_of_year,
-            'ends_on_type': self.ends_on_type.value if self.ends_on_type else None,
+            'ends_on_type': self.ends_on_type.value if self.ends_on_type else None, # Enum to string
             'ends_on_occurrences': self.ends_on_occurrences,
-            'ends_on_date': self.ends_on_date.isoformat() if self.ends_on_date else None,
+            'ends_on_date': self.ends_on_date.isoformat() if self.ends_on_date else None, # Date to ISO string
         } 
 
     def __repr__(self):

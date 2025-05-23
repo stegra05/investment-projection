@@ -53,19 +53,24 @@ def get_owned_child_or_404(
         The found child entity instance (of type `ModelType`).
 
     Raises:
-        ChildResourceNotFoundError (subclass of ApplicationException, typically 404):
-            If the child resource with the given ID is not found or does not belong
-            to the specified parent instance.
-        ApplicationException (500): For internal configuration issues (e.g., incorrect
-                                   relationship name, non-standard model PK/FK setup)
-                                   or unexpected database errors during the fallback query.
+        ChildResourceNotFoundError: If the child resource with the given ID is not
+            found or does not belong to the specified parent instance. This exception
+            is a subclass of `ApplicationException` and typically results in a 404 response.
+        ApplicationException: For internal server errors, including:
+            - Incorrect relationship name provided (`child_relationship_name`).
+            - Issues with SQLAlchemy model or relationship setup (e.g., composite
+              primary keys on parent, unresolvable foreign keys on child).
+            - Unexpected database errors during the fallback query.
+            These typically result in a 500 response.
         AttributeError: If `parent_instance` does not have an attribute matching
-                        `child_relationship_name`, or if a child object in the
-                        collection does not have `child_pk_attr`. This usually
-                        indicates a programming error.
-        ValueError: If the SQLAlchemy relationship configuration is unexpected (e.g.,
-                    parent model has a composite primary key not handled by this helper,
-                    or the foreign key relationship on the child cannot be determined).
+            `child_relationship_name`, or if a child object in the parent's collection
+            does not have the attribute specified by `child_pk_attr`. This usually
+            indicates a programming error or misconfiguration.
+        ValueError: If the SQLAlchemy relationship configuration is unexpected or
+            unsupported by this helper (e.g., parent model has a composite primary
+            key, or the foreign key relationship on the child cannot be determined).
+            This often points to a misconfiguration of SQLAlchemy models or the
+            relationship definition.
     """
     current_app.logger.debug(
         f"Attempting to get child '{child_model.__name__}' with ID '{child_id}' "
@@ -151,17 +156,17 @@ def get_owned_child_or_404(
         # This error typically indicates a programming mistake:
         # - `parent_instance` might not have an attribute `child_relationship_name`.
         # - An object in `child_collection` might not have `child_pk_attr`.
-        current_app.logger.error(f"AttributeError in get_owned_child_or_404: {e}. This may indicate a misconfiguration or programming error.", exc_info=True)
+        current_app.logger.error(f"AttributeError in get_owned_child_or_404: {e}. This may indicate a misconfiguration or programming error (e.g., incorrect relationship name or PK attribute).", exc_info=True)
         raise ApplicationException(
-            message=f"Internal configuration error: Problem accessing attribute for relationship or primary key. Details: {e}", 
+            message=f"Server configuration error: Problem accessing attribute for relationship '{child_relationship_name}' or primary key '{child_pk_attr}'. Please check model definitions and relationship configurations. Details: {e}",
             status_code=500
         )
     except ValueError as e:
         # This error indicates issues with the SQLAlchemy model/relationship setup
         # that this helper function cannot work with (e.g., composite PKs, unresolvable FKs).
-        current_app.logger.error(f"ValueError in get_owned_child_or_404 due to model/relationship configuration: {e}", exc_info=True)
+        current_app.logger.error(f"ValueError in get_owned_child_or_404 due to model/relationship configuration: {e}. This often means the SQLAlchemy models or their relationships are not set up as expected by this helper.", exc_info=True)
         raise ApplicationException(
-            message=f"Internal configuration error: Problem with model or relationship setup. Details: {e}", 
+            message=f"Server configuration error: Problem with model or relationship setup, such as composite primary keys or unresolvable foreign keys. Details: {e}",
             status_code=500
         )
     except HTTPException:
@@ -170,7 +175,7 @@ def get_owned_child_or_404(
     except Exception as e:
         # Catch any other unexpected errors, potentially database-related during the fallback query.
         current_app.logger.exception( # Logs with full stack trace
-            f"Unexpected error in get_owned_child_or_404 for child {child_model.__name__} (PK attr: {child_pk_attr}) ID '{child_id}'. Error: {e}"
+            f"Unexpected error in get_owned_child_or_404 for child {child_model.__name__} (PK attr: {child_pk_attr}) ID '{child_id}'. Parent: {parent_instance.__class__.__name__}. Error: {e}"
         )
         # Raise a DatabaseError or a generic ApplicationException for client.
-        raise DatabaseError(message="An unexpected error occurred while trying to retrieve the requested item.")
+        raise DatabaseError(message=f"An unexpected error occurred while trying to retrieve {child_model.__name__} ID '{child_id}'. Please try again later or contact support if the issue persists.")
