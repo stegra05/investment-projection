@@ -13,7 +13,7 @@ This cheatsheet provides common Docker and Docker Compose commands relevant to m
   ```bash
   docker-compose build <service_name>
   ```
-  *Example:* `docker-compose build backend`
+  *Examples:* `docker-compose build backend`, `docker-compose build frontend`
 
 - **Build images without using cache (for a clean build):**
   ```bash
@@ -34,11 +34,11 @@ This cheatsheet provides common Docker and Docker Compose commands relevant to m
   ```bash
   docker-compose up -d
   ```
-- **Start specific services:**
+- **Start specific services (e.g., all application services in detached mode):**
   ```bash
-  docker-compose up <service_name_1> <service_name_2>
+  docker-compose up -d db redis backend celeryworker frontend
   ```
-  *Example:* `docker-compose up backend redis`
+  *Or individual services:* `docker-compose up -d backend`
 
 ## 3. Stopping Services
 
@@ -70,7 +70,7 @@ This cheatsheet provides common Docker and Docker Compose commands relevant to m
   ```bash
   docker-compose logs <service_name>
   ```
-  *Example:* `docker-compose logs backend`
+  *Examples:* `docker-compose logs backend`, `docker-compose logs frontend`
 
 - **Follow (stream) logs for a specific service:**
   ```bash
@@ -100,7 +100,7 @@ This is essential for tasks like database migrations, running tests, or accessin
       ```bash
       docker-compose exec backend flask db upgrade
       ```
-      *(Other migration commands: `flask db init`, `flask db migrate -m "your message"`)*
+      *(Other migration commands: `docker-compose exec backend flask db init`, `docker-compose exec backend flask db migrate -m "your message"`)*
     - **Run backend tests (Pytest):**
       ```bash
       docker-compose exec backend pytest
@@ -109,9 +109,14 @@ This is essential for tasks like database migrations, running tests, or accessin
       ```bash
       docker-compose exec backend bash
       ```
-    - **Open a sh shell inside the frontend container (Alpine images often use `sh`):**
+    - **Open a sh shell inside the frontend container (if it's Alpine-based):**
       ```bash
       docker-compose exec frontend sh
+      ```
+    - **Open a shell inside the PostgreSQL container (db service):**
+      ```bash
+      docker-compose exec db psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} 
+      # Ensure POSTGRES_USER and POSTGRES_DB are set in your .env file or replace with actual values
       ```
 
 ## 6. Restarting Services
@@ -152,7 +157,8 @@ This is essential for tasks like database migrations, running tests, or accessin
   ```bash
   docker volume rm <volume_name>
   ```
-  *Example (to remove the PostgreSQL data volume for this project, if named `projectname_postgres_data`):* `docker volume rm investment-projection_postgres_data` (The actual name might vary slightly based on your project directory name).
+  *Example (to remove the PostgreSQL data volume for this project):* `docker volume rm investment-projection_postgres_data`
+  *(Note: Docker Compose typically prepends the project directory name, e.g., `investment-projection_`, to the volume name `postgres_data` defined in `docker-compose.yml`. Check `docker volume ls` for the exact name).*
 
 - **Clean up unused Docker resources (stopped containers, dangling images, unused networks, build cache):**
   ```bash
@@ -163,16 +169,37 @@ This is essential for tasks like database migrations, running tests, or accessin
   docker system prune -a --volumes
   ```
 
-## 8. Quick Troubleshooting Tips
+## 8. Additional Useful Commands
 
-- **Port Conflicts:** If a service fails to start because a port is already in use on your host, change the host-side port mapping in `docker-compose.yml`. For example, change `ports: - "5000:5000"` to `ports: - "5001:5000"` for the backend service if port 5000 is taken on your host. Then access it via `http://localhost:5001`.
-- **Environment Variables:** Double-check that environment variables are correctly defined in your root `.env` file and referenced correctly in `docker-compose.yml`. Ensure service names (like `db`, `redis`) are used for inter-container communication URLs (e.g., `DATABASE_URL=postgresql://user:pass@db:5432/dbname`).
+- **Stop and remove containers, networks, volumes, AND local images used by services:**
+  ```bash
+  docker-compose down --rmi all
+  ```
+- **Pull the latest images for services defined in `docker-compose.yml` (e.g., `postgres:13-alpine`, `redis:alpine`):**
+  ```bash
+  docker-compose pull
+  ```
+- **Display the running processes within each service's container:**
+  ```bash
+  docker-compose top
+  ```
+- **Inspect a container's details, including its IP address on the Docker network:**
+  ```bash
+  docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container_name_or_id>
+  ```
+  *Example (get IP of the backend container):* `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' investment_projection_backend`
+  *(Container names like `investment_projection_backend`, `investment_projection_db` are defined by `container_name` in `docker-compose.yml` or generated by Docker Compose.)*
+
+## 9. Quick Troubleshooting Tips
+
+- **Port Conflicts:** If a service fails to start because a port is already in use on your host, change the host-side port mapping in `docker-compose.yml`. For example, change `ports: - "${FLASK_PORT_ON_HOST:-5000}:5000"` to `ports: - "5001:5000"` for the backend service if port 5000 is taken on your host. Then access it via `http://localhost:5001`. Remember to update your root `.env` file if you change the `FLASK_PORT_ON_HOST` variable.
+- **Environment Variables:** Double-check that environment variables are correctly defined in your root `.env` file (for `docker-compose.yml`) and service-specific `.env` files (e.g., `backend/.env`). Ensure service names (like `db`, `redis`) are used for inter-container communication URLs (e.g., `DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${DB_PORT_INTERNAL}/${POSTGRES_DB}`).
 - **Volume Mounts & Hot Reloading:** If hot reloading isn't working:
-    - Verify volume paths in `docker-compose.yml` are correct.
-    - For React, ensure `CHOKIDAR_USEPOLLING=true` is set.
-    - For Flask, ensure `FLASK_ENV=development` (or `DEBUG=True`) is set.
+    - Verify volume paths in `docker-compose.yml` are correct (e.g., `./backend:/usr/src/app`).
+    - For Frontend (Vite/React): Ensure `WATCHPACK_POLLING="true"` is set in the `frontend` service's environment variables in `docker-compose.yml`.
+    - For Backend (Flask): Ensure `FLASK_ENV=development` (or `FLASK_DEBUG=1`) is set. The `docker-compose.yml` uses `FLASK_ENV: ${FLASK_ENV}` which should be set to `development` in your root `.env` file.
 - **Build Issues:** If `docker-compose build` fails, examine the output for errors. It often points to issues in a `Dockerfile` (e.g., missing dependencies, incorrect commands) or problems installing packages from `requirements.txt` / `package.json`.
 - **"Service ... failed to build: ...":** Look at the error messages above this line. It usually indicates a problem within the `Dockerfile` for that service.
-- **"Cannot connect to the Docker daemon":** Make sure Docker Desktop is running.
+- **"Cannot connect to the Docker daemon":** Make sure Docker Desktop (or Docker Engine on Linux) is running.
 
 This cheatsheet should cover most of your daily Docker interactions for this project!

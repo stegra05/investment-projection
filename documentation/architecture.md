@@ -9,8 +9,11 @@ This document provides a high-level overview of the system architecture for the 
 The system retains a standard client-server architecture:
 
 * **Frontend (Client):** A single-page application (SPA) built using **React**. Runs in the browser, responsible for UI rendering, input capture, and results display, implementing the approved visual and interactive vision.
-    * **UI Structure:** Organized into Login, Register, and Dashboard views. The core interaction area is the **Portfolio Workspace**, utilizing a **multi-panel layout** (optimized for larger screens) and incorporating **guided workflows** for complex tasks (e.g., onboarding, advanced projections).
-    * **Component Structure:** Organized by feature/view (e.g., `features/PortfolioNavigatorPanel/`, `features/AssetsEditor/`, `features/ProjectionViz/`, `workflows/ProjectionSetup/`) to manage complexity.
+    * **UI Structure:** Organized into Login, Register, and Dashboard views. The core interaction area is the **Portfolio Workspace**, utilizing a **multi-panel layout** (optimized for larger screens) and incorporating **guided workflows** for complex tasks (e.g., onboarding, advanced projections). This is implemented in `frontend/src/features/portfolio/pages/PortfolioWorkspacePage.jsx` using `Allotment` for resizable panes.
+    * **Component Structure:** Organized by feature and view. Key panel components for the workspace are located in `frontend/src/features/portfolio/panels/`, for example:
+        *   `NavigationPanel.jsx`
+        *   `MainContentPanel.jsx` (which would render specific views like `AssetView.jsx` or `PlannedChangesView.jsx` from a `views` subdirectory)
+        *   `ProjectionPanel.jsx`
     * **State Management Strategy:** Tiered approach confirmed:
         * **Global State (Zustand):** Manages auth status/details, list of user portfolios.
         * **Contextual State (React Context API):** Manages the state of the *currently selected portfolio* across the different panels. May also manage state within multi-step guided workflows.
