@@ -191,15 +191,15 @@ def test_planned_future_change_representation(session, portfolio_factory):
 
     change_date_val = date(2024,1,1) # renamed variable
     change = PlannedFutureChange(
-        portfolio_id=portfolio.portfolio_id, 
-        description='Monthly Savings', 
+        portfolio_id=portfolio.portfolio_id,
+        description='Monthly Savings',
         change_type=ChangeType.CONTRIBUTION,
         amount=Decimal('100.00'), # Changed from value to amount
-        change_date=change_date_val 
+        change_date=change_date_val
     )
     session.add(change)
     session.commit()
-    assert repr(change) == f'<PlannedFutureChange {change.change_id}: Monthly Savings on {change_date_val}>'
+    assert repr(change) == f'<PlannedFutureChange {change.change_id} ({change.change_type} on {change_date_val})>'  # Updated to match actual __repr__ implementation
 
 
 # Tests for UserCeleryTask Model

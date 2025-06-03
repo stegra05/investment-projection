@@ -42,7 +42,7 @@ def test_create_portfolio_success(auth_client, session): # session might be need
         "name": "My New Awesome Portfolio",
         "description": "A portfolio for aggressive growth stocks."
     }
-    response = auth_client.post('/portfolios/', json=portfolio_data)
+    response = auth_client.post('/api/v1/portfolios/', json=portfolio_data)
     assert response.status_code == 201
     data = response.get_json()
     assert data['name'] == "My New Awesome Portfolio"
@@ -51,7 +51,7 @@ def test_create_portfolio_success(auth_client, session): # session might be need
 
 def test_create_portfolio_missing_name(auth_client):
     portfolio_data = {"description": "Only description provided."}
-    response = auth_client.post('/portfolios/', json=portfolio_data)
+    response = auth_client.post('/api/v1/portfolios/', json=portfolio_data)
     assert response.status_code == 400 # Validation error for missing name
 
 # === Test GET /portfolios/ ===
@@ -65,7 +65,7 @@ def test_get_portfolios_list_success(auth_client, portfolio_factory, session):
     portfolio_factory(user=other_user, name="Other User's List Portfolio")
     session.commit()
 
-    response = auth_client.get('/portfolios/')
+    response = auth_client.get('/api/v1/portfolios/')
     assert response.status_code == 200
     data = response.get_json()
     assert isinstance(data, list)
@@ -81,14 +81,14 @@ def test_get_specific_portfolio_success(auth_client, portfolio_factory, session)
     portfolio = portfolio_factory(user=user, name="Specific View Portfolio")
     session.commit()
 
-    response = auth_client.get(f'/portfolios/{portfolio.portfolio_id}')
+    response = auth_client.get(f'/api/v1/portfolios/{portfolio.portfolio_id}/')
     assert response.status_code == 200
     data = response.get_json()
     assert data['name'] == "Specific View Portfolio"
     assert data['portfolio_id'] == portfolio.portfolio_id
 
 def test_get_specific_portfolio_not_found(auth_client):
-    response = auth_client.get('/portfolios/888777') # Non-existent ID
+    response = auth_client.get('/api/v1/portfolios/888777/') # Non-existent ID
     assert response.status_code == 404
 
 def test_get_specific_portfolio_unauthorized(auth_client, user_factory, portfolio_factory, session):
@@ -96,7 +96,7 @@ def test_get_specific_portfolio_unauthorized(auth_client, user_factory, portfoli
     other_portfolio = portfolio_factory(user=other_user, name="Forbidden Portfolio")
     session.commit()
 
-    response = auth_client.get(f'/portfolios/{other_portfolio.portfolio_id}')
+    response = auth_client.get(f'/api/v1/portfolios/{other_portfolio.portfolio_id}/')
     assert response.status_code == 403 # Or 404 based on decorator behavior
 
 # === Test PUT /portfolios/{portfolio_id} ===
@@ -106,7 +106,7 @@ def test_update_portfolio_success(auth_client, portfolio_factory, session):
     session.commit()
 
     update_data = {"name": "Updated Portfolio Name", "description": "New description"}
-    response = auth_client.put(f'/portfolios/{portfolio.portfolio_id}', json=update_data)
+    response = auth_client.put(f'/api/v1/portfolios/{portfolio.portfolio_id}/', json=update_data)
     assert response.status_code == 200
     data = response.get_json()
     assert data['name'] == "Updated Portfolio Name"
@@ -118,7 +118,7 @@ def test_update_portfolio_unauthorized(auth_client, user_factory, portfolio_fact
     session.commit()
 
     update_data = {"name": "Attempted Hack"}
-    response = auth_client.put(f'/portfolios/{other_portfolio.portfolio_id}', json=update_data)
+    response = auth_client.put(f'/api/v1/portfolios/{other_portfolio.portfolio_id}/', json=update_data)
     assert response.status_code == 403 # Or 404
 
 # === Test DELETE /portfolios/{portfolio_id} ===
@@ -128,7 +128,7 @@ def test_delete_portfolio_success(auth_client, portfolio_factory, session):
     session.commit()
     portfolio_id_del = portfolio_to_delete.portfolio_id
 
-    response = auth_client.delete(f'/portfolios/{portfolio_id_del}')
+    response = auth_client.delete(f'/api/v1/portfolios/{portfolio_id_del}/')
     assert response.status_code == 200
     assert response.get_json()['message'] == "Portfolio deleted successfully"
     assert Portfolio.query.get(portfolio_id_del) is None
@@ -138,39 +138,39 @@ def test_delete_portfolio_unauthorized(auth_client, user_factory, portfolio_fact
     other_portfolio = portfolio_factory(user=other_user, name="Safe From Deletion")
     session.commit()
 
-    response = auth_client.delete(f'/portfolios/{other_portfolio.portfolio_id}')
+    response = auth_client.delete(f'/api/v1/portfolios/{other_portfolio.portfolio_id}/')
     assert response.status_code == 403 # Or 404
 
 # === Test PUT /portfolios/{portfolio_id}/allocations ===
 def test_update_allocations_success(auth_client, portfolio_factory, session):
     user = auth_client.user
     portfolio = portfolio_factory(user=user)
-    asset1 = Asset(portfolio_id=portfolio.portfolio_id, name="Stock A", asset_type=AssetType.STOCK, currency=Currency.USD, current_value=1000)
-    asset2 = Asset(portfolio_id=portfolio.portfolio_id, name="Bond B", asset_type=AssetType.BOND, currency=Currency.USD, current_value=1000)
+    asset1 = Asset(portfolio_id=portfolio.portfolio_id, name_or_ticker="Stock A", asset_type=AssetType.STOCK, allocation_value=1000)
+    asset2 = Asset(portfolio_id=portfolio.portfolio_id, name_or_ticker="Bond B", asset_type=AssetType.BOND, allocation_value=1000)
     session.add_all([asset1, asset2])
     session.commit()
 
     allocations_data = [
-        {"asset_id": asset1.asset_id, "target_allocation_percentage": 60.0},
-        {"asset_id": asset2.asset_id, "target_allocation_percentage": 40.0}
+        {"asset_id": asset1.asset_id, "allocation_percentage": 60.0},
+        {"asset_id": asset2.asset_id, "allocation_percentage": 40.0}
     ]
-    response = auth_client.put(f'/portfolios/{portfolio.portfolio_id}/allocations', json=allocations_data)
+    response = auth_client.put(f'/api/v1/portfolios/{portfolio.portfolio_id}/allocations/', json=allocations_data)
     assert response.status_code == 200
     data = response.get_json()
     assert len(data) == 2
     # Check if percentages are updated in the database or response
     updated_asset1 = Asset.query.get(asset1.asset_id)
-    assert updated_asset1.target_allocation_percentage == Decimal("60.0")
+    assert updated_asset1.allocation_percentage == Decimal("60.0")
 
 def test_update_allocations_invalid_sum(auth_client, portfolio_factory, session):
     user = auth_client.user
     portfolio = portfolio_factory(user=user)
-    asset1 = Asset(portfolio_id=portfolio.portfolio_id, name="Stock C", asset_type=AssetType.STOCK, currency=Currency.USD, current_value=1000)
+    asset1 = Asset(portfolio_id=portfolio.portfolio_id, name_or_ticker="Stock C", asset_type=AssetType.STOCK, allocation_value=1000)
     session.add(asset1)
     session.commit()
 
-    allocations_data = [{"asset_id": asset1.asset_id, "target_allocation_percentage": 110.0}] # Sum > 100
-    response = auth_client.put(f'/portfolios/{portfolio.portfolio_id}/allocations', json=allocations_data)
+    allocations_data = [{"asset_id": asset1.asset_id, "allocation_percentage": 110.0}] # Sum > 100
+    response = auth_client.put(f'/api/v1/portfolios/{portfolio.portfolio_id}/allocations/', json=allocations_data)
     assert response.status_code == 400
     assert "sum to 100%" in response.get_json()['error'].lower()
 
@@ -180,11 +180,11 @@ def test_update_allocations_asset_id_mismatch(auth_client, portfolio_factory, us
     # Create an asset belonging to another portfolio/user to test mismatch
     other_user_for_asset = user_factory(email='assetowner@example.com', username='assetowner')
     other_portfolio_for_asset = portfolio_factory(user=other_user_for_asset)
-    mismatched_asset = Asset(portfolio_id=other_portfolio_for_asset.portfolio_id, name="Mismatched Asset", asset_type=AssetType.STOCK, currency=Currency.USD, current_value=100)
+    mismatched_asset = Asset(portfolio_id=other_portfolio_for_asset.portfolio_id, name_or_ticker="Mismatched Asset", asset_type=AssetType.STOCK, allocation_value=100)
     session.add_all([mismatched_asset])
     session.commit()
 
-    allocations_data = [{"asset_id": mismatched_asset.asset_id, "target_allocation_percentage": 100.0}]
-    response = auth_client.put(f'/portfolios/{portfolio.portfolio_id}/allocations', json=allocations_data)
+    allocations_data = [{"asset_id": mismatched_asset.asset_id, "allocation_percentage": 100.0}]
+    response = auth_client.put(f'/api/v1/portfolios/{portfolio.portfolio_id}/allocations/', json=allocations_data)
     assert response.status_code == 400 # Or 404 if asset not found in *current* portfolio
     assert "not belong to portfolio" in response.get_json()['error'].lower()

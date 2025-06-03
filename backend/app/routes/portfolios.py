@@ -31,7 +31,7 @@ from app.utils.exceptions import (
 )
 
 # Define the blueprint: 'portfolios', with a URL prefix /api/v1/portfolios
-portfolios_bp = Blueprint('portfolios', __name__, url_prefix='/api/v1/portfolios')
+portfolios_bp = Blueprint('portfolios', __name__)
 
 # --- Decorators ---
 

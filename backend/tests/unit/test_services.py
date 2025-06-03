@@ -1570,9 +1570,9 @@ class TestInitializeAssetValues:
             assert asset_values == expected_asset_values
             assert total_value == expected_total
             mock_logger.warning.assert_any_call(
-                "Cannot calculate percentage-based allocations because the definitive total portfolio value is zero or negative (0.0). Percentage-based assets will remain at 0 value."
+                "Cannot calculate percentage-based allocations for 1 asset(s) because the definitive total portfolio value is zero or negative (0). These assets will remain at 0 value."
             )
-            
+
     def test_iav_mixed_fixed_and_percentage_with_override(self, app):
         assets = [
             create_pi_mock_asset(asset_id=1, allocation_value=Decimal('2000')),

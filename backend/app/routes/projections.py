@@ -27,7 +27,7 @@ from app.utils.exceptions import (
 # Define the blueprint: 'projections_bp'
 # URL prefix /api/v1/portfolios is applied here, so routes like '/<pid>/projections'
 # become /api/v1/portfolios/<pid>/projections.
-projections_bp = Blueprint('projections_bp', __name__, url_prefix='/api/v1/portfolios')
+projections_bp = Blueprint('projections_bp', __name__)
 
 
 # --- Pydantic Schemas for Projection Requests ---

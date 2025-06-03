@@ -13,7 +13,7 @@ from pydantic import ValidationError # For catching Pydantic validation errors
 
 # Define the blueprint: 'user_settings_bp'
 # URL prefix /api/v1/users/settings ensures these routes are versioned and clearly scoped.
-user_settings_bp = Blueprint('user_settings_bp', __name__, url_prefix='/api/v1/users/settings')
+user_settings_bp = Blueprint('user_settings_bp', __name__)
 
 @user_settings_bp.route('', methods=['GET'])
 @jwt_required() # Ensures the user is authenticated

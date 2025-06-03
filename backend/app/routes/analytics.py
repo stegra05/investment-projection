@@ -21,7 +21,7 @@ from app.utils.exceptions import (
     ApplicationException, PortfolioNotFoundError, AccessDeniedError, BadRequestError
 )
 
-analytics_bp = Blueprint('analytics', __name__, url_prefix='/api/v1/portfolios/<int:portfolio_id>/analytics')
+analytics_bp = Blueprint('analytics', __name__)
 
 # --- Decorators ---
 

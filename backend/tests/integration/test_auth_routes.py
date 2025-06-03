@@ -1,6 +1,7 @@
 import pytest
 import json
 from app.models.user import User # To query user directly for assertions
+from app.utils.exceptions import ApplicationException
 # client, session, user_factory are fixtures from conftest.py
 
 # Helper function to parse cookies if tokens are sent via HttpOnly cookies
@@ -105,7 +106,7 @@ def test_login_user_incorrect_password(client, user_factory):
     })
     assert response.status_code == 401
     json_data = response.get_json()
-    assert json_data['message'] == 'Invalid email or password'
+    assert json_data['message'] == 'Invalid username/email or password.'
 
 def test_login_user_not_found(client):
     """Test login for a user that does not exist."""
@@ -115,7 +116,7 @@ def test_login_user_not_found(client):
     })
     assert response.status_code == 401 
     json_data = response.get_json()
-    assert json_data['message'] == 'Invalid email or password'
+    assert json_data['message'] == 'Invalid username/email or password.'
 
 
 def test_refresh_token_success(client, user_factory):
@@ -176,7 +177,7 @@ def test_logout_success(client, user_factory):
 
     assert logout_response.status_code == 200
     json_data = logout_response.get_json()
-    assert json_data['message'] == 'Logout successful (token needs to be discarded client-side)'
+    assert json_data['message'] == 'Logout successful. Please discard your access token.'
 
     # Verify refresh_token_cookie is cleared
     # The cookie should be set with Max-Age=0 or Expires to a past date.

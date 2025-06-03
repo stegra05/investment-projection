@@ -52,25 +52,25 @@ def test_create_planned_change_one_time_success(auth_client, portfolio_factory, 
     user = auth_client.user
     portfolio = portfolio_factory(user=user)
     change_data = {
-        "change_type": ChangeType.ONE_TIME_INVESTMENT.value,
+        "change_type": ChangeType.CONTRIBUTION.value,
         "change_date": "2024-07-01",
         "amount": 1000.00,
         "currency": Currency.USD.value, # Assuming schema supports this, model might not
         "description": "One-time bonus investment",
         "is_recurring": False
     }
-    response = auth_client.post(f'/portfolios/{portfolio.portfolio_id}/changes', json=change_data)
+    response = auth_client.post(f'/api/v1/portfolios/{portfolio.portfolio_id}/changes/', json=change_data)
     assert response.status_code == 201
     data = response.get_json()
     assert data['description'] == "One-time bonus investment"
-    assert data['change_type'] == ChangeType.ONE_TIME_INVESTMENT.value
+    assert data['change_type'] == ChangeType.CONTRIBUTION.value
     assert data['portfolio_id'] == portfolio.portfolio_id
 
 def test_create_planned_change_recurring_success(auth_client, portfolio_factory, session):
     user = auth_client.user
     portfolio = portfolio_factory(user=user)
     change_data = {
-        "change_type": ChangeType.RECURRING_INVESTMENT.value,
+        "change_type": ChangeType.CONTRIBUTION.value,
         "change_date": "2024-08-01", # Start date
         "amount": 200.00,
         "description": "Monthly savings top-up",
@@ -78,10 +78,10 @@ def test_create_planned_change_recurring_success(auth_client, portfolio_factory,
         "frequency": FrequencyType.MONTHLY.value,
         "interval": 1,
         "day_of_month": 15,
-        "ends_on_type": EndsOnType.OCCURRENCES.value,
+        "ends_on_type": EndsOnType.AFTER_OCCURRENCES.value,
         "ends_on_occurrences": 12
     }
-    response = auth_client.post(f'/portfolios/{portfolio.portfolio_id}/changes', json=change_data)
+    response = auth_client.post(f'/api/v1/portfolios/{portfolio.portfolio_id}/changes/', json=change_data)
     assert response.status_code == 201
     data = response.get_json()
     assert data['description'] == "Monthly savings top-up"
@@ -92,14 +92,14 @@ def test_create_planned_change_invalid_data(auth_client, portfolio_factory):
     user = auth_client.user
     portfolio = portfolio_factory(user=user)
     invalid_data = {"amount": "not a number"} # Missing required fields, invalid amount
-    response = auth_client.post(f'/portfolios/{portfolio.portfolio_id}/changes', json=invalid_data)
+    response = auth_client.post(f'/api/v1/portfolios/{portfolio.portfolio_id}/changes/', json=invalid_data)
     assert response.status_code == 400 # Validation Error
 
 def test_create_planned_change_unauthorized_portfolio(auth_client, user_factory, portfolio_factory):
     other_user = user_factory(username='otherchangesuser', email='otherchanges@example.com')
     other_portfolio = portfolio_factory(user=other_user)
-    change_data = {"change_type": "DEPOSIT", "change_date": "2024-01-01", "amount": 100}
-    response = auth_client.post(f'/portfolios/{other_portfolio.portfolio_id}/changes', json=change_data)
+    change_data = {"change_type": ChangeType.CONTRIBUTION.value, "change_date": "2024-01-01", "amount": 100}
+    response = auth_client.post(f'/api/v1/portfolios/{other_portfolio.portfolio_id}/changes/', json=change_data)
     assert response.status_code == 403 # verify_portfolio_ownership
 
 # === Test PUT /portfolios/{portfolio_id}/changes/{change_id} ===
@@ -107,14 +107,14 @@ def test_update_planned_change_success(auth_client, portfolio_factory, session):
     user = auth_client.user
     portfolio = portfolio_factory(user=user)
     change = PlannedFutureChange(
-        portfolio_id=portfolio.portfolio_id, change_type=ChangeType.ONE_TIME_INVESTMENT, 
+        portfolio_id=portfolio.portfolio_id, change_type=ChangeType.CONTRIBUTION, 
         change_date=date(2024,5,1), amount=500, description="Initial Change"
     )
     session.add(change)
     session.commit()
 
     update_data = {"description": "Updated One-Time Investment", "amount": 750.00}
-    response = auth_client.put(f'/portfolios/{portfolio.portfolio_id}/changes/{change.change_id}', json=update_data)
+    response = auth_client.put(f'/api/v1/portfolios/{portfolio.portfolio_id}/changes/{change.change_id}/', json=update_data)
     assert response.status_code == 200
     data = response.get_json()
     assert data['description'] == "Updated One-Time Investment"
@@ -131,29 +131,29 @@ def test_update_planned_change_validation_error(auth_client, portfolio_factory, 
     session.commit()
 
     invalid_update = {"amount": "non-numeric"}
-    response = auth_client.put(f'/portfolios/{portfolio.portfolio_id}/changes/{change.change_id}', json=invalid_update)
+    response = auth_client.put(f'/api/v1/portfolios/{portfolio.portfolio_id}/changes/{change.change_id}/', json=invalid_update)
     assert response.status_code == 400
 
 def test_update_planned_change_unauthorized(auth_client, user_factory, portfolio_factory, session):
     other_user = user_factory(username='otherchangeupdate', email='otherchangeupdate@example.com')
     other_portfolio = portfolio_factory(user=other_user)
-    other_change = PlannedFutureChange(portfolio_id=other_portfolio.portfolio_id, change_type=ChangeType.DEPOSIT, change_date=date(2024,1,1), amount=10)
+    other_change = PlannedFutureChange(portfolio_id=other_portfolio.portfolio_id, change_type=ChangeType.CONTRIBUTION, change_date=date(2024,1,1), amount=10)
     session.add(other_change)
     session.commit()
 
-    response = auth_client.put(f'/portfolios/{other_portfolio.portfolio_id}/changes/{other_change.change_id}', json={"description": "Attempted Update"})
+    response = auth_client.put(f'/api/v1/portfolios/{other_portfolio.portfolio_id}/changes/{other_change.change_id}/', json={"description": "Attempted Update"})
     assert response.status_code == 403
 
 # === Test DELETE /portfolios/{portfolio_id}/changes/{change_id} ===
 def test_delete_planned_change_success(auth_client, portfolio_factory, session):
     user = auth_client.user
     portfolio = portfolio_factory(user=user)
-    change_to_delete = PlannedFutureChange(portfolio_id=portfolio.portfolio_id, change_type=ChangeType.ONE_TIME_INVESTMENT, change_date=date(2024,1,1), amount=100)
+    change_to_delete = PlannedFutureChange(portfolio_id=portfolio.portfolio_id, change_type=ChangeType.CONTRIBUTION, change_date=date(2024,1,1), amount=100)
     session.add(change_to_delete)
     session.commit()
     change_id_del = change_to_delete.change_id
 
-    response = auth_client.delete(f'/portfolios/{portfolio.portfolio_id}/changes/{change_id_del}')
+    response = auth_client.delete(f'/api/v1/portfolios/{portfolio.portfolio_id}/changes/{change_id_del}/')
     assert response.status_code == 200
     assert response.get_json()['message'] == "Planned change deleted successfully"
     assert PlannedFutureChange.query.get(change_id_del) is None
@@ -161,7 +161,7 @@ def test_delete_planned_change_success(auth_client, portfolio_factory, session):
 def test_delete_planned_change_not_found(auth_client, portfolio_factory):
     user = auth_client.user
     portfolio = portfolio_factory(user=user)
-    response = auth_client.delete(f'/portfolios/{portfolio.portfolio_id}/changes/99999')
+    response = auth_client.delete(f'/api/v1/portfolios/{portfolio.portfolio_id}/changes/99999/')
     assert response.status_code == 404
 
 

@@ -158,20 +158,20 @@ def create_app(config_name='default'):
     from app.routes.auth import auth_bp
     app.register_blueprint(auth_bp)
     from app.routes.portfolios import portfolios_bp
-    app.register_blueprint(portfolios_bp)
+    app.register_blueprint(portfolios_bp, url_prefix='/api/v1/portfolios')
     from app.routes.assets import assets_bp
     app.register_blueprint(assets_bp, url_prefix='/api/v1/portfolios/<int:portfolio_id>/assets')
     from app.routes.changes import changes_bp
     app.register_blueprint(changes_bp, url_prefix='/api/v1/portfolios/<int:portfolio_id>/changes')
     from app.routes.projections import projections_bp
-    app.register_blueprint(projections_bp)
+    app.register_blueprint(projections_bp, url_prefix='/api/v1/portfolios')
     from app.routes.analytics import analytics_bp
-    app.register_blueprint(analytics_bp)
+    app.register_blueprint(analytics_bp, url_prefix='/api/v1/analytics/portfolio/<int:portfolio_id>')
     from app.routes.tasks import tasks_bp
     app.register_blueprint(tasks_bp, url_prefix='/api/v1/tasks')
 
     from app.routes.user_settings_routes import user_settings_bp # Import the new blueprint
-    app.register_blueprint(user_settings_bp) # Register the new blueprint
+    app.register_blueprint(user_settings_bp, url_prefix='/api/v1/user/settings') # Register the new blueprint
 
     # Register custom error handlers
     register_error_handlers(app, db)

@@ -7,19 +7,20 @@ access information about tasks they initiated.
 """
 from flask import Blueprint, jsonify, current_app, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity, current_user # current_user for accessing User object
+import datetime
 # Re-enable the original task_service import
 # Re-enable the original task_service import if it was commented out
 from app.services.task_service import get_task_status # Service to interact with Celery backend
 from app.models import UserCeleryTask # Model to link users to Celery tasks
-from app import db # SQLAlchemy database instance
+from app import db, celery_app # SQLAlchemy database instance and Celery app for tests
 from werkzeug.exceptions import HTTPException # For specific exception handling
 
 # Define the blueprint: 'tasks'. The URL prefix (e.g., /api/v1/tasks) should be
 # defined when this blueprint is registered in the main app factory (app/__init__.py).
 # Assuming prefix will be '/api/v1/tasks' based on typical structure.
-tasks_bp = Blueprint('tasks', __name__, url_prefix='/api/v1/tasks') # Added url_prefix
+tasks_bp = Blueprint('tasks', __name__)
 
-@tasks_bp.route('/<string:task_id>', methods=['GET'])
+@tasks_bp.route('/<string:task_id>/status', methods=['GET'])
 @jwt_required() # Ensures the user is authenticated
 def get_task_by_id(task_id: str):
     """Retrieves the status and result (if available) of a specific Celery task.
@@ -83,7 +84,7 @@ def get_task_by_id(task_id: str):
 
 # Example route for initiating a task.
 # This is illustrative and should be replaced or adapted for actual application tasks.
-@tasks_bp.route('/run_example_task', methods=['POST'])
+@tasks_bp.route('/run-example-task', methods=['GET'])
 @jwt_required()
 def run_example_task_route():
     """(Example) Initiates a sample background task for the authenticated user.
@@ -120,7 +121,7 @@ def run_example_task_route():
         db.session.commit() 
         current_app.logger.info(f"Example task '{task_id}' (UserCeleryTask record created) dispatched for UserID '{user_id}'.")
         
-        return jsonify({"message": "Example task initiated successfully.", "task_id": task_id}), 202 # HTTP 202 Accepted
+        return jsonify({"message": "Example task triggered successfully", "task_id": task_id}), 202 # HTTP 202 Accepted
         
     except HTTPException as http_exc:
         # Re-raise known HTTP exceptions.
